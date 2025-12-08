@@ -17,6 +17,8 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.maxLines,
     this.inputFormatters,
+    this.readOnly = false,
+    this.onTap,
   });
 
   final TextEditingController controller;
@@ -29,6 +31,8 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final int? maxLines;
   final List<TextInputFormatter>? inputFormatters;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -57,6 +61,8 @@ class _AppTextFieldState extends State<AppTextField> {
         validator: widget.validator,
         maxLines: _obscureText ? 1 : widget.maxLines,
         inputFormatters: widget.inputFormatters,
+        readOnly: widget.readOnly,
+        onTap: widget.onTap,
         style: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 15.sp,

@@ -10,11 +10,13 @@ class PrimaryButton extends StatelessWidget {
     required this.title,
     required this.onPressed,
     this.isLoading = false,
+    this.gradient,
   });
 
   final String title;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final Gradient? gradient;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class PrimaryButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: isEnabled
-              ? AppColors.brandGradient
+              ? (gradient ?? AppColors.primaryGradient)
               : null,
           color: isEnabled ? null : AppColors.primary.withOpacity(0.3),
           borderRadius: BorderRadius.circular(16.r),
