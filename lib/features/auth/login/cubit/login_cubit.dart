@@ -32,13 +32,9 @@ class LoginCubit extends Cubit<LoginState> {
       final response = await _repository.login(request);
 
       if (response.status && response.data != null && response.token != null) {
-        // Save token
         await _storageService.saveToken(response.token!);
-
-        // Save user data
         await _storageService.saveUserData(response.data!);
 
-        // Set auth token in Dio client
         _dioClient.setAuthToken(response.token!);
 
         emit(LoginSuccess(response.data!));
@@ -46,7 +42,17 @@ class LoginCubit extends Cubit<LoginState> {
         emit(LoginError(response.message));
       }
     } catch (e) {
-      emit(LoginError(e.toString().replaceFirst('Exception: ', '')));
+      String errorMessage = 'An error occurred. Please try again.';
+      if (e is Exception) {
+        final exceptionString = e.toString();
+        errorMessage = exceptionString.replaceFirst(RegExp(r'^Exception:\s*'), '').trim();
+        if (errorMessage.isEmpty) {
+          errorMessage = 'An error occurred. Please try again.';
+        }
+      } else {
+        errorMessage = e.toString();
+      }
+      emit(LoginError(errorMessage));
     }
   }
 

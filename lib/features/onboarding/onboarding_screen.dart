@@ -99,7 +99,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
             ),
-
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -114,7 +113,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-
             Padding(
               padding: EdgeInsets.symmetric(vertical: 24.h),
               child: Row(
@@ -129,9 +127,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
             Padding(
-              padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 32.h),
+              padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 42.h),
               child: Row(
                 children: [
                   if (_currentPage > 0)

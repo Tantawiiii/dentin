@@ -1,12 +1,15 @@
 import 'package:dentin/features/auth/login/ui/login_screen.dart';
 import 'package:dentin/features/auth/register/register_screen.dart';
+import 'package:dentin/features/auth/register/verification_screen.dart';
+import 'package:dentin/features/auth/forget_password/ui/forget_password_screen.dart';
+import 'package:dentin/features/auth/forget_password/ui/forget_password_otp_screen.dart';
+import 'package:dentin/features/auth/forget_password/ui/forget_password_reset_screen.dart';
+import 'package:dentin/features/home/home_screen.dart';
 import 'package:dentin/features/onboarding/onboarding_screen.dart';
 import 'package:dentin/features/onboarding/splash_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'app_routes.dart';
-
-
 
 Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
   switch (settings.name) {
@@ -18,8 +21,32 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
     case AppRoutes.login:
       return MaterialPageRoute(builder: (_) => const LoginScreen());
 
-      case AppRoutes.signup:
+    case AppRoutes.signup:
       return MaterialPageRoute(builder: (_) => const RegisterScreen());
+
+    case AppRoutes.verification:
+      final email = settings.arguments as String? ?? '';
+      return MaterialPageRoute(
+        builder: (_) => VerificationScreen(email: email),
+      );
+
+    case AppRoutes.forgetPassword:
+      return MaterialPageRoute(builder: (_) => const ForgetPasswordScreen());
+
+    case AppRoutes.forgetPasswordOtp:
+      final email = settings.arguments as String? ?? '';
+      return MaterialPageRoute(
+        builder: (_) => ForgetPasswordOtpScreen(email: email),
+      );
+
+    case AppRoutes.forgetPasswordReset:
+      final email = settings.arguments as String? ?? '';
+      return MaterialPageRoute(
+        builder: (_) => ForgetPasswordResetScreen(email: email),
+      );
+
+    case AppRoutes.home:
+      return MaterialPageRoute(builder: (_) => const HomeScreen());
 
     default:
       return MaterialPageRoute(

@@ -57,6 +57,7 @@ class BasicInfoStep extends StatelessWidget {
     return SingleChildScrollView(
       child: Form(
         key: formKey,
+        autovalidateMode: AutovalidateMode.disabled,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -189,11 +190,13 @@ class BasicInfoStep extends StatelessWidget {
                 return null;
               },
             ),
+            SizedBox(height: 24.h),
           ],
         ),
       ),
     );
   }
 }
+
 
 

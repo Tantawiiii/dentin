@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/constant/app_colors.dart';
+import '../../core/constant/app_font_sizes.dart';
 
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
@@ -11,17 +12,19 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.isLoading = false,
     this.gradient,
+    this.fontSize,
   });
 
   final String title;
   final VoidCallback? onPressed;
   final bool isLoading;
   final Gradient? gradient;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
     final isEnabled = onPressed != null && !isLoading;
-    
+
     return Bounce(
       onTap: isEnabled ? onPressed : null,
       duration: const Duration(milliseconds: 120),
@@ -30,9 +33,7 @@ class PrimaryButton extends StatelessWidget {
         width: double.infinity,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          gradient: isEnabled
-              ? (gradient ?? AppColors.primaryGradient)
-              : null,
+          gradient: isEnabled ? (gradient ?? AppColors.primaryGradient) : null,
           color: isEnabled ? null : AppColors.primary.withOpacity(0.3),
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: isEnabled
@@ -66,7 +67,7 @@ class PrimaryButton extends StatelessWidget {
                 title,
                 style: TextStyle(
                   color: AppColors.textOnPrimary,
-                  fontSize: 16.sp,
+                  fontSize: fontSize ?? AppFontSizes.buttonMedium,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),

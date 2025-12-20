@@ -8,6 +8,7 @@ import 'core/routing/app_router.dart';
 import 'core/routing/app_routes.dart';
 import 'core/services/storage_service.dart';
 import 'core/theme/app_theme.dart';
+import 'shared/widgets/app_toast.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
       minTextAdapt: true,
       builder: (_, child) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'DentIn',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,

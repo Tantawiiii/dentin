@@ -58,6 +58,9 @@ class _LoginScreenState extends State<LoginScreen> {
           if (state is LoginSuccess) {
             Navigator.of(context).pushReplacementNamed(AppRoutes.home);
           } else if (state is LoginError) {
+
+            print("Login Error: ${state.message}");
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -161,7 +164,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             16.verticalSpace,
                             Bounce(
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.of(context).pushNamed(AppRoutes.forgetPassword);
+                              },
                               child: Text(
                                 AppTexts.forgotPassword,
                                 style: TextStyle(

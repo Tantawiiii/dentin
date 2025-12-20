@@ -38,9 +38,10 @@ final class AppTexts {
 
   // Register Screen
   static const String createYourAccount = 'Create Your Account';
-  static const String joinOurPlatform = 'Join our platform in just a few simple steps';
+  static const String joinOurPlatform =
+      'Join our platform in just a few simple steps';
   static const String alreadyHaveAccount = 'Already have an account? ';
-  static const String loginHere = 'Login here';
+  static const String loginHere = 'Login';
   static const String submit = 'Submit';
 
   // Register Steps
@@ -82,10 +83,112 @@ final class AppTexts {
   static const String postgraduateDegree = 'Postgraduate Degree';
   static const String selectDegree = 'Select Degree';
   static const String degreeRequired = 'Postgraduate Degree is required';
+  static const String fieldsSpecialties = 'Fields/Specialties';
+  static const String selectSpecialties = 'Select Specialties';
+  static const String specialtiesRequired =
+      'At least one specialty is required';
 
   // Experience Step
-  static const String experienceStepComingSoon = 'Experience Step - Coming Soon';
+  static const String professionalExperience = 'Professional Experience';
+  static const String yearsOfExperience = 'Years of Experience';
+  static const String yearsOfExperienceRequired =
+      'Years of experience is required';
+  static const String enterYearsOfExperience = 'Enter years of experience';
+  static const String professionalDescription = 'Professional Description';
+  static const String professionalDescriptionRequired =
+      'Professional description is required';
+  static const String enterProfessionalDescription =
+      'Enter your professional description';
+  static const String previousExperience = 'Previous Experience';
+  static const String previousExperienceRequired =
+      'Previous experience is required';
+  static const String enterPreviousExperience =
+      'Enter your previous experience';
+  static const String workAddress = 'Address';
+  static const String workAddressRequired = 'Work address is required';
+  static const String enterWorkAddress = 'Enter your work address';
+  static const String universityAssistant =
+      'Do you work as a university assistant?';
+  static const String universityAssistantRequired =
+      'Please select if you work as a university assistant';
+  static const String selectUniversityAssistant = 'Select';
+  static const String haveClinic = 'Do you have a clinic?';
+  static const String haveClinicRequired = 'Please select if you have a clinic';
+  static const String selectHaveClinic = 'Select';
+  static const String clinicName = 'Clinic Name';
+  static const String enterClinicName = 'Enter clinic name';
+  static const String clinicNameRequired = 'Clinic name is required';
+  static const String clinicAddress = 'Clinic Address';
+  static const String enterClinicAddress = 'Enter clinic address';
+  static const String clinicAddressRequired = 'Clinic address is required';
+  static const String teacherAssistantAtUniversity = 'Teacher Assistant At University';
+  static const String enterUniversityName = 'Enter university name';
+  static const String universityNameRequired = 'University name is required';
+  static const String toolsYouHave = 'Tools You Have';
+  static const String toolsRequired = 'At least one tool is required';
+  static const String addTool = 'Add a tool';
+  static const String addToolButton = '+ Add';
+  static const String skills = 'Skills';
+  static const String skillsRequired = 'At least one skill is required';
+  static const String addSkill = 'Add a skill';
+  static const String addSkillButton = '+ Add';
+  static const String yes = 'Yes';
+  static const String no = 'No';
+  
+  // Available Times
+  static const String availableTimes = 'Available Times';
+  static const String day = 'Day';
+  static const String from = 'From';
+  static const String to = 'To';
+  static const String addTimeSlot = '+ Add Time Slot';
+  static const String remove = 'Remove';
+  static const String availableTimesRequired = 'At least one time slot is required';
+  static const String sunday = 'Sunday';
+  static const String monday = 'Monday';
+  static const String tuesday = 'Tuesday';
+  static const String wednesday = 'Wednesday';
+  static const String thursday = 'Thursday';
+  static const String friday = 'Friday';
+  static const String saturday = 'Saturday';
 
   // Documents Step
   static const String documentsStepComingSoon = 'Documents Step - Coming Soon';
+  static const String documentsAndCertificates = 'Documents & Certificates';
+  static const String profileImage = 'Profile Image';
+  static const String coverImage = 'Cover Image';
+  static const String graduationCertificate = 'Graduation Certificate';
+  static const String cv = 'CV (PDF/DOC/DOCX)';
+  static const String courseCertificates = 'Course Certificates (Multiple)';
+  static const String uploadFile = 'Upload File';
+  static const String clickToUpload = 'Click to upload or drag & drop';
+  static const String profileImageRequired = 'Profile image is required';
+  static const String coverImageRequired = 'Cover image is required';
+  static const String graduationCertificateRequired = 'Graduation certificate is required';
+  static const String cvRequired = 'CV is required';
+  static const String courseCertificatesRequired = 'At least one course certificate is required';
+  static const String completeRegistration = 'Complete Registration 🎉';
+
+  // Verification Screen
+  static const String appName = 'Dent';
+  static const String appSubtitle = 'Doctors Community & Network';
+  static const String accountVerification = 'ACCOUNT VERIFICATION';
+  static const String registrationUnderReview = 'REGISTRATION UNDER REVIEW';
+  static const String welcomeToMedicalCommunity = 'Welcome to Our Medical Community';
+  static const String verificationWelcomeMessage =
+      'Thank you for joining Dent, the premier platform for medical professionals. Your registration is currently being reviewed by our verification team to ensure the integrity of our community.';
+  static const String verificationProcess = 'Verification Process';
+  static const String verificationProcessDescriptionPart1 =
+      'Our team will verify your medical credentials and profile information. This typically takes ';
+  static const String verificationTimeline = '24-48 hours';
+  static const String verificationProcessDescriptionPart2 =
+      ". You'll receive an email notification once approved.";
+  static const String whatYouCanDo = 'What You Can Do';
+  static const String professionalNetwork = 'Professional Network';
+  static const String professionalNetworkDescription = 'Connect with medical colleagues';
+  static const String jobOpportunities = 'Job Opportunities';
+  static const String jobOpportunitiesDescription = 'Find medical positions & opportunities';
+  static const String medicalContent = 'Medical Content';
+  static const String medicalContentDescription = 'Share & discuss medical cases';
+  static const String backToLogin = 'Back to Login';
+  static const String exploreCommunity = 'Explore Community';
 }
