@@ -106,7 +106,7 @@ class UserData {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       birthDate: json['birth_date'],
-      graduationYear: json['graduation_year'],
+      graduationYear: json['graduation_year']?.toString(),
       university: json['university'],
       graduationGrade: json['graduation_grade'],
       postgraduateDegree: json['postgraduate_degree'],

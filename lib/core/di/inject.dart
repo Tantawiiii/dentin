@@ -5,6 +5,10 @@ import '../network/api_service.dart';
 import '../services/storage_service.dart';
 import '../../features/auth/login/data/repo/login_repository.dart';
 import '../../features/auth/login/cubit/login_cubit.dart';
+import '../../features/auth/register/data/repo/register_repository.dart';
+import '../../features/auth/register/cubit/register_cubit.dart';
+import '../../features/auth/forget_password/data/repo/forget_password_repository.dart';
+import '../../features/auth/forget_password/cubit/forget_password_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -27,12 +31,31 @@ Future<void> init() async {
   // Login Repository
   sl.registerLazySingleton(() => LoginRepository(sl<ApiService>()));
 
-  // Login Cubit (factory - each screen gets a new instance)
+  // Register Repository
+  sl.registerLazySingleton(() => RegisterRepository(sl<ApiService>()));
+
+  // Forget Password Repository
+  sl.registerLazySingleton(() => ForgetPasswordRepository(sl<ApiService>()));
+
   sl.registerFactory(
     () => LoginCubit(
       repository: sl<LoginRepository>(),
       storageService: sl<StorageService>(),
       dioClient: sl<DioClient>(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => RegisterCubit(
+      repository: sl<RegisterRepository>(),
+      storageService: sl<StorageService>(),
+      dioClient: sl<DioClient>(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => ForgetPasswordCubit(
+      repository: sl<ForgetPasswordRepository>(),
     ),
   );
 }
