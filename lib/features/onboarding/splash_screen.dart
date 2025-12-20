@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:dentin/core/constant/app_assets.dart';
 import 'package:dentin/core/constant/app_colors.dart';
 import 'package:dentin/core/routing/app_routes.dart';
+import 'package:dentin/core/di/inject.dart' as di;
+import 'package:dentin/core/services/storage_service.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -38,10 +40,21 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
 
     _navigationTimer = Timer(const Duration(milliseconds: 2300), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
-      }
+      _checkAuthAndNavigate();
     });
+  }
+
+  void _checkAuthAndNavigate() {
+    if (!mounted) return;
+
+    final storageService = di.sl<StorageService>();
+    final token = storageService.getToken();
+
+    if (token != null && token.isNotEmpty) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    } else {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
+    }
   }
 
   @override

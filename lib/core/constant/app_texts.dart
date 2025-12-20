@@ -191,4 +191,37 @@ final class AppTexts {
   static const String medicalContentDescription = 'Share & discuss medical cases';
   static const String backToLogin = 'Back to Login';
   static const String exploreCommunity = 'Explore Community';
+
+  // Home Screen
+  static const String home = 'Home';
+  static const String logout = 'Logout';
+  static const String noPostsYet = 'No posts yet';
+  static const String retry = 'Retry';
+
+  // Create Post
+  static const String whatsOnYourMind = "What's on your mind?";
+  static const String requestToPromotePost = 'Request to promote this post as an advertisement';
+  static const String photo = 'Photo';
+  static const String video = 'Video';
+  static const String gallery = 'Gallery';
+  static const String createPost = 'Create Post';
+  static const String pleaseAddContentOrMedia = 'Please add content or media';
+  static const String postCreatedSuccessfully = 'Post created successfully';
+
+  // Post Item
+  static const String justNow = 'Just now';
+  static const String likes = 'likes';
+  static const String comments = 'comments';
+  static const String like = 'Like';
+  static const String comment = 'Comment';
+  static const String share = 'Share';
+  static const String sponsored = 'Sponsored';
+  static const String promotedPost = 'Promoted Post';
+  static const String sponsoredPromotedPost = 'Sponsored • Promoted Post';
+
+  // Navigation
+  static const String exploreStories = 'Explore Stories';
+  static const String messages = 'Messages';
+  static const String store = 'Store';
+  static const String jobs = 'Jobs';
 }

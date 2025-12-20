@@ -44,7 +44,7 @@ class UserData {
   final String? address;
   final List<AvailableTime>? availableTimes;
   final List<String>? skills;
-  final List<String>? fields;
+  final List<Field>? fields;
   final String? profileImage;
   final String? coverImage;
   final String? graduationCertificateImage;
@@ -122,7 +122,11 @@ class UserData {
               .toList()
           : null,
       skills: json['skills'] != null ? List<String>.from(json['skills']) : null,
-      fields: json['fields'] != null ? List<String>.from(json['fields']) : null,
+      fields: json['fields'] != null
+          ? (json['fields'] as List)
+              .map((e) => Field.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
       profileImage: json['profile_image'],
       coverImage: json['cover_image'],
       graduationCertificateImage: json['graduation_certificate_image'],
@@ -165,7 +169,7 @@ class UserData {
       'address': address,
       'available_times': availableTimes?.map((e) => e.toJson()).toList(),
       'skills': skills,
-      'fields': fields,
+      'fields': fields?.map((e) => e.toJson()).toList(),
       'profile_image': profileImage,
       'cover_image': coverImage,
       'graduation_certificate_image': graduationCertificateImage,
@@ -209,6 +213,30 @@ class AvailableTime {
       'day': day,
       'from': from,
       'to': to,
+    };
+  }
+}
+
+class Field {
+  final int id;
+  final String name;
+
+  Field({
+    required this.id,
+    required this.name,
+  });
+
+  factory Field.fromJson(Map<String, dynamic> json) {
+    return Field(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
     };
   }
 }
