@@ -1,40 +1,132 @@
+import 'package:bounce/bounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/constant/app_colors.dart';
+import '../../../core/constant/app_texts.dart';
+import '../../../core/di/inject.dart' as di;
+import '../../../core/services/storage_service.dart';
+import '../../../shared/widgets/shimmer_placeholder.dart';
+import '../../../shared/widgets/video_player_widget.dart';
 import '../data/models/post_models.dart';
+import '../data/repo/post_repository.dart';
+import 'share_post_dialog.dart';
 
-class PostItemWidget extends StatelessWidget {
+class PostItemWidget extends StatefulWidget {
   final Post post;
+  final VoidCallback? onPostUpdated;
 
-  const PostItemWidget({
-    super.key,
-    required this.post,
-  });
+  const PostItemWidget({super.key, required this.post, this.onPostUpdated});
+
+  @override
+  State<PostItemWidget> createState() => _PostItemWidgetState();
+}
+
+class _PostItemWidgetState extends State<PostItemWidget> {
+  late Post _currentPost;
+  bool _isLiked = false;
+  bool _isLiking = false;
+  bool _isCommenting = false;
+  final TextEditingController _commentController = TextEditingController();
+  final FocusNode _commentFocusNode = FocusNode();
+  final PageController _mediaPageController = PageController();
+  int _currentMediaPage = 0;
+  final PostRepository _postRepository = di.sl<PostRepository>();
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPost = widget.post;
+  }
+
+  @override
+  void didUpdateWidget(PostItemWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.post.id != widget.post.id ||
+        oldWidget.post.likesCount != widget.post.likesCount ||
+        oldWidget.post.comments.length != widget.post.comments.length) {
+      _currentPost = widget.post;
+    }
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    _commentFocusNode.dispose();
+    _mediaPageController.dispose();
+    super.dispose();
+  }
 
   String _formatTime(String? dateTime) {
-    if (dateTime == null) return 'Just now';
+    if (dateTime == null) return AppTexts.justNow;
     try {
       final date = DateTime.parse(dateTime);
       final now = DateTime.now();
       final difference = now.difference(date);
 
       if (difference.inMinutes < 1) {
-        return 'Just now';
+        return AppTexts.justNow;
       } else if (difference.inHours < 1) {
-        return '${difference.inMinutes}m ago';
+        return '${difference.inMinutes}${AppTexts.minutes} ${AppTexts.ago}';
       } else if (difference.inDays < 1) {
-        return '${difference.inHours}h ago';
+        return '${difference.inHours}${AppTexts.hours} ${AppTexts.ago}';
       } else if (difference.inDays < 7) {
-        return '${difference.inDays}d ago';
+        return '${difference.inDays}${AppTexts.days} ${AppTexts.ago}';
       } else {
-        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
         return '${months[date.month - 1]} ${date.day}, ${date.year}';
       }
     } catch (e) {
-      return 'Just now';
+      return AppTexts.justNow;
     }
+  }
+
+  List<_PostMediaItem> _buildMediaItems() {
+    final List<_PostMediaItem> items = [];
+
+    final hasImage = !_isDefaultImage(_currentPost.image);
+    final hasVideo = !_isDefaultImage(_currentPost.video);
+    final hasGallery = _currentPost.gallery.isNotEmpty;
+
+    if (hasGallery) {
+      for (final galleryItem in _currentPost.gallery) {
+        items.add(
+          _PostMediaItem(type: _PostMediaType.image, url: galleryItem.fullUrl),
+        );
+      }
+    }
+
+    if (hasImage) {
+      items.add(
+        _PostMediaItem(type: _PostMediaType.image, url: _currentPost.image),
+      );
+    }
+
+    if (hasVideo) {
+      items.add(
+        _PostMediaItem(
+          type: _PostMediaType.video,
+          url: _currentPost.video,
+          thumbnailUrl: _currentPost.image,
+        ),
+      );
+    }
+
+    return items;
   }
 
   bool _isDefaultImage(String? url) {
@@ -42,17 +134,128 @@ class PostItemWidget extends StatelessWidget {
     return url.contains('default-logo.png');
   }
 
+  Future<void> _handleLike() async {
+    if (_isLiking) return;
+
+    final previousLikedState = _isLiked;
+    final previousLikesCount = _currentPost.likesCount;
+
+    setState(() {
+      _isLiking = true;
+      _isLiked = !_isLiked;
+      _currentPost = _currentPost.copyWith(
+        likesCount: _isLiked
+            ? _currentPost.likesCount + 1
+            : _currentPost.likesCount - 1,
+      );
+    });
+
+    try {
+      await _postRepository.likePost(
+        _currentPost.id,
+        LikePostRequest(liked: _isLiked, likesCount: _currentPost.likesCount),
+      );
+    } catch (e) {
+      setState(() {
+        _isLiked = previousLikedState;
+        _currentPost = _currentPost.copyWith(likesCount: previousLikesCount);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to like post: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLiking = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleComment() async {
+    final content = _commentController.text.trim();
+    if (content.isEmpty || _isCommenting) return;
+
+    setState(() {
+      _isCommenting = true;
+    });
+
+    try {
+      final storageService = di.sl<StorageService>();
+      final userData = storageService.getUserData();
+      if (userData == null) {
+        throw Exception('User not logged in');
+      }
+
+      final request = CreateCommentRequest(
+        postId: _currentPost.id,
+        content: content,
+        reaction: 'like',
+      );
+
+      final response = await _postRepository.createComment(request);
+
+      final newComments = List<Comment>.from(_currentPost.comments)
+        ..add(response.data);
+
+      setState(() {
+        _currentPost = _currentPost.copyWith(comments: newComments);
+        _commentController.clear();
+      });
+
+      if (widget.onPostUpdated != null) {
+        widget.onPostUpdated!();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to post comment: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCommenting = false;
+        });
+      }
+    }
+  }
+
+  void _openCommentsBottomSheet() {
+    if (_currentPost.comments.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _PostCommentsBottomSheet(
+          post: _currentPost,
+          onAddComment: () {
+            Navigator.of(context).pop();
+            _commentFocusNode.requestFocus();
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasImage = !_isDefaultImage(post.image);
-    final hasVideo = !_isDefaultImage(post.video);
-    final hasGallery = post.gallery.isNotEmpty;
-    final isAd = post.isAdRequest && post.isAdApproved == true;
+    final mediaItems = _buildMediaItems();
+    final hasMedia = mediaItems.isNotEmpty;
+    final isAd = _currentPost.isAdApproved == true;
+    final storageService = di.sl<StorageService>();
+    final userData = storageService.getUserData();
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        color: isAd ? AppColors.primaryLight.withOpacity(0.1) : AppColors.surface,
+        color: isAd
+            ? AppColors.primaryLight.withOpacity(0.1)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16.r),
         border: isAd
             ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 2)
@@ -76,7 +279,7 @@ class PostItemWidget extends StatelessWidget {
                   Icon(Icons.star, size: 16.sp, color: AppColors.primary),
                   SizedBox(width: 4.w),
                   Text(
-                    'Sponsored • Promoted Post',
+                    AppTexts.sponsoredPromotedPost,
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
@@ -96,17 +299,14 @@ class PostItemWidget extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8.r),
                       child: CachedNetworkImage(
-                        imageUrl: post.user.profileImage,
+                        imageUrl: _currentPost.user.profileImage,
                         width: 40.w,
                         height: 40.w,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
+                        placeholder: (context, url) => ShimmerPlaceholder(
                           width: 40.w,
                           height: 40.w,
-                          color: AppColors.surfaceVariant,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                         errorWidget: (context, url, error) => Container(
                           width: 40.w,
@@ -129,7 +329,7 @@ class PostItemWidget extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  post.user.userName,
+                                  _currentPost.user.userName,
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w600,
@@ -151,7 +351,7 @@ class PostItemWidget extends StatelessWidget {
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            _formatTime(post.user.createdAt),
+                            _formatTime(_currentPost.user.createdAt),
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: AppColors.textSecondary,
@@ -168,10 +368,11 @@ class PostItemWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (post.content != null && post.content!.isNotEmpty) ...[
+                if (_currentPost.content != null &&
+                    _currentPost.content!.isNotEmpty) ...[
                   SizedBox(height: 12.h),
                   Text(
-                    post.content!,
+                    _currentPost.content!,
                     style: TextStyle(
                       fontSize: 14.sp,
                       color: AppColors.textPrimary,
@@ -181,167 +382,165 @@ class PostItemWidget extends StatelessWidget {
               ],
             ),
           ),
-          if (hasImage || hasVideo || hasGallery)
+          if (hasMedia)
             Container(
               width: double.infinity,
               constraints: BoxConstraints(maxHeight: 400.h),
-              child: hasGallery
-                  ? SizedBox(
-                      height: 300.h,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: post.gallery.length,
-                        itemBuilder: (context, index) {
-                          return Container(
-                            width: MediaQuery.of(context).size.width * 0.9,
-                            margin: EdgeInsets.only(
-                              left: index == 0 ? 16.w : 8.w,
-                              right: index == post.gallery.length - 1 ? 16.w : 0,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8.r),
-                              child: CachedNetworkImage(
-                                imageUrl: post.gallery[index].fullUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: AppColors.surfaceVariant,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(),
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    controller: _mediaPageController,
+                    itemCount: mediaItems.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentMediaPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final media = mediaItems[index];
+                      return Container(
+                        margin: EdgeInsets.symmetric(horizontal: 16.w),
+                        width: double.infinity,
+                        height: 300.h,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8.r),
+                          child: media.type == _PostMediaType.video
+                              ? Container(
+                                  color: Colors.black,
+                                  child: VideoPlayerWidget(
+                                    videoUrl: media.url,
+                                    thumbnailUrl: media.thumbnailUrl,
+                                    autoPlay: false,
+                                    showControls: true,
+                                    fit: BoxFit.cover,
+                                    isMuted: true,
                                   ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: AppColors.surfaceVariant,
-                                  child: Icon(
-                                    Icons.error,
-                                    size: 48.sp,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  : hasVideo
-                      ? Stack(
-                          children: [
-                            Container(
-                              margin: EdgeInsets.symmetric(horizontal: 16.w),
-                              width: double.infinity,
-                              height: 300.h,
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8.r),
-                                child: CachedNetworkImage(
-                                  imageUrl: post.image,
+                                )
+                              : CachedNetworkImage(
+                                  imageUrl: media.url,
                                   fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: Colors.black,
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(Colors.white),
+                                  placeholder: (context, url) =>
+                                      ShimmerPlaceholder(
+                                        width: double.infinity,
+                                        height: 300.h,
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) => Container(
-                                    color: Colors.black,
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.play_circle_filled,
-                                        size: 64.sp,
-                                        color: Colors.white,
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                        height: 300.h,
+                                        color: AppColors.surfaceVariant,
+                                        child: Icon(
+                                          Icons.error,
+                                          size: 48.sp,
+                                          color: AppColors.textSecondary,
+                                        ),
                                       ),
-                                    ),
-                                  ),
                                 ),
+                        ),
+                      );
+                    },
+                  ),
+                  if (mediaItems.length > 1)
+                    Positioned(
+                      bottom: 12.h,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          mediaItems.length,
+                          (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            margin: EdgeInsets.symmetric(horizontal: 3.w),
+                            width: _currentMediaPage == index ? 10.w : 6.w,
+                            height: 6.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(
+                                _currentMediaPage == index ? 0.95 : 0.5,
                               ),
-                            ),
-                            Positioned.fill(
-                              child: Center(
-                                child: Container(
-                                  padding: EdgeInsets.all(16.w),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.play_arrow,
-                                    size: 48.sp,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Container(
-                          margin: EdgeInsets.symmetric(horizontal: 16.w),
-                          constraints: BoxConstraints(maxHeight: 400.h),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8.r),
-                            child: CachedNetworkImage(
-                              imageUrl: post.image,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                height: 300.h,
-                                color: AppColors.surfaceVariant,
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                height: 300.h,
-                                color: AppColors.surfaceVariant,
-                                child: Icon(
-                                  Icons.error,
-                                  size: 48.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
                           ),
                         ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           Padding(
             padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${post.likesCount} likes ${post.comments.length} comments',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${_currentPost.likesCount} ${AppTexts.likes}',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (_currentPost.comments.isNotEmpty)
+                      GestureDetector(
+                        onTap: _openCommentsBottomSheet,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 14.sp,
+                              color: AppColors.primary,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '${_currentPost.comments.length} ${AppTexts.comments}',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
                 SizedBox(height: 12.h),
                 Row(
                   children: [
                     Expanded(
                       child: _buildActionButton(
-                        icon: Icons.favorite_outline,
-                        label: 'Like',
-                        onTap: () {},
+                        icon: _isLiked
+                            ? Icons.favorite
+                            : Icons.favorite_outline,
+                        label: AppTexts.like,
+                        onTap: _handleLike,
+                        isActive: _isLiked,
+                        isLoading: _isLiking,
                       ),
                     ),
                     Expanded(
                       child: _buildActionButton(
                         icon: Icons.comment_outlined,
-                        label: 'Comment',
-                        onTap: () {},
+                        label: AppTexts.comment,
+                        onTap: _openCommentsBottomSheet,
                       ),
                     ),
                     Expanded(
                       child: _buildActionButton(
                         icon: Icons.share_outlined,
-                        label: 'Share',
-                        onTap: () {},
+                        label: AppTexts.share,
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) =>
+                                SharePostDialog(post: _currentPost),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -352,7 +551,7 @@ class PostItemWidget extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'Sponsored',
+                        AppTexts.sponsored,
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: AppColors.textSecondary,
@@ -361,6 +560,113 @@ class PostItemWidget extends StatelessWidget {
                       ),
                     ),
                   ),
+                Divider(height: 24.h, thickness: 1, color: AppColors.divider),
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: userData?.profileImage != null
+                          ? CachedNetworkImage(
+                              imageUrl: userData!.profileImage!,
+                              width: 32.w,
+                              height: 32.w,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => ShimmerPlaceholder(
+                                width: 32.w,
+                                height: 32.w,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                width: 32.w,
+                                height: 32.w,
+                                color: AppColors.surfaceVariant,
+                                child: Icon(
+                                  Icons.person,
+                                  size: 16.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              width: 32.w,
+                              height: 32.w,
+                              color: AppColors.surfaceVariant,
+                              child: Icon(
+                                Icons.person,
+                                size: 16.sp,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: TextField(
+                        controller: _commentController,
+                        focusNode: _commentFocusNode,
+                        decoration: InputDecoration(
+                          hintText: AppTexts.writeComment,
+                          hintStyle: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surfaceVariant,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 10.h,
+                          ),
+                          isDense: true,
+                        ),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: null,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _handleComment(),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Bounce(
+                      onTap: _handleComment,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 10.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _isCommenting
+                              ? AppColors.primary.withOpacity(0.6)
+                              : AppColors.primary,
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: _isCommenting
+                            ? SizedBox(
+                                width: 16.w,
+                                height: 16.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                AppTexts.post,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -373,21 +679,39 @@ class PostItemWidget extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    bool isActive = false,
+    bool isLoading = false,
   }) {
-    return InkWell(
-      onTap: onTap,
+    return Bounce(
+      onTap: isLoading ? () {} : onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 8.h),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20.sp, color: AppColors.textSecondary),
+            if (isLoading)
+              SizedBox(
+                width: 16.w,
+                height: 16.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isActive ? AppColors.primary : AppColors.textSecondary,
+                  ),
+                ),
+              )
+            else
+              Icon(
+                icon,
+                size: 20.sp,
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
+              ),
             SizedBox(width: 6.w),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14.sp,
-                color: AppColors.textSecondary,
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -398,3 +722,230 @@ class PostItemWidget extends StatelessWidget {
   }
 }
 
+class _PostCommentsBottomSheet extends StatelessWidget {
+  final Post post;
+  final VoidCallback onAddComment;
+
+  const _PostCommentsBottomSheet({
+    required this.post,
+    required this.onAddComment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Container(
+        color: Colors.black54,
+        child: GestureDetector(
+          onTap: () {},
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24.r),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(height: 8.h),
+                    Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: AppColors.divider,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 12.h,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppTexts.comments,
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  '${post.comments.length} ${AppTexts.comments}',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Bounce(
+                            onTap: onAddComment,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.add_comment_outlined,
+                                    size: 18.sp,
+                                    color: AppColors.primary,
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    AppTexts.comment,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, color: AppColors.divider),
+                    Expanded(
+                      child: post.comments.isEmpty
+                          ? Center(
+                              child: Text(
+                                AppTexts.noCommentsYet,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              controller: scrollController,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
+                              itemCount: post.comments.length,
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: 10.h),
+                              itemBuilder: (context, index) {
+                                final comment = post.comments[index];
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      child: CachedNetworkImage(
+                                        imageUrl: comment.user.profileImage,
+                                        width: 32.w,
+                                        height: 32.w,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            ShimmerPlaceholder(
+                                              width: 32.w,
+                                              height: 32.w,
+                                              borderRadius:
+                                                  BorderRadius.circular(16.r),
+                                            ),
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                              width: 32.w,
+                                              height: 32.w,
+                                              color: AppColors.surfaceVariant,
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 18.sp,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.w,
+                                          vertical: 8.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceVariant,
+                                          borderRadius: BorderRadius.circular(
+                                            16.r,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              comment.user.userName,
+                                              style: TextStyle(
+                                                fontSize: 13.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              comment.content,
+                                              style: TextStyle(
+                                                fontSize: 13.sp,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              comment.createdAt,
+                                              style: TextStyle(
+                                                fontSize: 11.sp,
+                                                color: AppColors.textTertiary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum _PostMediaType { image, video }
+
+class _PostMediaItem {
+  final _PostMediaType type;
+  final String url;
+  final String? thumbnailUrl;
+
+  _PostMediaItem({required this.type, required this.url, this.thumbnailUrl});
+}

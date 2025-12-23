@@ -121,7 +121,8 @@ final class AppTexts {
   static const String clinicAddress = 'Clinic Address';
   static const String enterClinicAddress = 'Enter clinic address';
   static const String clinicAddressRequired = 'Clinic address is required';
-  static const String teacherAssistantAtUniversity = 'Teacher Assistant At University';
+  static const String teacherAssistantAtUniversity =
+      'Teacher Assistant At University';
   static const String enterUniversityName = 'Enter university name';
   static const String universityNameRequired = 'University name is required';
   static const String toolsYouHave = 'Tools You Have';
@@ -134,7 +135,7 @@ final class AppTexts {
   static const String addSkillButton = '+ Add';
   static const String yes = 'Yes';
   static const String no = 'No';
-  
+
   // Available Times
   static const String availableTimes = 'Available Times';
   static const String day = 'Day';
@@ -142,7 +143,8 @@ final class AppTexts {
   static const String to = 'To';
   static const String addTimeSlot = '+ Add Time Slot';
   static const String remove = 'Remove';
-  static const String availableTimesRequired = 'At least one time slot is required';
+  static const String availableTimesRequired =
+      'At least one time slot is required';
   static const String sunday = 'Sunday';
   static const String monday = 'Monday';
   static const String tuesday = 'Tuesday';
@@ -163,9 +165,11 @@ final class AppTexts {
   static const String clickToUpload = 'Click to upload or drag & drop';
   static const String profileImageRequired = 'Profile image is required';
   static const String coverImageRequired = 'Cover image is required';
-  static const String graduationCertificateRequired = 'Graduation certificate is required';
+  static const String graduationCertificateRequired =
+      'Graduation certificate is required';
   static const String cvRequired = 'CV is required';
-  static const String courseCertificatesRequired = 'At least one course certificate is required';
+  static const String courseCertificatesRequired =
+      'At least one course certificate is required';
   static const String completeRegistration = 'Complete Registration 🎉';
 
   // Verification Screen
@@ -173,7 +177,8 @@ final class AppTexts {
   static const String appSubtitle = 'Doctors Community & Network';
   static const String accountVerification = 'ACCOUNT VERIFICATION';
   static const String registrationUnderReview = 'REGISTRATION UNDER REVIEW';
-  static const String welcomeToMedicalCommunity = 'Welcome to Our Medical Community';
+  static const String welcomeToMedicalCommunity =
+      'Welcome to Our Medical Community';
   static const String verificationWelcomeMessage =
       'Thank you for joining Dent, the premier platform for medical professionals. Your registration is currently being reviewed by our verification team to ensure the integrity of our community.';
   static const String verificationProcess = 'Verification Process';
@@ -184,23 +189,29 @@ final class AppTexts {
       ". You'll receive an email notification once approved.";
   static const String whatYouCanDo = 'What You Can Do';
   static const String professionalNetwork = 'Professional Network';
-  static const String professionalNetworkDescription = 'Connect with medical colleagues';
+  static const String professionalNetworkDescription =
+      'Connect with medical colleagues';
   static const String jobOpportunities = 'Job Opportunities';
-  static const String jobOpportunitiesDescription = 'Find medical positions & opportunities';
+  static const String jobOpportunitiesDescription =
+      'Find medical positions & opportunities';
   static const String medicalContent = 'Medical Content';
-  static const String medicalContentDescription = 'Share & discuss medical cases';
+  static const String medicalContentDescription =
+      'Share & discuss medical cases';
   static const String backToLogin = 'Back to Login';
   static const String exploreCommunity = 'Explore Community';
 
   // Home Screen
-  static const String home = 'Home';
+  static const String home = 'Feed';
   static const String logout = 'Logout';
   static const String noPostsYet = 'No posts yet';
+  static const String noStoriesYet = 'No stories yet';
   static const String retry = 'Retry';
 
   // Create Post
   static const String whatsOnYourMind = "What's on your mind?";
-  static const String requestToPromotePost = 'Request to promote this post as an advertisement';
+  static const String promoteAsAd = 'Promote as Ad';
+  static const String requestToPromotePost =
+      'Request to promote this post as an advertisement';
   static const String photo = 'Photo';
   static const String video = 'Video';
   static const String gallery = 'Gallery';
@@ -216,12 +227,64 @@ final class AppTexts {
   static const String comment = 'Comment';
   static const String share = 'Share';
   static const String sponsored = 'Sponsored';
+  static const String regular = 'Regular';
   static const String promotedPost = 'Promoted Post';
   static const String sponsoredPromotedPost = 'Sponsored • Promoted Post';
+
+  // Time Formatting
+  static const String minutes = 'm';
+  static const String hours = 'h';
+  static const String days = 'd';
+  static const String ago = 'ago';
 
   // Navigation
   static const String exploreStories = 'Explore Stories';
   static const String messages = 'Messages';
   static const String store = 'Store';
   static const String jobs = 'Jobs';
+
+  // Comments
+  static const String writeComment = 'Write a comment...';
+  static const String post = 'Post';
+  static const String noCommentsYet = 'No comments yet';
+
+  // Share Dialog
+  static const String shareThisPost = 'Share this post';
+  static const String chooseHowToShare =
+      'Choose how you want to share this post';
+  static const String shareOnWhatsApp = 'Share on WhatsApp';
+  static const String shareWithContacts = 'Share with your contacts';
+  static const String shareToProfile = 'Share to your profile';
+  static const String postToTimeline = 'Post to your timeline';
+  static const String copyLink = 'Copy link';
+  static const String copyPostLinkToClipboard = 'Copy post link to clipboard';
+  static const String cancel = 'Cancel';
+
+  // Profile Screen
+  static const String profilePostsTab = 'Posts';
+  static const String profileAboutTab = 'About';
+  static const String profileTotalPosts = 'Total Posts';
+  static const String profileRegularPosts = 'Regular Posts';
+  static const String profileSponsoredPosts = 'Sponsored Posts';
+  static const String profileFriends = 'Friends';
+  static const String profileEducation = 'Education';
+  static const String profileExperience = 'Experience';
+  static const String profileAvailableTimes = 'Available Times';
+  static const String profileUniversity = 'University';
+  static const String profileGraduationYear = 'Graduation Year';
+  static const String profileGraduationGrade = 'Graduation Grade';
+  static const String profilePostgraduateDegree = 'Postgraduate Degree';
+  static const String profileSpecialization = 'Specialization';
+  static const String profileExperienceYears = 'Experience Years';
+  static const String profileWhereDidYouWork = 'Where Did You Work';
+  static const String profileSkills = 'Skills';
+  static const String profileFields = 'Fields';
+  static const String profileGraduationCertificate = 'Graduation Certificate';
+  static const String profileCvDownload = 'Download CV (PDF)';
+  static const String profileCourseCertificates = 'Course Certificates';
+  static const String profileEditProfile = 'Edit Profile';
+  static const String profileLocation = 'Location';
+  static const String profilePhone = 'Phone';
+  static const String profileBirthDate = 'Birth Date';
+  static const String profileJoined = 'Joined';
 }

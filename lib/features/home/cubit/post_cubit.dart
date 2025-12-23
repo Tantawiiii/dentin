@@ -11,17 +11,65 @@ class PostCubit extends Cubit<PostState> {
   PostCubit(this._repository) : super(PostInitial());
 
   List<Post> _posts = [];
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
 
   List<Post> get posts => _posts;
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _isLoadingMore;
 
-  Future<void> loadPosts() async {
-    emit(PostLoading());
+  Future<void> loadPosts({bool refresh = false}) async {
+    if (refresh) {
+      _currentPage = 1;
+      _hasMore = true;
+      _posts = [];
+    }
+
+    if (_currentPage == 1) {
+      emit(PostLoading());
+    }
+
     try {
-      final response = await _repository.getPosts();
-      _posts = response.data;
-      emit(PostLoaded(_posts));
+      final response = await _repository.getPosts(page: _currentPage);
+      if (refresh || _currentPage == 1) {
+        _posts = response.data;
+      } else {
+        _posts.addAll(response.data);
+      }
+
+      _hasMore = response.meta?.hasMorePages ?? false;
+      _currentPage++;
+
+      emit(
+        PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1),
+      );
     } catch (e) {
       emit(PostError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> loadMorePosts() async {
+    if (!_hasMore || _isLoadingMore) return;
+
+    _isLoadingMore = true;
+    emit(PostLoadingMore(_posts, _currentPage));
+
+    try {
+      final response = await _repository.getPosts(page: _currentPage);
+      _posts.addAll(response.data);
+      _hasMore = response.meta?.hasMorePages ?? false;
+      _currentPage++;
+
+      emit(
+        PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1),
+      );
+    } catch (e) {
+      emit(
+        PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1),
+      );
+    } finally {
+      _isLoadingMore = false;
     }
   }
 
@@ -64,7 +112,10 @@ class PostCubit extends Cubit<PostState> {
         }
       }
 
-      if (imageId == null && videoId == null && galleryIds.isEmpty && (content == null || content.isEmpty)) {
+      if (imageId == null &&
+          videoId == null &&
+          galleryIds.isEmpty &&
+          (content == null || content.isEmpty)) {
         emit(PostCreateError('Please add content, image, video, or gallery'));
         return;
       }
@@ -80,14 +131,13 @@ class PostCubit extends Cubit<PostState> {
       final response = await _repository.createPost(request);
       _posts.insert(0, response.data);
       emit(PostCreated(response.data));
-      emit(PostLoaded(_posts));
+      emit(PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage));
     } catch (e) {
       emit(PostCreateError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
 
   void refreshPosts() {
-    loadPosts();
+    loadPosts(refresh: true);
   }
 }
-
