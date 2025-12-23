@@ -7,6 +7,7 @@ import 'package:dentin/features/auth/forget_password/ui/forget_password_reset_sc
 import 'package:dentin/features/home/main_navigation_screen.dart';
 import 'package:dentin/features/onboarding/onboarding_screen.dart';
 import 'package:dentin/features/onboarding/splash_screen.dart';
+import 'package:dentin/features/profile/ui/profile_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'app_routes.dart';
@@ -47,6 +48,9 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
 
     case AppRoutes.home:
       return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
+
+    case AppRoutes.profile:
+      return MaterialPageRoute(builder: (_) => const ProfileScreen());
 
     default:
       return MaterialPageRoute(

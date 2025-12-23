@@ -53,8 +53,8 @@ class _SplashScreenState extends State<SplashScreen>
     if (token != null && token.isNotEmpty) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.home);
     } else {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
-    }
+        Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
+      }
   }
 
   @override

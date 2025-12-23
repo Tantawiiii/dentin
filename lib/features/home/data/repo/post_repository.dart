@@ -11,10 +11,11 @@ class PostRepository {
 
   PostRepository(this._apiService);
 
-  Future<PostResponse> getPosts() async {
+  Future<PostResponse> getPosts({int page = 1}) async {
     try {
-      final response = await _apiService.get<dynamic>(
-        '/api/post/index',
+      final response = await _apiService.post<dynamic>(
+        ApiConstants.postIndexPublic,
+        queryParameters: {'page': page},
       );
 
       if (response.statusCode != null && response.statusCode! < 400) {
@@ -91,6 +92,50 @@ class PostRepository {
     return response.statusMessage ?? 'An error occurred';
   }
 
+  Future<CreateCommentResponse> createComment(
+    CreateCommentRequest request,
+  ) async {
+    try {
+      final response = await _apiService.post<dynamic>(
+        ApiConstants.createComment,
+        data: request.toJson(),
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        return CreateCommentResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to create comment: ${e.toString()}');
+    }
+  }
+
+  Future<void> likePost(int postId, LikePostRequest request) async {
+    try {
+      final response = await _apiService.post<dynamic>(
+        ApiConstants.likePost(postId),
+        data: request.toJson(),
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        return;
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to like post: ${e.toString()}');
+    }
+  }
+
   String _extractErrorMessageFromDioException(DioException exception) {
     final responseData = exception.response?.data;
     if (responseData != null && responseData is Map) {
@@ -100,4 +145,3 @@ class PostRepository {
     return 'Network error: ${exception.message ?? "Unknown error"}';
   }
 }
-

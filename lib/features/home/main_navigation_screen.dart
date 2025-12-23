@@ -32,6 +32,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
+        height: 100.h,
         decoration: BoxDecoration(
           color: AppColors.surface,
           boxShadow: [

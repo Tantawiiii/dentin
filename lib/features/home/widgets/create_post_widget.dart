@@ -6,19 +6,18 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constant/app_colors.dart';
+import '../../../core/constant/app_texts.dart';
 import '../../../core/di/inject.dart' as di;
 import '../../../core/services/storage_service.dart';
 import '../../../features/auth/login/data/models/login_response.dart';
+import '../../../shared/widgets/shimmer_placeholder.dart';
 import '../cubit/post_cubit.dart';
 import '../cubit/post_state.dart';
 
 class CreatePostWidget extends StatefulWidget {
   final PostCubit postCubit;
 
-  const CreatePostWidget({
-    super.key,
-    required this.postCubit,
-  });
+  const CreatePostWidget({super.key, required this.postCubit});
 
   @override
   State<CreatePostWidget> createState() => _CreatePostWidgetState();
@@ -27,11 +26,11 @@ class CreatePostWidget extends StatefulWidget {
 class _CreatePostWidgetState extends State<CreatePostWidget> {
   final TextEditingController _contentController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  
+
   File? _selectedImage;
   File? _selectedVideo;
   List<File> _selectedGallery = [];
-  bool _isAdRequest = false;
+  bool _isAdRequest = true;
   bool _isCreating = false;
 
   UserData? _userData;
@@ -75,17 +74,6 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
     }
   }
 
-  Future<void> _pickGallery() async {
-    final List<XFile> images = await _picker.pickMultiImage();
-    if (images.isNotEmpty) {
-      setState(() {
-        _selectedGallery = images.map((e) => File(e.path)).toList();
-        _selectedImage = null;
-        _selectedVideo = null;
-      });
-    }
-  }
-
   void _clearMedia() {
     setState(() {
       _selectedImage = null;
@@ -100,16 +88,19 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
         _selectedGallery.isEmpty &&
         (_contentController.text.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add content or media')),
+        SnackBar(content: Text(AppTexts.pleaseAddContentOrMedia)),
       );
       return;
     }
+
+    if (_isCreating) return;
 
     setState(() {
       _isCreating = true;
     });
 
-    await widget.postCubit.createPost(
+    // Fire-and-forget; actual result is handled in BlocListener
+    widget.postCubit.createPost(
       content: _contentController.text.trim().isNotEmpty
           ? _contentController.text.trim()
           : null,
@@ -118,25 +109,6 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
       galleryFiles: _selectedGallery.isNotEmpty ? _selectedGallery : null,
       isAdRequest: _isAdRequest,
     );
-
-    if (mounted) {
-      final state = widget.postCubit.state;
-      if (state is PostCreated) {
-        _contentController.clear();
-        _clearMedia();
-        _isAdRequest = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post created successfully')),
-        );
-      } else if (state is PostCreateError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.message)),
-        );
-      }
-      setState(() {
-        _isCreating = false;
-      });
-    }
   }
 
   @override
@@ -144,15 +116,34 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
     return BlocListener<PostCubit, PostState>(
       bloc: widget.postCubit,
       listener: (context, state) {
-        if (state is PostCreated && mounted) {
+        if (!mounted) return;
+
+        if (state is PostCreating) {
+          setState(() {
+            _isCreating = true;
+          });
+        } else if (state is PostCreated) {
+          _contentController.clear();
+          _clearMedia();
+          _isAdRequest = false;
           setState(() {
             _isCreating = false;
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppTexts.postCreatedSuccessfully)),
+          );
+        } else if (state is PostCreateError) {
+          setState(() {
+            _isCreating = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
         }
       },
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        padding: EdgeInsets.all(16.w),
+        margin: EdgeInsets.only(bottom: 16.h),
+        padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
           color: AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(16.r),
@@ -170,13 +161,10 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                           width: 40.w,
                           height: 40.w,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
+                          placeholder: (context, url) => ShimmerPlaceholder(
                             width: 40.w,
                             height: 40.w,
-                            color: AppColors.surface,
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
+                            borderRadius: BorderRadius.circular(8.r),
                           ),
                           errorWidget: (context, url, error) => Container(
                             width: 40.w,
@@ -205,7 +193,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                   child: TextField(
                     controller: _contentController,
                     decoration: InputDecoration(
-                      hintText: "What's on your mind?",
+                      hintText: AppTexts.whatsOnYourMind,
                       border: InputBorder.none,
                       hintStyle: TextStyle(
                         color: AppColors.textSecondary,
@@ -221,39 +209,62 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                 ),
               ],
             ),
-            if (_isAdRequest)
-              Container(
-                margin: EdgeInsets.only(top: 12.h),
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.attach_money, size: 20.sp, color: AppColors.primary),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        'Request to promote this post as an advertisement',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    Switch(
-                      value: _isAdRequest,
-                      onChanged: (value) {
-                        setState(() {
-                          _isAdRequest = value;
-                        });
-                      },
-                      activeColor: AppColors.primary,
-                    ),
-                  ],
-                ),
+            Container(
+              margin: EdgeInsets.only(top: 12.h),
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(8.r),
               ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.attach_money,
+                    size: 20.sp,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppTexts.promoteAsAd,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          AppTexts.requestToPromotePost,
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Switch(
+                    value: _isAdRequest,
+                    onChanged: (value) {
+                      setState(() {
+                        _isAdRequest = value;
+                      });
+                    },
+                    activeColor: AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
             SizedBox(height: 12.h),
             Row(
               children: [
@@ -261,10 +272,14 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                   onTap: _pickImage,
                   child: Row(
                     children: [
-                      Icon(Icons.camera_alt, size: 20.sp, color: AppColors.textSecondary),
+                      Icon(
+                        Icons.camera_alt,
+                        size: 20.sp,
+                        color: AppColors.textSecondary,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
-                        'Photo',
+                        AppTexts.photo,
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: AppColors.textSecondary,
@@ -278,10 +293,14 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                   onTap: _pickVideo,
                   child: Row(
                     children: [
-                      Icon(Icons.videocam, size: 20.sp, color: AppColors.textSecondary),
+                      Icon(
+                        Icons.videocam,
+                        size: 20.sp,
+                        color: AppColors.textSecondary,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
-                        'Video',
+                        AppTexts.video,
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: AppColors.textSecondary,
@@ -290,30 +309,17 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                     ],
                   ),
                 ),
-                SizedBox(width: 16.w),
-                GestureDetector(
-                  onTap: _pickGallery,
-                  child: Row(
-                    children: [
-                      Icon(Icons.collections, size: 20.sp, color: AppColors.textSecondary),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'Gallery',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+
                 const Spacer(),
                 ElevatedButton(
                   onPressed: _isCreating ? null : _createPost,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textOnPrimary,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
@@ -322,9 +328,10 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                       ? SizedBox(
                           width: 16.w,
                           height: 16.w,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          child: ShimmerPlaceholder(
+                            width: 16.w,
+                            height: 16.w,
+                            shape: BoxShape.circle,
                           ),
                         )
                       : Row(
@@ -333,7 +340,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                             Icon(Icons.edit, size: 16.sp),
                             SizedBox(width: 4.w),
                             Text(
-                              'Create Post',
+                              AppTexts.createPost,
                               style: TextStyle(fontSize: 14.sp),
                             ),
                           ],
@@ -341,7 +348,9 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                 ),
               ],
             ),
-            if (_selectedImage != null || _selectedVideo != null || _selectedGallery.isNotEmpty)
+            if (_selectedImage != null ||
+                _selectedVideo != null ||
+                _selectedGallery.isNotEmpty)
               Container(
                 margin: EdgeInsets.only(top: 12.h),
                 height: 200.h,
@@ -358,60 +367,60 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                             ),
                           )
                         : _selectedVideo != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8.r),
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      color: Colors.black,
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.play_circle_filled,
-                                          size: 64.sp,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8.r),
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  color: Colors.black,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.play_circle_filled,
+                                      size: 64.sp,
+                                      color: Colors.white,
                                     ),
-                                    Positioned(
-                                      top: 8.h,
-                                      right: 8.w,
-                                      child: Container(
-                                        padding: EdgeInsets.all(4.w),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black54,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.videocam,
-                                          size: 16.sp,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              )
-                            : _selectedGallery.isNotEmpty
-                                ? ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: _selectedGallery.length,
-                                    itemBuilder: (context, index) {
-                                      return Container(
-                                        margin: EdgeInsets.only(right: 8.w),
-                                        width: 200.w,
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(8.r),
-                                          child: Image.file(
-                                            _selectedGallery[index],
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : const SizedBox(),
+                                Positioned(
+                                  top: 8.h,
+                                  right: 8.w,
+                                  child: Container(
+                                    padding: EdgeInsets.all(4.w),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.videocam,
+                                      size: 16.sp,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _selectedGallery.isNotEmpty
+                        ? ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _selectedGallery.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                margin: EdgeInsets.only(right: 8.w),
+                                width: 200.w,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  child: Image.file(
+                                    _selectedGallery[index],
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : const SizedBox(),
                     Positioned(
                       top: 8.h,
                       right: 8.w,
@@ -440,4 +449,3 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
     );
   }
 }
-

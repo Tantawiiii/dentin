@@ -8,8 +8,17 @@ class PostLoading extends PostState {}
 
 class PostLoaded extends PostState {
   final List<Post> posts;
+  final bool hasMore;
+  final int currentPage;
 
-  PostLoaded(this.posts);
+  PostLoaded(this.posts, {this.hasMore = false, this.currentPage = 1});
+}
+
+class PostLoadingMore extends PostState {
+  final List<Post> posts;
+  final int currentPage;
+
+  PostLoadingMore(this.posts, this.currentPage);
 }
 
 class PostError extends PostState {
