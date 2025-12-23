@@ -9,5 +9,7 @@ final class ApiConstants {
   static const String sendOtp = '/api/send-otp';
   static const String verifyOtp = '/api/verify-otp';
   static const String resetPassword = '/api/reset-password';
+  static const String postIndex = '/api/post/index';
+  static const String postCreate = '/api/post';
 
 }

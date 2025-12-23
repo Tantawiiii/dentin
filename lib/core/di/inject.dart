@@ -9,6 +9,8 @@ import '../../features/auth/register/data/repo/register_repository.dart';
 import '../../features/auth/register/cubit/register_cubit.dart';
 import '../../features/auth/forget_password/data/repo/forget_password_repository.dart';
 import '../../features/auth/forget_password/cubit/forget_password_cubit.dart';
+import '../../features/home/data/repo/post_repository.dart';
+import '../../features/home/cubit/post_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -37,6 +39,9 @@ Future<void> init() async {
   // Forget Password Repository
   sl.registerLazySingleton(() => ForgetPasswordRepository(sl<ApiService>()));
 
+  // Post Repository
+  sl.registerLazySingleton(() => PostRepository(sl<ApiService>()));
+
   sl.registerFactory(
     () => LoginCubit(
       repository: sl<LoginRepository>(),
@@ -56,6 +61,12 @@ Future<void> init() async {
   sl.registerFactory(
     () => ForgetPasswordCubit(
       repository: sl<ForgetPasswordRepository>(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => PostCubit(
+      sl<PostRepository>(),
     ),
   );
 }
