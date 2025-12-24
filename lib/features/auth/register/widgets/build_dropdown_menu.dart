@@ -12,10 +12,11 @@ Widget BuildDropdownField({
   required Function(String?) onChanged,
   String? title,
 }) {
-  final isFocused = value != null;
+  final validatedValue = value != null && items.contains(value) ? value : null;
+  final isFocused = validatedValue != null;
 
   final dropdown = DropdownButtonFormField<String>(
-    value: value,
+    value: validatedValue,
     decoration: InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 10.sp),

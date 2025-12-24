@@ -5,6 +5,7 @@ import 'package:bounce/bounce.dart';
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../home/data/models/post_models.dart';
 import '../../home/data/repo/post_repository.dart';
 import '../../home/widgets/share_post_dialog.dart';
@@ -273,8 +274,9 @@ class _VideoStoryItemState extends State<VideoStoryItem> {
         _currentPost = _currentPost.copyWith(likesCount: previousLikesCount);
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to like post: ${e.toString()}')),
+        AppToast.showError(
+          'Failed to like post: ${e.toString()}',
+          context: context,
         );
       }
     } finally {

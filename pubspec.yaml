@@ -45,6 +45,7 @@ dependencies:
   video_player: ^2.8.2
   country_code_picker: ^3.0.0
   fluttertoast: ^9.0.0
+  flutter_slider_drawer: ^2.0.1
 
 
 dev_dependencies:

@@ -20,4 +20,5 @@ final class AppRoutes {
   static const String userInfo = '/user-info';
   static const String orderDetails = '/order-details';
   static const String profile = '/profile';
+  static const String rentClinic = '/rent-clinic';
 }

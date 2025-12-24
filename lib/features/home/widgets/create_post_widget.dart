@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
 import '../../../core/di/inject.dart' as di;
+import '../../../shared/widgets/app_toast.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../features/auth/login/data/models/login_response.dart';
 import '../../../shared/widgets/shimmer_placeholder.dart';
@@ -87,9 +88,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
         _selectedVideo == null &&
         _selectedGallery.isEmpty &&
         (_contentController.text.trim().isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppTexts.pleaseAddContentOrMedia)),
-      );
+      AppToast.showError(AppTexts.pleaseAddContentOrMedia, context: context);
       return;
     }
 
@@ -129,16 +128,15 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
           setState(() {
             _isCreating = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppTexts.postCreatedSuccessfully)),
+          AppToast.showSuccess(
+            AppTexts.postCreatedSuccessfully,
+            context: context,
           );
         } else if (state is PostCreateError) {
           setState(() {
             _isCreating = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          AppToast.showError(state.message, context: context);
         }
       },
       child: Container(

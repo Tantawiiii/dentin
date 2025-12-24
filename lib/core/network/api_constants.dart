@@ -15,5 +15,28 @@ final class ApiConstants {
   static const String createComment = '/api/create-comment';
   static String likePost(int postId) => '/api/posts/$postId/like';
   static const String checkAuth = '/api/user/check-auth';
+  static String updateUser(int userId) => '/api/user/$userId';
 
+  // Store / Products
+  static const String productIndex = '/api/product/index';
+  static const String productCreate = '/api/product';
+  static String productDetails(int id) => '/api/product/$id';
+
+  // Jobs
+  static const String jobIndex = '/api/job/index';
+  static const String jobCreate = '/api/job';
+  static String jobDetails(int id) => '/api/job/$id';
+  static String applyJob(int id) => '/api/jobs/$id/apply';
+
+  // Messages / Chat
+  static const String conversations = '/api/conversations';
+  static const String chatMessages = '/api/chat/messages';
+  static const String sendMessage = '/api/chat/send';
+  static const String markAsRead = '/api/messages/mark-as-read';
+
+  // Rent Clinic
+  static const String rentIndex = '/api/rent/index';
+  static const String rentCreate = '/api/rent';
+  static String rentDetails(int id) => '/api/rent/$id';
+  static const String contactSeller = '/api/rent/contact-seller';
 }

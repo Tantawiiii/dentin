@@ -8,6 +8,7 @@ import 'package:dentin/features/home/main_navigation_screen.dart';
 import 'package:dentin/features/onboarding/onboarding_screen.dart';
 import 'package:dentin/features/onboarding/splash_screen.dart';
 import 'package:dentin/features/profile/ui/profile_screen.dart';
+import 'package:dentin/features/rent_clinic/ui/rent_list_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'app_routes.dart';
@@ -51,6 +52,9 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
 
     case AppRoutes.profile:
       return MaterialPageRoute(builder: (_) => const ProfileScreen());
+
+    case AppRoutes.rentClinic:
+      return MaterialPageRoute(builder: (_) => const RentListScreen());
 
     default:
       return MaterialPageRoute(

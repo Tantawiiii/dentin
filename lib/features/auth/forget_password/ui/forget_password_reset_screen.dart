@@ -17,7 +17,8 @@ class ForgetPasswordResetScreen extends StatefulWidget {
   const ForgetPasswordResetScreen({super.key, required this.email});
 
   @override
-  State<ForgetPasswordResetScreen> createState() => _ForgetPasswordResetScreenState();
+  State<ForgetPasswordResetScreen> createState() =>
+      _ForgetPasswordResetScreenState();
 }
 
 class _ForgetPasswordResetScreenState extends State<ForgetPasswordResetScreen> {
@@ -58,18 +59,11 @@ class _ForgetPasswordResetScreenState extends State<ForgetPasswordResetScreen> {
         listener: (context, state) {
           if (state is ResetPasswordSuccess) {
             AppToast.showSuccess(state.message);
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              AppRoutes.login,
-              (route) => false,
-            );
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
           } else if (state is ResetPasswordError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.showError(state.message, context: context);
           }
         },
         builder: (context, state) {
@@ -167,4 +161,3 @@ class _ForgetPasswordResetScreenState extends State<ForgetPasswordResetScreen> {
     );
   }
 }
-
