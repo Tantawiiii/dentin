@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constant/app_colors.dart';
@@ -9,6 +10,7 @@ class MultipleFileUploadField extends StatelessWidget {
     super.key,
     required this.label,
     required this.files,
+    this.imageUrls,
     this.error,
     required this.onTap,
     required this.onRemove,
@@ -16,6 +18,7 @@ class MultipleFileUploadField extends StatelessWidget {
 
   final String label;
   final List<File> files;
+  final List<String>? imageUrls; // URLs for existing images/documents
   final String? error;
   final VoidCallback onTap;
   final Function(int) onRemove;
@@ -70,7 +73,7 @@ class MultipleFileUploadField extends StatelessWidget {
                 style: BorderStyle.solid,
               ),
             ),
-            child: files.isEmpty
+            child: files.isEmpty && (imageUrls == null || imageUrls!.isEmpty)
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -103,76 +106,168 @@ class MultipleFileUploadField extends StatelessWidget {
                         mainAxisSpacing: 8.h,
                         childAspectRatio: 1,
                       ),
-                      itemCount: files.length,
+                      itemCount: files.length + (imageUrls?.length ?? 0),
                       itemBuilder: (context, index) {
-                        final file = files[index];
-                        final isImage = _isImageFile(file);
-                        return Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8.r),
-                              child: isImage
-                                  ? Image.file(
-                                      file,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Container(
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      color: AppColors.surfaceVariant,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            _getFileIcon(file.path),
-                                            size: 24.sp,
-                                            color: AppColors.primary,
-                                          ),
-                                          SizedBox(height: 4.h),
-                                          Padding(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 4.w,
+                        // Show files first, then URLs
+                        if (index < files.length) {
+                          final file = files[index];
+                          final isImage = _isImageFile(file);
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.r),
+                                child: isImage
+                                    ? Image.file(
+                                        file,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        color: AppColors.surfaceVariant,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              _getFileIcon(file.path),
+                                              size: 24.sp,
+                                              color: AppColors.primary,
                                             ),
-                                            child: Text(
-                                              _getFileName(file.path),
-                                              style: TextStyle(
-                                                fontSize: 8.sp,
-                                                color: AppColors.textPrimary,
-                                                fontWeight: FontWeight.w500,
+                                            SizedBox(height: 4.h),
+                                            Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 4.w,
                                               ),
-                                              textAlign: TextAlign.center,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
+                                              child: Text(
+                                                _getFileName(file.path),
+                                                style: TextStyle(
+                                                  fontSize: 8.sp,
+                                                  color: AppColors.textPrimary,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
+                              ),
+                              Positioned(
+                                top: 4.h,
+                                right: 4.w,
+                                child: GestureDetector(
+                                  onTap: () => onRemove(index),
+                                  child: Container(
+                                    padding: EdgeInsets.all(4.w),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      shape: BoxShape.circle,
                                     ),
-                            ),
-                            Positioned(
-                              top: 4.h,
-                              right: 4.w,
-                              child: GestureDetector(
-                                onTap: () => onRemove(index),
-                                child: Container(
-                                  padding: EdgeInsets.all(4.w),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.error,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.close,
-                                    color: AppColors.textOnPrimary,
-                                    size: 12.sp,
+                                    child: Icon(
+                                      Icons.close,
+                                      color: AppColors.textOnPrimary,
+                                      size: 12.sp,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        );
+                            ],
+                          );
+                        } else {
+                          // Show URL images
+                          final urlIndex = index - files.length;
+                          final url = imageUrls![urlIndex];
+                          final isImage = _isImageUrl(url);
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.r),
+                                child: isImage
+                                    ? CachedNetworkImage(
+                                        imageUrl: url,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) => Container(
+                                          color: AppColors.surfaceVariant,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              color: AppColors.primary,
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                          color: AppColors.surfaceVariant,
+                                          child: Icon(
+                                            Icons.error_outline,
+                                            color: AppColors.error,
+                                            size: 24.sp,
+                                          ),
+                                        ),
+                                      )
+                                    : Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        color: AppColors.surfaceVariant,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              _getFileIconFromUrl(url),
+                                              size: 24.sp,
+                                              color: AppColors.primary,
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 4.w,
+                                              ),
+                                              child: Text(
+                                                _getFileNameFromUrl(url),
+                                                style: TextStyle(
+                                                  fontSize: 8.sp,
+                                                  color: AppColors.textPrimary,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                              ),
+                              Positioned(
+                                top: 4.h,
+                                right: 4.w,
+                                child: GestureDetector(
+                                  onTap: () => onRemove(index),
+                                  child: Container(
+                                    padding: EdgeInsets.all(4.w),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.close,
+                                      color: AppColors.textOnPrimary,
+                                      size: 12.sp,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
                       },
                     ),
                   ),
@@ -208,6 +303,40 @@ class MultipleFileUploadField extends StatelessWidget {
 
   String _getFileName(String path) {
     return path.split('/').last;
+  }
+
+  bool _isImageUrl(String url) {
+    final lowerUrl = url.toLowerCase();
+    return lowerUrl.contains('.jpg') ||
+        lowerUrl.contains('.jpeg') ||
+        lowerUrl.contains('.png') ||
+        lowerUrl.contains('.gif') ||
+        lowerUrl.contains('.bmp') ||
+        lowerUrl.contains('.webp');
+  }
+
+  IconData _getFileIconFromUrl(String url) {
+    final lowerUrl = url.toLowerCase();
+    if (lowerUrl.contains('.pdf')) {
+      return Icons.picture_as_pdf;
+    } else if (lowerUrl.contains('.doc') || lowerUrl.contains('.docx')) {
+      return Icons.description;
+    } else if (lowerUrl.contains('.xls') || lowerUrl.contains('.xlsx')) {
+      return Icons.table_chart;
+    } else if (lowerUrl.contains('.ppt') || lowerUrl.contains('.pptx')) {
+      return Icons.slideshow;
+    }
+    return Icons.insert_drive_file;
+  }
+
+  String _getFileNameFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final path = uri.path;
+      return path.split('/').last;
+    } catch (e) {
+      return url.split('/').last;
+    }
   }
 }
 

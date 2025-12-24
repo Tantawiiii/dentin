@@ -203,6 +203,7 @@ final class AppTexts {
   // Home Screen
   static const String home = 'Feed';
   static const String logout = 'Logout';
+  static const String myProfile = 'My Profile';
   static const String noPostsYet = 'No posts yet';
   static const String noStoriesYet = 'No stories yet';
   static const String retry = 'Retry';
@@ -238,8 +239,8 @@ final class AppTexts {
   static const String ago = 'ago';
 
   // Navigation
-  static const String exploreStories = 'Explore Stories';
-  static const String messages = 'Messages';
+  static const String exploreStories = 'Explore';
+  static const String messages = 'Chats';
   static const String store = 'Store';
   static const String jobs = 'Jobs';
 
@@ -287,4 +288,163 @@ final class AppTexts {
   static const String profilePhone = 'Phone';
   static const String profileBirthDate = 'Birth Date';
   static const String profileJoined = 'Joined';
+  static const String editProfileTitle = 'Edit Profile';
+  static const String editProfileSubtitle = 'Update your profile information';
+  static const String profileUpdatedSuccessfully = 'Profile updated successfully';
+  static const String updateProfile = 'Update Profile';
+  static const String filesUploaded = 'files uploaded';
+  static const String of = 'of';
+
+  // Store / Products
+  static const String storeTitle = 'Store';
+  static const String addProduct = 'Add Product';
+  static const String noProductsYet = 'No products yet';
+  static const String tapToAddFirstProduct = 'Tap + to add your first product';
+  static const String productCreatedSuccessfully =
+      'Product created successfully';
+  static const String productDetailsTitle = 'Product Details';
+  static const String productNewBadge = 'New';
+  static const String productDescription = 'Description';
+  static const String productNoDescription = 'No description available.';
+  static const String productSeller = 'Seller';
+  static const String productJoinedAtPrefix = 'Joined at ';
+  static const String productImageTapToAdd = 'Tap to add product image';
+  static const String productImageRequired = 'Please select a product image';
+  static const String productName = 'Product Name';
+  static const String productPrice = 'Price';
+  static const String productDiscount = 'Discount';
+  static const String productDescriptionLabel = 'Description';
+  static const String productNameRequired = 'Please enter product name';
+  static const String productPriceRequired = 'Please enter price';
+  static const String productPriceInvalid = 'Please enter a valid number';
+  static const String productDiscountRequired = 'Please enter discount';
+  static const String productDiscountInvalid = 'Please enter a valid number';
+  static const String productDescriptionRequired = 'Please enter description';
+  static const String productIsNewLabel = 'Is New Product';
+  static const String sendMessageToSeller = 'Send Message to Seller';
+  static const String aboutTheProduct = 'About the product:';
+  static const String typeYourMessage = 'Type your message...';
+  static const String sendMessage = 'Send Message';
+  static const String pleaseLoginToSendMessage =
+      'Please login to send a message';
+
+  // Jobs
+  static const String jobsTitle = 'Hiring Dentist';
+  static const String jobsListEmptyTitle = 'No jobs yet';
+  static const String jobsListEmptySubtitle =
+      'New opportunities will appear here.';
+  static const String jobsErrorRetry = 'Retry';
+  static const String jobsJobType = 'Job Type';
+  static const String jobsSalaryNotSpecified = 'Salary not specified';
+  static const String jobsApplicationsLabel = 'applications';
+  static const String jobsDetailsTitleFallback = 'Job Details';
+  static const String jobsDescription = 'Description';
+  static const String jobsResponsibilities = 'Responsibilities';
+  static const String jobsRequirements = 'Requirements';
+  static const String jobsBenefits = 'Benefits';
+  static const String jobsApplyNow = 'Apply Now';
+  static const String jobsNotAvailable = 'Not Available';
+  static const String jobsApplyForPrefix = 'Apply for ';
+  static const String jobsCoverLetter = 'Cover Letter';
+  static const String jobsCoverLetterHint =
+      'Why are you interested in this position? What makes you a good fit?';
+  static const String jobsSubmitApplication = 'Submit Application';
+  static const String jobsApplicationSuccessDefault =
+      'Application submitted successfully.';
+  static const String jobsApplicationFailedDefault =
+      'Failed to submit application.';
+  static const String jobsUnknownCompany = 'Unknown Company';
+  static const String jobsApplyDialogInfo =
+      'The employer will receive a notification about your application immediately.';
+  static const String jobsCoverLetterRequired = 'Please enter a cover letter.';
+  static const String jobsPostJob = 'Post Job';
+  static const String jobsPostNewJob = 'Post New Job';
+  static const String jobsPostNewJobDescription =
+      'Fill in the details below to post a new job opportunity.';
+  static const String jobsJobTitle = 'Job Title';
+  static const String jobsJobTitleRequired = 'Please enter job title';
+  static const String jobsJobLocation = 'Job Location';
+  static const String jobsJobLocationRequired = 'Please enter job location';
+  static const String jobsSalary = 'Salary';
+  static const String jobsSalaryRequired = 'Please enter salary';
+  static const String jobsJobDetails = 'Job Details';
+  static const String jobsJobDescription = 'Job Description';
+  static const String jobsJobDescriptionRequired =
+      'Please enter job description';
+  static const String jobsCompanyName = 'Company Name';
+  static const String jobsCompanyNameRequired = 'Please enter company name';
+  static const String jobsCompanySize = 'Company Size';
+  static const String jobsCompanyIndustry = 'Company Industry';
+  static const String jobsCompanyFounded = 'Company Founded';
+  static const String jobsCompanyWebsite = 'Company Website';
+  static const String jobsCompanyLocation = 'Company Location';
+  static const String jobsSearchJobs = 'Search Jobs';
+  static const String jobsSearchPlaceholder =
+      'jobs,companies,or location..';
+  static const String jobsLocationPlaceholder = 'Location';
+  static const String jobsAllJobs = 'All Jobs';
+  static const String jobsFullTime = 'Full-time';
+  static const String jobsPartTime = 'Part-time';
+  static const String jobsRemote = 'Remote';
+  static const String jobsFindYourNextCareer =
+      'Find your next career opportunity';
+  static const String jobsJobCreatedSuccessfully = 'Job posted successfully';
+  static const String jobsDefaultCoverLetter =
+      'أنا مهتم جدًا بالوظيفة ولدي خبرة سابقة في هذا المجال.\n\nWhy are you interested in this position? What makes you a good fit?';
+  static const String jobsDetailsNotLoaded = 'Job details not loaded yet.';
+  static const String jobsJobFallback = 'job';
+
+  // Rent Clinic
+  static const String rentClinic = 'Rent Clinic';
+  static const String rentClinicTitle = 'Rent Clinic';
+  static const String rentClinicSubtitle = 'Find and rent dental clinics';
+  static const String addRent = 'Add Rent';
+  static const String addNewRent = 'Add New Rent';
+  static const String noRentsYet = 'No rents available yet';
+  static const String tapToAddFirstRent = 'Tap + to add your first rent';
+  static const String rentDetails = 'Rent Details';
+  static const String rentName = 'Name';
+  static const String rentPrice = 'Price';
+  static const String rentDescription = 'Description';
+  static const String rentDuration = 'Duration';
+  static const String rentType = 'Type';
+  static const String rentStartDate = 'Start Date';
+  static const String rentEndDate = 'End Date';
+  static const String rentGovernorate = 'Governorate';
+  static const String rentCity = 'City';
+  static const String rentAddress = 'Address';
+  static const String rentSeller = 'Seller';
+  static const String rentGallery = 'Gallery';
+  static const String rentDays = 'days';
+  static const String rentCreatedSuccessfully = 'Rent created successfully';
+  static const String rentNameRequired = 'Please enter rent name';
+  static const String rentPriceRequired = 'Please enter price';
+  static const String rentPriceInvalid = 'Please enter a valid number';
+  static const String rentDescriptionRequired = 'Please enter description';
+  static const String rentDurationRequired = 'Please enter duration';
+  static const String rentGalleryRequired = 'Please add at least one image';
+  static const String contactSeller = 'Contact Seller';
+  static const String yourMessage = 'Your Message';
+  static const String productDetails = 'Product Details:';
+  static const String aboutTheRental = 'About the rental:';
+  static const String messageSentSuccessfully = 'Message sent successfully';
+  static const String pleaseEnterMessage = 'Please enter your message';
+  static const String selectImages = 'Select Images';
+  static const String addImages = 'Add Images';
+  static const String rental = 'Rental';
+  static const String enterRentName = 'Enter rent name';
+  static const String enterPrice = 'Enter price';
+  static const String enterDescription = 'Enter description';
+  static const String enterDurationInDays = 'Enter duration in days';
+  static const String dateFormatPlaceholder = 'YYYY-MM-DD';
+  static const String governoratePlaceholder = 'governorate';
+  static const String cityPlaceholder = 'city';
+  static const String enterAddress = 'Enter address';
+  static const String failedToUploadImage = 'Failed to upload image';
+  static const String failedToUploadImages = 'Failed to upload images';
+  static const String uploadingImages = 'Uploading images...';
+  static const String sessionExpired = 'Session Expired';
+  static const String sessionExpiredMessage =
+      'Your session has expired. Please login again to continue.';
+  static const String goToLogin = 'Go to Login';
 }

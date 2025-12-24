@@ -25,6 +25,12 @@ class DocumentsStep extends StatefulWidget {
     this.onGraduationCertificateChanged,
     this.onCvChanged,
     this.onCourseCertificatesChanged,
+    // URLs for existing images/documents
+    this.profileImageUrl,
+    this.coverImageUrl,
+    this.graduationCertificateUrl,
+    this.cvUrl,
+    this.courseCertificatesUrls,
   });
 
   final GlobalKey<FormState> formKey;
@@ -38,6 +44,12 @@ class DocumentsStep extends StatefulWidget {
   final Function(File?)? onGraduationCertificateChanged;
   final Function(File?)? onCvChanged;
   final Function(List<File>)? onCourseCertificatesChanged;
+  // URLs for existing images/documents
+  final String? profileImageUrl;
+  final String? coverImageUrl;
+  final String? graduationCertificateUrl;
+  final String? cvUrl;
+  final List<String>? courseCertificatesUrls;
 
   @override
   State<DocumentsStep> createState() => DocumentsStepState();
@@ -97,7 +109,7 @@ class DocumentsStepState extends State<DocumentsStep> {
   }
 
   String? _validateProfileImage() {
-    if (widget.profileImage == null) {
+    if (widget.profileImage == null && widget.profileImageUrl == null) {
       setState(() {
         _profileImageError = AppTexts.profileImageRequired;
       });
@@ -107,7 +119,7 @@ class DocumentsStepState extends State<DocumentsStep> {
   }
 
   String? _validateCoverImage() {
-    if (widget.coverImage == null) {
+    if (widget.coverImage == null && widget.coverImageUrl == null) {
       setState(() {
         _coverImageError = AppTexts.coverImageRequired;
       });
@@ -117,7 +129,8 @@ class DocumentsStepState extends State<DocumentsStep> {
   }
 
   String? _validateGraduationCertificate() {
-    if (widget.graduationCertificate == null) {
+    if (widget.graduationCertificate == null &&
+        widget.graduationCertificateUrl == null) {
       setState(() {
         _graduationCertificateError = AppTexts.graduationCertificateRequired;
       });
@@ -127,7 +140,7 @@ class DocumentsStepState extends State<DocumentsStep> {
   }
 
   String? _validateCv() {
-    if (widget.cv == null) {
+    if (widget.cv == null && widget.cvUrl == null) {
       setState(() {
         _cvError = AppTexts.cvRequired;
       });
@@ -137,8 +150,11 @@ class DocumentsStepState extends State<DocumentsStep> {
   }
 
   String? _validateCourseCertificates() {
-    if (widget.courseCertificates == null ||
-        widget.courseCertificates!.isEmpty) {
+    final hasFiles = widget.courseCertificates != null &&
+        widget.courseCertificates!.isNotEmpty;
+    final hasUrls = widget.courseCertificatesUrls != null &&
+        widget.courseCertificatesUrls!.isNotEmpty;
+    if (!hasFiles && !hasUrls) {
       setState(() {
         _courseCertificatesError = AppTexts.courseCertificatesRequired;
       });
@@ -191,6 +207,7 @@ class DocumentsStepState extends State<DocumentsStep> {
             FileUploadField(
               label: AppTexts.profileImage,
               file: widget.profileImage,
+              imageUrl: widget.profileImageUrl,
               error: _profileImageError,
               onTap: () => ImageSourceDialog.show(
                 context,
@@ -212,6 +229,7 @@ class DocumentsStepState extends State<DocumentsStep> {
             FileUploadField(
               label: AppTexts.coverImage,
               file: widget.coverImage,
+              imageUrl: widget.coverImageUrl,
               error: _coverImageError,
               onTap: () => ImageSourceDialog.show(
                 context,
@@ -233,6 +251,7 @@ class DocumentsStepState extends State<DocumentsStep> {
             FileUploadField(
               label: AppTexts.graduationCertificate,
               file: widget.graduationCertificate,
+              imageUrl: widget.graduationCertificateUrl,
               error: _graduationCertificateError,
               onTap: () => _pickFile(
                 (file) => widget.onGraduationCertificateChanged?.call(file),
@@ -247,6 +266,7 @@ class DocumentsStepState extends State<DocumentsStep> {
             FileUploadField(
               label: AppTexts.cv,
               file: widget.cv,
+              imageUrl: widget.cvUrl,
               error: _cvError,
               onTap: () => _pickFile(
                 (file) => widget.onCvChanged?.call(file),
@@ -262,6 +282,7 @@ class DocumentsStepState extends State<DocumentsStep> {
             MultipleFileUploadField(
               label: AppTexts.courseCertificates,
               files: widget.courseCertificates ?? [],
+              imageUrls: widget.courseCertificatesUrls,
               error: _courseCertificatesError,
               onTap: () => _pickMultipleFiles(
                 (files) => widget.onCourseCertificatesChanged?.call(files),

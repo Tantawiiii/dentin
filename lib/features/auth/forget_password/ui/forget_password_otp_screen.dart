@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/di/inject.dart' as di;
+import '../../../../shared/widgets/app_toast.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
@@ -16,7 +17,8 @@ class ForgetPasswordOtpScreen extends StatefulWidget {
   const ForgetPasswordOtpScreen({super.key, required this.email});
 
   @override
-  State<ForgetPasswordOtpScreen> createState() => _ForgetPasswordOtpScreenState();
+  State<ForgetPasswordOtpScreen> createState() =>
+      _ForgetPasswordOtpScreenState();
 }
 
 class _ForgetPasswordOtpScreenState extends State<ForgetPasswordOtpScreen> {
@@ -57,29 +59,11 @@ class _ForgetPasswordOtpScreenState extends State<ForgetPasswordOtpScreen> {
               arguments: widget.email,
             );
           } else if (state is VerifyOtpError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.showError(state.message, context: context);
           } else if (state is SendOtpSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.showSuccess(state.message, context: context);
           } else if (state is SendOtpError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.showError(state.message, context: context);
           }
         },
         builder: (context, state) {
@@ -147,7 +131,9 @@ class _ForgetPasswordOtpScreenState extends State<ForgetPasswordOtpScreen> {
                     SizedBox(height: 32.h),
                     PrimaryButton(
                       title: 'Verify OTP',
-                      onPressed: (isLoading || _otp == null) ? null : _handleVerifyOtp,
+                      onPressed: (isLoading || _otp == null)
+                          ? null
+                          : _handleVerifyOtp,
                       isLoading: isLoading,
                     ),
                     SizedBox(height: 16.h),
@@ -202,4 +188,3 @@ class _ForgetPasswordOtpScreenState extends State<ForgetPasswordOtpScreen> {
     );
   }
 }
-

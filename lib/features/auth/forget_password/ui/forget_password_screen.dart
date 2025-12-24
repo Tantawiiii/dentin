@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
 import '../../../../core/di/inject.dart' as di;
+import '../../../../shared/widgets/app_toast.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -54,13 +55,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
               arguments: _emailController.text,
             );
           } else if (state is SendOtpError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.showError(state.message, context: context);
           }
         },
         builder: (context, state) {
@@ -146,4 +141,3 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     );
   }
 }
-

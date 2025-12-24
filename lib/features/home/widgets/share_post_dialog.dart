@@ -6,15 +6,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../data/models/post_models.dart';
 
 class SharePostDialog extends StatelessWidget {
   final Post post;
 
-  const SharePostDialog({
-    super.key,
-    required this.post,
-  });
+  const SharePostDialog({super.key, required this.post});
 
   String _getPostUrl() {
     // Assuming the post URL format based on your API base URL
@@ -26,7 +24,7 @@ class SharePostDialog extends StatelessWidget {
     try {
       final url = 'whatsapp://send?text=${Uri.encodeComponent(_getPostUrl())}';
       final uri = Uri.parse(url);
-      
+
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
         if (context.mounted) {
@@ -34,7 +32,8 @@ class SharePostDialog extends StatelessWidget {
         }
       } else {
         // Fallback to WhatsApp web
-        final webUrl = 'https://wa.me/?text=${Uri.encodeComponent(_getPostUrl())}';
+        final webUrl =
+            'https://wa.me/?text=${Uri.encodeComponent(_getPostUrl())}';
         final webUri = Uri.parse(webUrl);
         if (await canLaunchUrl(webUri)) {
           await launchUrl(webUri, mode: LaunchMode.externalApplication);
@@ -43,16 +42,15 @@ class SharePostDialog extends StatelessWidget {
           }
         } else {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('WhatsApp is not installed')),
-            );
+            AppToast.showInfo('WhatsApp is not installed', context: context);
           }
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to share: ${e.toString()}')),
+        AppToast.showError(
+          'Failed to share: ${e.toString()}',
+          context: context,
         );
       }
     }
@@ -63,9 +61,7 @@ class SharePostDialog extends StatelessWidget {
     // This would typically involve making an API call to share the post to user's profile
     if (context.mounted) {
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Feature coming soon')),
-      );
+      AppToast.showInfo('Feature coming soon', context: context);
     }
   }
 
@@ -75,17 +71,13 @@ class SharePostDialog extends StatelessWidget {
       await Clipboard.setData(ClipboardData(text: url));
       if (context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Link copied to clipboard'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        AppToast.showSuccess('Link copied to clipboard', context: context);
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to copy link: ${e.toString()}')),
+        AppToast.showError(
+          'Failed to copy link: ${e.toString()}',
+          context: context,
         );
       }
     }
@@ -94,9 +86,7 @@ class SharePostDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
       child: Container(
         padding: EdgeInsets.all(24.w),
         decoration: BoxDecoration(
@@ -231,8 +221,12 @@ class SharePostDialog extends StatelessWidget {
               height: 48.w,
               decoration: BoxDecoration(
                 color: iconColor,
-                shape: icon == Icons.chat ? BoxShape.circle : BoxShape.rectangle,
-                borderRadius: icon == Icons.chat ? null : BorderRadius.circular(12.r),
+                shape: icon == Icons.chat
+                    ? BoxShape.circle
+                    : BoxShape.rectangle,
+                borderRadius: icon == Icons.chat
+                    ? null
+                    : BorderRadius.circular(12.r),
               ),
               child: icon == Icons.chat
                   ? Center(
@@ -245,11 +239,7 @@ class SharePostDialog extends StatelessWidget {
                         ),
                       ),
                     )
-                  : Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
+                  : Icon(icon, color: Colors.white, size: 24.sp),
             ),
             SizedBox(width: 16.w),
             Expanded(
@@ -267,10 +257,7 @@ class SharePostDialog extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: subtitleColor,
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: subtitleColor),
                   ),
                 ],
               ),

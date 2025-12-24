@@ -7,6 +7,7 @@ import '../../../../core/constant/app_assets.dart';
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
 import '../../../../core/di/inject.dart' as di;
+import '../../../../shared/widgets/app_toast.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
@@ -58,16 +59,9 @@ class _LoginScreenState extends State<LoginScreen> {
           if (state is LoginSuccess) {
             Navigator.of(context).pushReplacementNamed(AppRoutes.home);
           } else if (state is LoginError) {
-
             print("Login Error: ${state.message}");
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppToast.showError(state.message, context: context);
           }
         },
         builder: (context, state) {
@@ -165,7 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             16.verticalSpace,
                             Bounce(
                               onTap: () {
-                                Navigator.of(context).pushNamed(AppRoutes.forgetPassword);
+                                Navigator.of(
+                                  context,
+                                ).pushNamed(AppRoutes.forgetPassword);
                               },
                               child: Text(
                                 AppTexts.forgotPassword,

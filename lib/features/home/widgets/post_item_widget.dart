@@ -6,18 +6,29 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
 import '../../../core/di/inject.dart' as di;
+import '../../../shared/widgets/app_toast.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../shared/widgets/shimmer_placeholder.dart';
 import '../../../shared/widgets/video_player_widget.dart';
 import '../data/models/post_models.dart';
 import '../data/repo/post_repository.dart';
+import 'post_action_button.dart';
+import 'post_comments_bottom_sheet.dart';
+import 'post_media_models.dart';
 import 'share_post_dialog.dart';
 
 class PostItemWidget extends StatefulWidget {
   final Post post;
   final VoidCallback? onPostUpdated;
 
-  const PostItemWidget({super.key, required this.post, this.onPostUpdated});
+  final int index;
+
+  const PostItemWidget({
+    super.key,
+    required this.post,
+    this.onPostUpdated,
+    required this.index,
+  });
 
   @override
   State<PostItemWidget> createState() => _PostItemWidgetState();
@@ -95,8 +106,8 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     }
   }
 
-  List<_PostMediaItem> _buildMediaItems() {
-    final List<_PostMediaItem> items = [];
+  List<PostMediaItem> _buildMediaItems() {
+    final List<PostMediaItem> items = [];
 
     final hasImage = !_isDefaultImage(_currentPost.image);
     final hasVideo = !_isDefaultImage(_currentPost.video);
@@ -105,21 +116,21 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     if (hasGallery) {
       for (final galleryItem in _currentPost.gallery) {
         items.add(
-          _PostMediaItem(type: _PostMediaType.image, url: galleryItem.fullUrl),
+          PostMediaItem(type: PostMediaType.image, url: galleryItem.fullUrl),
         );
       }
     }
 
     if (hasImage) {
       items.add(
-        _PostMediaItem(type: _PostMediaType.image, url: _currentPost.image),
+        PostMediaItem(type: PostMediaType.image, url: _currentPost.image),
       );
     }
 
     if (hasVideo) {
       items.add(
-        _PostMediaItem(
-          type: _PostMediaType.video,
+        PostMediaItem(
+          type: PostMediaType.video,
           url: _currentPost.video,
           thumbnailUrl: _currentPost.image,
         ),
@@ -161,8 +172,9 @@ class _PostItemWidgetState extends State<PostItemWidget> {
         _currentPost = _currentPost.copyWith(likesCount: previousLikesCount);
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to like post: ${e.toString()}')),
+        AppToast.showError(
+          'Failed to like post: ${e.toString()}',
+          context: context,
         );
       }
     } finally {
@@ -210,8 +222,9 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to post comment: ${e.toString()}')),
+        AppToast.showError(
+          'Failed to post comment: ${e.toString()}',
+          context: context,
         );
       }
     } finally {
@@ -231,7 +244,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return _PostCommentsBottomSheet(
+        return PostCommentsBottomSheet(
           post: _currentPost,
           onAddComment: () {
             Navigator.of(context).pop();
@@ -250,333 +263,358 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     final storageService = di.sl<StorageService>();
     final userData = storageService.getUserData();
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      decoration: BoxDecoration(
-        color: isAd
-            ? AppColors.primaryLight.withOpacity(0.1)
-            : AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
-        border: isAd
-            ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 2)
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isAd)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.2),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16.r),
-                  topRight: Radius.circular(16.r),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.star, size: 16.sp, color: AppColors.primary),
-                  SizedBox(width: 4.w),
-                  Text(
-                    AppTexts.sponsoredPromotedPost,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 16),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16.h),
+        decoration: BoxDecoration(
+          color: isAd
+              ? AppColors.primaryLight.withOpacity(0.1)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(16.r),
+          border: isAd
+              ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 2)
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isAd)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.2),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16.r),
+                    topRight: Radius.circular(16.r),
                   ),
-                ],
-              ),
-            ),
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+                ),
+                child: Row(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: CachedNetworkImage(
-                        imageUrl: _currentPost.user.profileImage,
-                        width: 40.w,
-                        height: 40.w,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => ShimmerPlaceholder(
-                          width: 40.w,
-                          height: 40.w,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          width: 40.w,
-                          height: 40.w,
-                          color: AppColors.surfaceVariant,
-                          child: Icon(
-                            Icons.person,
-                            size: 24.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                    Icon(Icons.star, size: 16.sp, color: AppColors.primary),
+                    SizedBox(width: 4.w),
+                    Text(
+                      AppTexts.sponsoredPromotedPost,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
                       ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  _currentPost.user.userName,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (isAd) ...[
-                                SizedBox(width: 4.w),
-                                Icon(
-                                  Icons.verified,
-                                  size: 16.sp,
-                                  color: AppColors.success,
-                                ),
-                              ],
-                            ],
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            _formatTime(_currentPost.user.createdAt),
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.more_vert, size: 20.sp),
-                      onPressed: () {},
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
-                if (_currentPost.content != null &&
-                    _currentPost.content!.isNotEmpty) ...[
-                  SizedBox(height: 12.h),
-                  Text(
-                    _currentPost.content!,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (hasMedia)
-            Container(
-              width: double.infinity,
-              constraints: BoxConstraints(maxHeight: 400.h),
-              child: Stack(
+              ),
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  PageView.builder(
-                    controller: _mediaPageController,
-                    itemCount: mediaItems.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentMediaPage = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final media = mediaItems[index];
-                      return Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16.w),
-                        width: double.infinity,
-                        height: 300.h,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8.r),
-                          child: media.type == _PostMediaType.video
-                              ? Container(
-                                  color: Colors.black,
-                                  child: VideoPlayerWidget(
-                                    videoUrl: media.url,
-                                    thumbnailUrl: media.thumbnailUrl,
-                                    autoPlay: false,
-                                    showControls: true,
-                                    fit: BoxFit.cover,
-                                    isMuted: true,
-                                  ),
-                                )
-                              : CachedNetworkImage(
-                                  imageUrl: media.url,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      ShimmerPlaceholder(
-                                        width: double.infinity,
-                                        height: 300.h,
-                                        borderRadius: BorderRadius.circular(
-                                          8.r,
-                                        ),
-                                      ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                        height: 300.h,
-                                        color: AppColors.surfaceVariant,
-                                        child: Icon(
-                                          Icons.error,
-                                          size: 48.sp,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                ),
-                        ),
-                      );
-                    },
-                  ),
-                  if (mediaItems.length > 1)
-                    Positioned(
-                      bottom: 12.h,
-                      left: 0,
-                      right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          mediaItems.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            margin: EdgeInsets.symmetric(horizontal: 3.w),
-                            width: _currentMediaPage == index ? 10.w : 6.w,
-                            height: 6.h,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(
-                                _currentMediaPage == index ? 0.95 : 0.5,
-                              ),
-                              borderRadius: BorderRadius.circular(12.r),
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: CachedNetworkImage(
+                          imageUrl: _currentPost.user.profileImage,
+                          width: 40.w,
+                          height: 40.w,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => ShimmerPlaceholder(
+                            width: 40.w,
+                            height: 40.w,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 40.w,
+                            height: 40.w,
+                            color: AppColors.surfaceVariant,
+                            child: Icon(
+                              Icons.person,
+                              size: 24.sp,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${_currentPost.likesCount} ${AppTexts.likes}',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (_currentPost.comments.isNotEmpty)
-                      GestureDetector(
-                        onTap: _openCommentsBottomSheet,
-                        child: Row(
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.chat_bubble_outline,
-                              size: 14.sp,
-                              color: AppColors.primary,
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    _currentPost.user.userName,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (isAd) ...[
+                                  SizedBox(width: 4.w),
+                                  Icon(
+                                    Icons.verified,
+                                    size: 16.sp,
+                                    color: AppColors.success,
+                                  ),
+                                ],
+                              ],
                             ),
-                            SizedBox(width: 4.w),
+                            SizedBox(height: 2.h),
                             Text(
-                              '${_currentPost.comments.length} ${AppTexts.comments}',
+                              _formatTime(_currentPost.user.createdAt),
                               style: TextStyle(
                                 fontSize: 12.sp,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
                         ),
                       ),
+                      IconButton(
+                        icon: Icon(Icons.more_vert, size: 20.sp),
+                        onPressed: () {},
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  if (_currentPost.content != null &&
+                      _currentPost.content!.isNotEmpty) ...[
+                    SizedBox(height: 12.h),
+                    Text(
+                      _currentPost.content!,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ],
-                ),
-                SizedBox(height: 12.h),
-                Row(
+                ],
+              ),
+            ),
+            if (hasMedia)
+              Container(
+                width: double.infinity,
+                constraints: BoxConstraints(maxHeight: 400.h),
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: _buildActionButton(
-                        icon: _isLiked
-                            ? Icons.favorite
-                            : Icons.favorite_outline,
-                        label: AppTexts.like,
-                        onTap: _handleLike,
-                        isActive: _isLiked,
-                        isLoading: _isLiking,
-                      ),
+                    PageView.builder(
+                      controller: _mediaPageController,
+                      itemCount: mediaItems.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentMediaPage = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final media = mediaItems[index];
+                        return Container(
+                          margin: EdgeInsets.symmetric(horizontal: 16.w),
+                          width: double.infinity,
+                          height: 300.h,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.r),
+                            child: media.type == PostMediaType.video
+                                ? Container(
+                                    color: Colors.black,
+                                    child: VideoPlayerWidget(
+                                      videoUrl: media.url,
+                                      thumbnailUrl: media.thumbnailUrl,
+                                      autoPlay: false,
+                                      showControls: true,
+                                      fit: BoxFit.cover,
+                                      isMuted: true,
+                                    ),
+                                  )
+                                : CachedNetworkImage(
+                                    imageUrl: media.url,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) =>
+                                        ShimmerPlaceholder(
+                                          width: double.infinity,
+                                          height: 300.h,
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                        ),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                          height: 300.h,
+                                          color: AppColors.surfaceVariant,
+                                          child: Icon(
+                                            Icons.error,
+                                            size: 48.sp,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                  ),
+                          ),
+                        );
+                      },
                     ),
-                    Expanded(
-                      child: _buildActionButton(
-                        icon: Icons.comment_outlined,
-                        label: AppTexts.comment,
-                        onTap: _openCommentsBottomSheet,
+                    if (mediaItems.length > 1)
+                      Positioned(
+                        bottom: 12.h,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            mediaItems.length,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              margin: EdgeInsets.symmetric(horizontal: 3.w),
+                              width: _currentMediaPage == index ? 10.w : 6.w,
+                              height: 6.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(
+                                  _currentMediaPage == index ? 0.95 : 0.5,
+                                ),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: _buildActionButton(
-                        icon: Icons.share_outlined,
-                        label: AppTexts.share,
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) =>
-                                SharePostDialog(post: _currentPost),
-                          );
-                        },
-                      ),
-                    ),
                   ],
                 ),
-                if (isAd)
-                  Padding(
-                    padding: EdgeInsets.only(top: 8.h),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        AppTexts.sponsored,
+              ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${_currentPost.likesCount} ${AppTexts.likes}',
                         style: TextStyle(
-                          fontSize: 11.sp,
+                          fontSize: 12.sp,
                           color: AppColors.textSecondary,
-                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (_currentPost.comments.isNotEmpty)
+                        GestureDetector(
+                          onTap: _openCommentsBottomSheet,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 14.sp,
+                                color: AppColors.primary,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '${_currentPost.comments.length} ${AppTexts.comments}',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: PostActionButton(
+                          icon: _isLiked
+                              ? Icons.favorite
+                              : Icons.favorite_outline,
+                          label: AppTexts.like,
+                          onTap: _handleLike,
+                          isActive: _isLiked,
+                          isLoading: _isLiking,
+                        ),
+                      ),
+                      Expanded(
+                        child: PostActionButton(
+                          icon: Icons.comment_outlined,
+                          label: AppTexts.comment,
+                          onTap: _openCommentsBottomSheet,
+                        ),
+                      ),
+                      Expanded(
+                        child: PostActionButton(
+                          icon: Icons.share_outlined,
+                          label: AppTexts.share,
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) =>
+                                  SharePostDialog(post: _currentPost),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (isAd)
+                    Padding(
+                      padding: EdgeInsets.only(top: 8.h),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          AppTexts.sponsored,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColors.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                Divider(height: 24.h, thickness: 1, color: AppColors.divider),
-                Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: userData?.profileImage != null
-                          ? CachedNetworkImage(
-                              imageUrl: userData!.profileImage!,
-                              width: 32.w,
-                              height: 32.w,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => ShimmerPlaceholder(
+                  Divider(height: 24.h, thickness: 1, color: AppColors.divider),
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: userData?.profileImage != null
+                            ? CachedNetworkImage(
+                                imageUrl: userData!.profileImage!,
                                 width: 32.w,
                                 height: 32.w,
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              errorWidget: (context, url, error) => Container(
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) =>
+                                    ShimmerPlaceholder(
+                                      width: 32.w,
+                                      height: 32.w,
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                errorWidget: (context, url, error) => Container(
+                                  width: 32.w,
+                                  height: 32.w,
+                                  color: AppColors.surfaceVariant,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 16.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              )
+                            : Container(
                                 width: 32.w,
                                 height: 32.w,
                                 color: AppColors.surfaceVariant,
@@ -586,133 +624,77 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                                   color: AppColors.textSecondary,
                                 ),
                               ),
-                            )
-                          : Container(
-                              width: 32.w,
-                              height: 32.w,
-                              color: AppColors.surfaceVariant,
-                              child: Icon(
-                                Icons.person,
-                                size: 16.sp,
-                                color: AppColors.textSecondary,
-                              ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: TextField(
+                          controller: _commentController,
+                          focusNode: _commentFocusNode,
+                          decoration: InputDecoration(
+                            hintText: AppTexts.writeComment,
+                            hintStyle: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textSecondary,
                             ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: TextField(
-                        controller: _commentController,
-                        focusNode: _commentFocusNode,
-                        decoration: InputDecoration(
-                          hintText: AppTexts.writeComment,
-                          hintStyle: TextStyle(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20.r),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.surfaceVariant,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 10.h,
+                            ),
+                            isDense: true,
+                          ),
+                          style: TextStyle(
                             fontSize: 14.sp,
-                            color: AppColors.textSecondary,
+                            color: AppColors.textPrimary,
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20.r),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.surfaceVariant,
-                          contentPadding: EdgeInsets.symmetric(
+                          maxLines: null,
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (_) => _handleComment(),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Bounce(
+                        onTap: _handleComment,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 16.w,
                             vertical: 10.h,
                           ),
-                          isDense: true,
-                        ),
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: null,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _handleComment(),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Bounce(
-                      onTap: _handleComment,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 10.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _isCommenting
-                              ? AppColors.primary.withOpacity(0.6)
-                              : AppColors.primary,
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: _isCommenting
-                            ? SizedBox(
-                                width: 16.w,
-                                height: 16.w,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
+                          decoration: BoxDecoration(
+                            color: _isCommenting
+                                ? AppColors.primary.withOpacity(0.6)
+                                : AppColors.primary,
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: _isCommenting
+                              ? SizedBox(
+                                  width: 16.w,
+                                  height: 16.w,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  AppTexts.post,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              )
-                            : Text(
-                                AppTexts.post,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool isActive = false,
-    bool isLoading = false,
-  }) {
-    return Bounce(
-      onTap: isLoading ? () {} : onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.h),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isLoading)
-              SizedBox(
-                width: 16.w,
-                height: 16.w,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isActive ? AppColors.primary : AppColors.textSecondary,
+                    ],
                   ),
-                ),
-              )
-            else
-              Icon(
-                icon,
-                size: 20.sp,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
-              ),
-            SizedBox(width: 6.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
+                ],
               ),
             ),
           ],
@@ -720,232 +702,4 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       ),
     );
   }
-}
-
-class _PostCommentsBottomSheet extends StatelessWidget {
-  final Post post;
-  final VoidCallback onAddComment;
-
-  const _PostCommentsBottomSheet({
-    required this.post,
-    required this.onAddComment,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
-      child: Container(
-        color: Colors.black54,
-        child: GestureDetector(
-          onTap: () {},
-          child: DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            builder: (context, scrollController) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(24.r),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(height: 8.h),
-                    Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.divider,
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 12.h,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppTexts.comments,
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                SizedBox(height: 4.h),
-                                Text(
-                                  '${post.comments.length} ${AppTexts.comments}',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Bounce(
-                            onTap: onAddComment,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 14.w,
-                                vertical: 8.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.add_comment_outlined,
-                                    size: 18.sp,
-                                    color: AppColors.primary,
-                                  ),
-                                  SizedBox(width: 6.w),
-                                  Text(
-                                    AppTexts.comment,
-                                    style: TextStyle(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Divider(height: 1, color: AppColors.divider),
-                    Expanded(
-                      child: post.comments.isEmpty
-                          ? Center(
-                              child: Text(
-                                AppTexts.noCommentsYet,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              controller: scrollController,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                                vertical: 12.h,
-                              ),
-                              itemCount: post.comments.length,
-                              separatorBuilder: (_, __) =>
-                                  SizedBox(height: 10.h),
-                              itemBuilder: (context, index) {
-                                final comment = post.comments[index];
-                                return Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(16.r),
-                                      child: CachedNetworkImage(
-                                        imageUrl: comment.user.profileImage,
-                                        width: 32.w,
-                                        height: 32.w,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) =>
-                                            ShimmerPlaceholder(
-                                              width: 32.w,
-                                              height: 32.w,
-                                              borderRadius:
-                                                  BorderRadius.circular(16.r),
-                                            ),
-                                        errorWidget: (context, url, error) =>
-                                            Container(
-                                              width: 32.w,
-                                              height: 32.w,
-                                              color: AppColors.surfaceVariant,
-                                              child: Icon(
-                                                Icons.person,
-                                                size: 18.sp,
-                                                color: AppColors.textSecondary,
-                                              ),
-                                            ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Expanded(
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 12.w,
-                                          vertical: 8.h,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surfaceVariant,
-                                          borderRadius: BorderRadius.circular(
-                                            16.r,
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              comment.user.userName,
-                                              style: TextStyle(
-                                                fontSize: 13.sp,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textPrimary,
-                                              ),
-                                            ),
-                                            SizedBox(height: 4.h),
-                                            Text(
-                                              comment.content,
-                                              style: TextStyle(
-                                                fontSize: 13.sp,
-                                                color: AppColors.textPrimary,
-                                              ),
-                                            ),
-                                            SizedBox(height: 4.h),
-                                            Text(
-                                              comment.createdAt,
-                                              style: TextStyle(
-                                                fontSize: 11.sp,
-                                                color: AppColors.textTertiary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-enum _PostMediaType { image, video }
-
-class _PostMediaItem {
-  final _PostMediaType type;
-  final String url;
-  final String? thumbnailUrl;
-
-  _PostMediaItem({required this.type, required this.url, this.thumbnailUrl});
 }

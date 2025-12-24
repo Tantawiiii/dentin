@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_constants.dart';
 import '../../../../core/network/api_service.dart';
 import '../models/profile_response.dart';
+import '../models/update_profile_request.dart';
 
 class ProfileData {
   final Doctor doctor;
@@ -30,6 +31,25 @@ class ProfileRepository {
       doctor: profileResponse.message.doctor,
       friendsCount: profileResponse.message.friendsCount,
     );
+  }
+
+  Future<Doctor> updateProfile(int userId, UpdateProfileRequest request) async {
+    final Response<dynamic> response = await _apiService.patch(
+      ApiConstants.updateUser(userId),
+      data: request.toJson(),
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    
+    // Parse the response structure
+    if (data['status'] == 200 && data['message'] != null) {
+      final message = data['message'] as Map<String, dynamic>;
+      if (message['data'] != null) {
+        return Doctor.fromJson(message['data'] as Map<String, dynamic>);
+      }
+    }
+    
+    throw Exception('Failed to update profile');
   }
 }
 

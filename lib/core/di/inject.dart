@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/messages/cubit/chat_cubit.dart';
+import '../../features/messages/data/repo/chat_repository.dart';
 import '../network/dio_client.dart';
 import '../network/api_service.dart';
 import '../services/storage_service.dart';
@@ -14,6 +16,10 @@ import '../../features/home/cubit/post_cubit.dart';
 import '../../features/explore_stories/data/repo/stories_repository.dart';
 import '../../features/explore_stories/cubit/stories_cubit.dart';
 import '../../features/profile/data/repo/profile_repository.dart';
+import '../../features/store/data/repo/product_repository.dart';
+import '../../features/jobs/data/repo/job_repository.dart';
+import '../../features/rent_clinic/data/repo/rent_repository.dart';
+import '../../features/rent_clinic/cubit/rent_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -51,6 +57,18 @@ Future<void> init() async {
   // Profile Repository
   sl.registerLazySingleton(() => ProfileRepository(sl<ApiService>()));
 
+  // Product Repository
+  sl.registerLazySingleton(() => ProductRepository(sl<ApiService>()));
+
+  // Job Repository
+  sl.registerLazySingleton(() => JobRepository(sl<ApiService>()));
+
+  // Chat Repository
+  sl.registerLazySingleton(() => ChatRepository(sl<ApiService>()));
+
+  // Rent Repository
+  sl.registerLazySingleton(() => RentRepository(sl<ApiService>()));
+
   sl.registerFactory(
     () => LoginCubit(
       repository: sl<LoginRepository>(),
@@ -68,20 +86,14 @@ Future<void> init() async {
   );
 
   sl.registerFactory(
-    () => ForgetPasswordCubit(
-      repository: sl<ForgetPasswordRepository>(),
-    ),
+    () => ForgetPasswordCubit(repository: sl<ForgetPasswordRepository>()),
   );
 
-  sl.registerFactory(
-    () => PostCubit(
-      sl<PostRepository>(),
-    ),
-  );
+  sl.registerFactory(() => PostCubit(sl<PostRepository>()));
 
-  sl.registerFactory(
-    () => StoriesCubit(
-      sl<StoriesRepository>(),
-    ),
-  );
+  sl.registerFactory(() => StoriesCubit(sl<StoriesRepository>()));
+
+  sl.registerLazySingleton(() => ChatCubit(sl<ChatRepository>()));
+
+  sl.registerFactory(() => RentCubit(sl<RentRepository>()));
 }

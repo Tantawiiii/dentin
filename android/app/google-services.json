@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "721699029637",
+    "firebase_url": "https://chat-a3477-default-rtdb.firebaseio.com",
+    "project_id": "chat-a3477",
+    "storage_bucket": "chat-a3477.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:721699029637:android:173ceb0fd404a982ea1fec",
+        "android_client_info": {
+          "package_name": "com.tantawii.dentin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC35QndrbcikB3hbKFrEy6pPbo2W2F90sE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

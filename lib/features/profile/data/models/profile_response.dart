@@ -66,6 +66,12 @@ class Doctor {
   final String? cv;
   final List<CourseCertificate> courseCertificates;
   final String? createdAt;
+  final bool? isWorkAssistantUniversity;
+  final String? assistantUniversity;
+  final String? tools;
+  final bool? hasClinic;
+  final String? clinicName;
+  final String? clinicAddress;
 
   Doctor({
     required this.id,
@@ -95,6 +101,12 @@ class Doctor {
     this.cv,
     required this.courseCertificates,
     this.createdAt,
+    this.isWorkAssistantUniversity,
+    this.assistantUniversity,
+    this.tools,
+    this.hasClinic,
+    this.clinicName,
+    this.clinicAddress,
   });
 
   factory Doctor.fromJson(Map<String, dynamic> json) {
@@ -117,7 +129,12 @@ class Doctor {
       experience: json['experience'] as String?,
       whereDidYouWork: json['where_did_you_work'] as String?,
       availableTimes: (json['available_times'] as List<dynamic>? ?? [])
-          .map((e) => e.toString())
+          .map((e) {
+            if (e is Map) {
+              return '${e['day'] ?? ''}|${e['from'] ?? ''}|${e['to'] ?? ''}';
+            }
+            return e.toString();
+          })
           .toList(),
       skills: (json['skills'] as List<dynamic>? ?? [])
           .map((e) => e.toString())
@@ -138,6 +155,12 @@ class Doctor {
               .map((e) => CourseCertificate.fromJson(e as Map<String, dynamic>))
               .toList(),
       createdAt: json['created_at'] as String?,
+      isWorkAssistantUniversity: json['is_work_assistant_university'] as bool?,
+      assistantUniversity: json['assistant_university'] as String?,
+      tools: json['tools'] as String?,
+      hasClinic: json['has_clinic'] as bool?,
+      clinicName: json['clinic_name'] as String?,
+      clinicAddress: json['clinic_address'] as String?,
     );
   }
 }
