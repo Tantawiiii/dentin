@@ -6,6 +6,7 @@ import '../../features/auth/login/data/models/login_response.dart';
 class StorageService {
   static const String _keyToken = 'auth_token';
   static const String _keyUserData = 'user_data';
+  static const String _keyFCMToken = 'fcm_token';
 
   final SharedPreferences _prefs;
 
@@ -45,8 +46,21 @@ class StorageService {
     await _prefs.remove(_keyUserData);
   }
 
+  Future<void> saveFCMToken(String token) async {
+    await _prefs.setString(_keyFCMToken, token);
+  }
+
+  String? getFCMToken() {
+    return _prefs.getString(_keyFCMToken);
+  }
+
+  Future<void> removeFCMToken() async {
+    await _prefs.remove(_keyFCMToken);
+  }
+
   Future<void> clearAll() async {
     await removeToken();
     await removeUserData();
+    await removeFCMToken();
   }
 }

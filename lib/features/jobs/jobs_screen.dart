@@ -337,6 +337,9 @@ class _JobsScreenState extends State<JobsScreen> {
       return ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(16.w),
+        cacheExtent: 500,
+        addAutomaticKeepAlives: true,
+        addRepaintBoundaries: true,
         itemCount: 6,
         itemBuilder: (context, index) {
           return const JobItemShimmer();
@@ -421,6 +424,9 @@ class _JobsScreenState extends State<JobsScreen> {
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.all(8.w),
+      cacheExtent: 500,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemCount: _jobs.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= _jobs.length) {

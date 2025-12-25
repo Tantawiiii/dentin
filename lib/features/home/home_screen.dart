@@ -157,17 +157,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         )
                       else ...[
                         SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final post = posts[index];
-                            return PostItemWidget(
-                              key: ValueKey(post.id),
-                              post: post,
-                              index: index,
-                            );
-                          }, childCount: posts.length),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final post = posts[index];
+                              return RepaintBoundary(
+                                key: ValueKey('post_${post.id}'),
+                                child: PostItemWidget(
+                                  key: ValueKey(post.id),
+                                  post: post,
+                                  index: index,
+                                ),
+                              );
+                            },
+                            childCount: posts.length,
+                            addAutomaticKeepAlives: true,
+                            addRepaintBoundaries: true,
+                          ),
                         ),
                         if (isLoadingMore)
                           SliverToBoxAdapter(

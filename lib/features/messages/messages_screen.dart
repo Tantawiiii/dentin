@@ -77,7 +77,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
             }
 
             if (state is ConversationsError) {
-              print(state.message);
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -143,142 +142,155 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   await _chatCubit.refreshConversations(_currentUserId!);
                 }
               },
+              color: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              strokeWidth: 2.5,
               child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                cacheExtent: 500,
                 itemCount: conversations.length,
                 padding: EdgeInsets.symmetric(vertical: 8.h),
+                addAutomaticKeepAlives: true,
+                addRepaintBoundaries: true,
                 itemBuilder: (context, index) {
                   final conversation = conversations[index];
                   final user = conversation.user;
                   final lastMessage = conversation.lastMessage;
 
-                  return InkWell(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ChatDetailScreen(receiverUser: user),
+                  return RepaintBoundary(
+                    key: ValueKey('conversation_${conversation.user.id}'),
+                    child: InkWell(
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ChatDetailScreen(receiverUser: user),
+                          ),
+                        );
+                        if (_currentUserId != null && mounted) {
+                          _chatCubit.loadConversations(_currentUserId!);
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
                         ),
-                      );
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        border: Border(
-                          bottom: BorderSide(
-                            color: AppColors.border,
-                            width: 0.5,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: AppColors.border,
+                              width: 0.5,
+                            ),
                           ),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 28.r,
-                                backgroundColor: AppColors.primary,
-                                backgroundImage: user.profileImage != null
-                                    ? CachedNetworkImageProvider(
-                                        user.profileImage!,
-                                      )
-                                    : null,
-                                child: user.profileImage == null
-                                    ? Text(
-                                        user.userName.isNotEmpty
-                                            ? user.userName[0].toUpperCase()
-                                            : 'U',
+                        child: Row(
+                          children: [
+                            Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 28.r,
+                                  backgroundColor: AppColors.primary,
+                                  backgroundImage: user.profileImage != null
+                                      ? CachedNetworkImageProvider(
+                                          user.profileImage!,
+                                        )
+                                      : null,
+                                  child: user.profileImage == null
+                                      ? Text(
+                                          user.userName.isNotEmpty
+                                              ? user.userName[0].toUpperCase()
+                                              : 'U',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                if (conversation.unreadCount > 0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.all(4.w),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.error,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppColors.surface,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minWidth: 18.w,
+                                        minHeight: 18.h,
+                                      ),
+                                      child: Text(
+                                        conversation.unreadCount > 9
+                                            ? '9+'
+                                            : '${conversation.unreadCount}',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 18.sp,
+                                          fontSize: 10.sp,
                                           fontWeight: FontWeight.bold,
                                         ),
-                                      )
-                                    : null,
-                              ),
-                              if (conversation.unreadCount > 0)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    padding: EdgeInsets.all(4.w),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.error,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.surface,
-                                        width: 2,
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                                    constraints: BoxConstraints(
-                                      minWidth: 18.w,
-                                      minHeight: 18.h,
-                                    ),
-                                    child: Text(
-                                      conversation.unreadCount > 9
-                                          ? '9+'
-                                          : '${conversation.unreadCount}',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        user.userName,
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    if (lastMessage != null)
-                                      Text(
-                                        _formatTime(lastMessage.createdAt),
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                SizedBox(height: 4.h),
-                                if (lastMessage != null)
-                                  Text(
-                                    lastMessage.body,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: conversation.unreadCount > 0
-                                          ? AppColors.textPrimary
-                                          : AppColors.textSecondary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                               ],
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          user.userName,
+                                          style: TextStyle(
+                                            fontSize: 16.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (lastMessage != null)
+                                        Text(
+                                          _formatTime(lastMessage.createdAt),
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  if (lastMessage != null)
+                                    Text(
+                                      lastMessage.body,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: conversation.unreadCount > 0
+                                            ? AppColors.textPrimary
+                                            : AppColors.textSecondary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

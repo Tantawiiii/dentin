@@ -111,6 +111,38 @@ class ChatRepository {
     }
   }
 
+  Future<Map<String, dynamic>> uploadFile({
+    required String filePath,
+    required int receiverId,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath),
+        'receiver_id': receiverId,
+      });
+
+      final response = await _apiService.post<dynamic>(
+        ApiConstants.uploadFile,
+        data: formData,
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        final jsonData = response.data as Map<String, dynamic>;
+        if (jsonData['result'] == 'Error') {
+          throw Exception(jsonData['message'] ?? 'Failed to upload file');
+        }
+        return jsonData['data'] as Map<String, dynamic>;
+      } else {
+        throw Exception(_extractErrorMessage(response));
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to upload file: ${e.toString()}');
+    }
+  }
+
   String _extractErrorMessage(Response<dynamic> response) {
     if (response.data != null) {
       final errorData = response.data;

@@ -104,6 +104,24 @@ class HomeDrawer extends StatelessWidget {
                       Navigator.of(context).pushNamed(AppRoutes.rentClinic);
                     },
                   ),
+                  const Divider(),
+                  ListTile(
+                    leading: Icon(
+                      Icons.person_add_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      'Friend Requests',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      Navigator.of(context).pushNamed(AppRoutes.friendRequests);
+                    },
+                  ),
                   const Spacer(),
                 ],
               ),

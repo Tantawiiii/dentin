@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bounce/bounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -450,7 +451,6 @@ class _AddRentScreenState extends State<AddRentScreen> {
                   hint: AppTexts.enterAddress,
                 ),
                 SizedBox(height: 24.h),
-                // Gallery Section
                 Text(
                   '${AppTexts.rentGallery} *',
                   style: TextStyle(
@@ -460,7 +460,7 @@ class _AddRentScreenState extends State<AddRentScreen> {
                   ),
                 ),
                 SizedBox(height: 8.h),
-                GestureDetector(
+                Bounce(
                   onTap: _pickImages,
                   child: Container(
                     height: 120.h,
