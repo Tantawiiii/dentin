@@ -290,7 +290,8 @@ final class AppTexts {
   static const String profileJoined = 'Joined';
   static const String editProfileTitle = 'Edit Profile';
   static const String editProfileSubtitle = 'Update your profile information';
-  static const String profileUpdatedSuccessfully = 'Profile updated successfully';
+  static const String profileUpdatedSuccessfully =
+      'Profile updated successfully';
   static const String updateProfile = 'Update Profile';
   static const String filesUploaded = 'files uploaded';
   static const String of = 'of';
@@ -379,8 +380,7 @@ final class AppTexts {
   static const String jobsCompanyWebsite = 'Company Website';
   static const String jobsCompanyLocation = 'Company Location';
   static const String jobsSearchJobs = 'Search Jobs';
-  static const String jobsSearchPlaceholder =
-      'jobs,companies,or location..';
+  static const String jobsSearchPlaceholder = 'jobs,companies,or location..';
   static const String jobsLocationPlaceholder = 'Location';
   static const String jobsAllJobs = 'All Jobs';
   static const String jobsFullTime = 'Full-time';
@@ -447,4 +447,53 @@ final class AppTexts {
   static const String sessionExpiredMessage =
       'Your session has expired. Please login again to continue.';
   static const String goToLogin = 'Go to Login';
+
+  // Friend Requests Screen
+  static const String friendRequests = 'Friend Requests';
+  static const String incoming = 'Incoming';
+  static const String outgoing = 'Outgoing';
+  static const String friends = 'Friends';
+  static const String noIncomingRequests = 'No incoming requests';
+  static const String noOutgoingRequests = 'No outgoing requests';
+  static const String pending = 'Pending';
+  static const String searchFriends = 'Search friends...';
+  static const String friendsCount = 'friends';
+  static const String noFriendsYet = 'No friends yet';
+  static const String noFriendsFound = 'No friends found';
+  static const String tryDifferentSearchTerm = 'Try a different search term';
+  static const String noMessagesYet = 'No messages yet';
+  static const String removeFriend = 'Remove Friend';
+  static const String removeFriendConfirmation =
+      'Are you sure you want to remove';
+  static const String removeFriendFromFriends = 'from your friends?';
+  static const String removeFriendButton = 'Remove';
+
+  // Notifications Screen
+  static const String notifications = 'Notifications';
+  static const String noNotificationsYet = 'No notifications yet';
+  static const String notificationsDescription =
+      "You'll see notifications about friend requests and messages here";
+  static const String markAsRead = 'Mark Read';
+  static const String markAllAsRead = 'Mark All Read';
+  static const String clearAll = 'Clear All';
+  static const String bulkActions = 'Bulk Actions';
+  static const String unread = 'unread';
+  static const String totalNotifications = 'total notifications';
+  static const String newNotification = 'New';
+  static const String markAllAsReadConfirmation =
+      'Are you sure you want to mark all notifications as read?';
+  static const String clearAllConfirmation =
+      'Are you sure you want to delete ALL notifications? This action cannot be undone!';
+  static const String allNotificationsRead =
+      'All notifications are already read!';
+  static const String markAllReadSuccess = 'All notifications marked as read';
+  static const String clearAllSuccess = 'All notifications deleted';
+  static const String failedToMarkAll = 'Failed to mark all as read';
+  static const String failedToClearAll = 'Failed to delete notifications';
+
+  // Network Connectivity
+  static const String noInternetConnection = 'No Internet Connection';
+  static const String checkInternetConnection = 'Please check your internet connection and try again';
+  static const String connecting = 'Connecting...';
+  static const String connected = 'Connected';
 }

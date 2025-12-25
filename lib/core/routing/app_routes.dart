@@ -21,4 +21,6 @@ final class AppRoutes {
   static const String orderDetails = '/order-details';
   static const String profile = '/profile';
   static const String rentClinic = '/rent-clinic';
+  static const String friendRequests = '/friend-requests';
+  static const String notifications = '/notifications';
 }

@@ -207,6 +207,9 @@ class _StoreScreenState extends State<StoreScreen> {
     return ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.all(16.w),
+      cacheExtent: 500,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemCount: _products.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= _products.length) {

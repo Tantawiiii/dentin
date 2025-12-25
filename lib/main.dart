@@ -1,33 +1,154 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 
+import 'core/config/firebase_config.dart';
 import 'core/di/inject.dart' as di;
 import 'core/network/dio_client.dart';
 import 'core/routing/app_router.dart';
 import 'core/routing/app_routes.dart';
 import 'core/services/storage_service.dart';
+import 'core/services/firebase_service.dart';
+import 'core/services/connectivity_service.dart';
+import 'core/services/fcm_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/connectivity_wrapper.dart';
 import 'shared/widgets/app_toast.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    if (kDebugMode) {
+      print('❌ Flutter Error: ${details.exception}');
+      print('Stack trace: ${details.stack}');
+    }
+  };
 
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.immersiveSticky,
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+      try {
+        if (kDebugMode) {
+          print('🌐 Initializing Connectivity Service...');
+        }
+        await ConnectivityService().initialize();
+        if (kDebugMode) {
+          print('✅ Connectivity Service initialized');
+        }
+      } catch (e, stackTrace) {
+        if (kDebugMode) {
+          print('⚠️ Connectivity Service initialization failed: $e');
+          print('Stack trace: $stackTrace');
+        }
+      }
+
+      try {
+        if (kDebugMode) {
+          print('🔥 Initializing Firebase with explicit config...');
+        }
+
+        try {
+          if (Firebase.apps.isEmpty) {
+            await Firebase.initializeApp(
+              options: FirebaseConfig.currentPlatform,
+            );
+            if (kDebugMode) {
+              print('✅ Firebase initialized successfully with explicit config');
+              print(
+                '📊 Project ID: ${FirebaseConfig.currentPlatform.projectId}',
+              );
+              print(
+                '📊 Auth Domain: ${FirebaseConfig.currentPlatform.authDomain}',
+              );
+            }
+          } else {
+            if (kDebugMode) {
+              print('✅ Firebase already initialized');
+              print('📊 Using existing Firebase instance');
+            }
+          }
+        } catch (e) {
+          if (e.toString().contains('duplicate-app')) {
+            if (kDebugMode) {
+              print('✅ Firebase already initialized (duplicate-app caught)');
+            }
+          } else {
+            rethrow;
+          }
+        }
+
+        await FirebaseService.initialize();
+
+        try {
+          if (kDebugMode) {
+            print('📱 Initializing FCM...');
+          }
+          FirebaseMessaging.onBackgroundMessage(
+            firebaseMessagingBackgroundHandler,
+          );
+        } catch (e, stackTrace) {
+          if (kDebugMode) {
+            print('⚠️ FCM initialization failed: $e');
+            print('Stack trace: $stackTrace');
+          }
+        }
+      } catch (e, stackTrace) {
+        if (kDebugMode) {
+          print('⚠️ Firebase initialization failed: $e');
+          print('Stack trace: $stackTrace');
+        }
+      }
+
+      try {
+        await di.init();
+      } catch (e, stackTrace) {
+        if (kDebugMode) {
+          print('❌ Dependency injection failed: $e');
+          print('Stack trace: $stackTrace');
+        }
+        rethrow;
+      }
+
+      try {
+        final storageService = di.sl<StorageService>();
+        final dioClient = di.sl<DioClient>();
+        final token = storageService.getToken();
+
+        if (token != null) {
+          dioClient.setAuthToken(token);
+        }
+
+        try {
+          await FCMService().initialize(storageService);
+        } catch (e) {
+          if (kDebugMode) {
+            print('⚠️ FCM initialization error: $e');
+          }
+        }
+      } catch (e, stackTrace) {
+        if (kDebugMode) {
+          print('⚠️ Error setting up services: $e');
+          print('Stack trace: $stackTrace');
+        }
+      }
+
+      WidgetsFlutterBinding.ensureInitialized();
+
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      if (kDebugMode) {
+        print('❌ Async Error: $error');
+        print('Stack trace: $stack');
+      }
+    },
   );
-
-  await di.init();
-
-  final storageService = di.sl<StorageService>();
-  final dioClient = di.sl<DioClient>();
-  final token = storageService.getToken();
-
-  if (token != null) {
-    dioClient.setAuthToken(token);
-  }
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -46,6 +167,12 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           onGenerateRoute: onGenerateAppRoute,
           initialRoute: AppRoutes.splash,
+          builder: (context, child) {
+            return ConnectivityWrapper(child: child!);
+          },
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            scrollbars: false,
+          ),
         );
       },
     );

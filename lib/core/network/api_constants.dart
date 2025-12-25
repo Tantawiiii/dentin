@@ -33,6 +33,7 @@ final class ApiConstants {
   static const String chatMessages = '/api/chat/messages';
   static const String sendMessage = '/api/chat/send';
   static const String markAsRead = '/api/messages/mark-as-read';
+  static const String uploadFile = '/api/chat/upload-file';
 
   // Rent Clinic
   static const String rentIndex = '/api/rent/index';

@@ -87,6 +87,9 @@ class _RentListScreenState extends State<RentListScreen> {
             if (state is RentLoading) {
               return ListView.builder(
                 padding: EdgeInsets.all(12.w),
+                cacheExtent: 500,
+                addAutomaticKeepAlives: true,
+                addRepaintBoundaries: true,
                 itemCount: 5,
                 itemBuilder: (context, index) {
                   return _buildRentShimmer();

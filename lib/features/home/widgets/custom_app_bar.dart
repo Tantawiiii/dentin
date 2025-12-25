@@ -5,16 +5,39 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_slider_drawer/flutter_slider_drawer.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../core/constant/app_colors.dart';
 import '../../../core/di/inject.dart' as di;
 import '../../../core/routing/app_routes.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../features/notifications/cubit/notifications_cubit.dart';
+import '../../../features/notifications/cubit/notifications_state.dart';
 import '../../../shared/widgets/shimmer_placeholder.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GlobalKey<SliderDrawerState>? sliderDrawerKey;
 
   const CustomAppBar({super.key, this.sliderDrawerKey});
+
+  @override
+  State<CustomAppBar> createState() => _CustomAppBarState();
+
+  @override
+  Size get preferredSize => throw UnimplementedError();
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  @override
+  void initState() {
+    super.initState();
+    final notificationsCubit = di.sl<NotificationsCubit>();
+    final storageService = di.sl<StorageService>();
+    final userData = storageService.getUserData();
+    if (userData?.id != null) {
+      notificationsCubit.loadNotifications();
+    }
+  }
 
   @override
   Size get preferredSize => Size.fromHeight(56.h);
@@ -46,7 +69,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 icon: const Icon(Icons.menu),
                 color: AppColors.primary,
                 onPressed: () {
-                  sliderDrawerKey?.currentState?.openSlider();
+                  widget.sliderDrawerKey?.currentState?.openSlider();
                 },
               ),
               Image.asset(
@@ -57,10 +80,56 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    color: AppColors.primary,
-                    onPressed: () {},
+                  BlocBuilder<NotificationsCubit, NotificationsState>(
+                    bloc: di.sl<NotificationsCubit>(),
+                    builder: (context, state) {
+                      int unreadCount = 0;
+                      if (state is NotificationsLoaded) {
+                        unreadCount = state.unreadCount;
+                      }
+
+                      return Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_outlined),
+                            color: AppColors.primary,
+                            onPressed: () {
+                              Navigator.of(context)
+                                  .pushNamed(AppRoutes.notifications);
+                            },
+                          ),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: 8.w,
+                              top: 8.h,
+                              child: Container(
+                                padding: EdgeInsets.all(4.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.surface,
+                                    width: 2,
+                                  ),
+                                ),
+                                constraints: BoxConstraints(
+                                  minWidth: 16.w,
+                                  minHeight: 16.h,
+                                ),
+                                child: Text(
+                                  unreadCount > 9 ? '9+' : '$unreadCount',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                   SizedBox(width: 2.w),
                   Bounce(

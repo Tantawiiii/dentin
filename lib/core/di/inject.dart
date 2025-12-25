@@ -4,7 +4,10 @@ import '../../features/messages/cubit/chat_cubit.dart';
 import '../../features/messages/data/repo/chat_repository.dart';
 import '../network/dio_client.dart';
 import '../network/api_service.dart';
+import '../services/connectivity_service.dart';
 import '../services/storage_service.dart';
+import '../services/firebase_service.dart';
+import '../services/fcm_service.dart';
 import '../../features/auth/login/data/repo/login_repository.dart';
 import '../../features/auth/login/cubit/login_cubit.dart';
 import '../../features/auth/register/data/repo/register_repository.dart';
@@ -20,6 +23,8 @@ import '../../features/store/data/repo/product_repository.dart';
 import '../../features/jobs/data/repo/job_repository.dart';
 import '../../features/rent_clinic/data/repo/rent_repository.dart';
 import '../../features/rent_clinic/cubit/rent_cubit.dart';
+import '../../features/friends/cubit/friend_requests_cubit.dart';
+import '../../features/notifications/cubit/notifications_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -30,6 +35,15 @@ Future<void> init() async {
 
   // Storage Service
   sl.registerLazySingleton(() => StorageService(sl<SharedPreferences>()));
+
+  // Firebase Service
+  sl.registerLazySingleton(() => FirebaseService());
+
+  // FCM Service
+  sl.registerLazySingleton(() => FCMService());
+
+  // Connectivity Service
+  sl.registerLazySingleton(() => ConnectivityService());
 
   // Dio Client
   sl.registerLazySingleton(
@@ -93,7 +107,27 @@ Future<void> init() async {
 
   sl.registerFactory(() => StoriesCubit(sl<StoriesRepository>()));
 
-  sl.registerLazySingleton(() => ChatCubit(sl<ChatRepository>()));
+  sl.registerLazySingleton(
+    () => ChatCubit(
+      sl<ChatRepository>(),
+      sl<FirebaseService>(),
+      sl<StorageService>(),
+    ),
+  );
 
   sl.registerFactory(() => RentCubit(sl<RentRepository>()));
+
+  // Friend Requests Cubit
+  sl.registerLazySingleton(
+    () => FriendRequestsCubit(
+      sl<FirebaseService>(),
+      sl<StorageService>(),
+      sl<ApiService>(),
+    ),
+  );
+
+  // Notifications Cubit
+  sl.registerLazySingleton(
+    () => NotificationsCubit(sl<FirebaseService>(), sl<StorageService>()),
+  );
 }
