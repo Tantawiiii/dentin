@@ -176,7 +176,15 @@ class ChatCubit extends Cubit<ChatState> {
               fileUrl: messageData['file_url'],
               fileName: messageData['file_name'],
               fileSize: messageData['file_size'],
-              productInfo: messageData['product_info'],
+              productInfo: messageData['product_info'] != null
+                  ? Map<String, dynamic>.from(
+                      messageData['product_info'] is Map
+                          ? (messageData['product_info'] as Map).map(
+                              (key, value) => MapEntry(key.toString(), value),
+                            )
+                          : {},
+                    )
+                  : null,
               timestamp: messageData['timestamp'] is int
                   ? messageData['timestamp']
                   : int.tryParse(messageData['timestamp']?.toString() ?? ''),

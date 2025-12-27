@@ -500,7 +500,7 @@ final class AppTexts {
 
   // Users List Screen
   static const String medicalProfessionals = 'Medical Professionals';
-  static const String searchByUsernameEmail = 'Search by Username, email...';
+  static const String searchByUsernameEmail = 'name, email...';
   static const String perPage = 'per page';
   static const String advancedFilters = 'Advanced Filters';
   static const String applyFilters = 'Apply Filters';

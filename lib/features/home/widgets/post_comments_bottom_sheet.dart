@@ -43,14 +43,14 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
   List<FirebaseComment> _comments = [];
   List<Comment> _backendComments = [];
   String? _replyingToCommentId;
-  Map<String, List<FirebaseReply>> _replies = {};
-  Map<String, bool> _expandedReplies = {};
-  Map<String, StreamSubscription<List<FirebaseReply>>> _repliesSubscriptions =
+  final Map<String, List<FirebaseReply>> _replies = {};
+  final Map<String, bool> _expandedReplies = {};
+  final Map<String, StreamSubscription<List<FirebaseReply>>> _repliesSubscriptions =
       {};
   bool _isLoading = true;
   bool _isAddingComment = false;
   bool _isAddingReply = false;
-  Map<String, bool> _isLikingComment = {};
+  final Map<String, bool> _isLikingComment = {};
   StreamSubscription<List<FirebaseComment>>? _commentsSubscription;
 
   UserData? _currentUser;

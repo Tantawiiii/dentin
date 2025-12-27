@@ -12,6 +12,7 @@ class UsersListLoaded extends UsersListState {
   final int totalPages;
   final int totalUsers;
   final int perPage;
+  final bool isLoadingMore;
 
   UsersListLoaded({
     required this.users,
@@ -19,7 +20,26 @@ class UsersListLoaded extends UsersListState {
     required this.totalPages,
     required this.totalUsers,
     required this.perPage,
+    this.isLoadingMore = false,
   });
+
+  UsersListLoaded copyWith({
+    List<Doctor>? users,
+    int? currentPage,
+    int? totalPages,
+    int? totalUsers,
+    int? perPage,
+    bool? isLoadingMore,
+  }) {
+    return UsersListLoaded(
+      users: users ?? this.users,
+      currentPage: currentPage ?? this.currentPage,
+      totalPages: totalPages ?? this.totalPages,
+      totalUsers: totalUsers ?? this.totalUsers,
+      perPage: perPage ?? this.perPage,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
 }
 
 class UsersListError extends UsersListState {
@@ -27,4 +47,3 @@ class UsersListError extends UsersListState {
 
   UsersListError(this.message);
 }
-

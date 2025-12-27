@@ -23,13 +23,15 @@ class UsersListCubit extends Cubit<UsersListState> {
         perPage: perPage,
       );
 
-      emit(UsersListLoaded(
-        users: response.data,
-        currentPage: response.meta.currentPage,
-        totalPages: response.meta.lastPage,
-        totalUsers: response.meta.total,
-        perPage: response.meta.perPage,
-      ));
+      emit(
+        UsersListLoaded(
+          users: response.data,
+          currentPage: response.meta.currentPage,
+          totalPages: response.meta.lastPage,
+          totalUsers: response.meta.total,
+          perPage: response.meta.perPage,
+        ),
+      );
     } catch (e) {
       emit(UsersListError(e.toString()));
     }
@@ -41,14 +43,36 @@ class UsersListCubit extends Cubit<UsersListState> {
   }) async {
     final currentState = state;
     if (currentState is UsersListLoaded) {
-      if (currentState.currentPage < currentState.totalPages) {
-        await loadUsers(
-          filters: filters,
-          page: currentState.currentPage + 1,
-          perPage: perPage,
-        );
+      if (currentState.currentPage < currentState.totalPages &&
+          !currentState.isLoadingMore) {
+        // Emit loading more state
+        emit(currentState.copyWith(isLoadingMore: true));
+
+        try {
+          final response = await _repository.getUsers(
+            filters: filters ?? UsersListFilters(),
+            page: currentState.currentPage + 1,
+            perPage: perPage,
+          );
+
+          // Append new users to existing list
+          final updatedUsers = [...currentState.users, ...response.data];
+
+          emit(
+            UsersListLoaded(
+              users: updatedUsers,
+              currentPage: response.meta.currentPage,
+              totalPages: response.meta.lastPage,
+              totalUsers: response.meta.total,
+              perPage: response.meta.perPage,
+              isLoadingMore: false,
+            ),
+          );
+        } catch (e) {
+          // Revert to previous state on error
+          emit(currentState.copyWith(isLoadingMore: false));
+        }
       }
     }
   }
 }
-

@@ -27,8 +27,9 @@ class SearchAndFiltersWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.surface,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(6.w),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -39,7 +40,7 @@ class SearchAndFiltersWidget extends StatelessWidget {
                   leadingIcon: Icons.search,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 2.w),
               IconButton(
                 icon: Icon(
                   Icons.filter_list,
@@ -49,7 +50,7 @@ class SearchAndFiltersWidget extends StatelessWidget {
                 ),
                 onPressed: onFilterToggle,
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 2.w),
               DropdownButton<int>(
                 value: perPage,
                 items: [5, 10, 20].map((value) {
@@ -72,4 +73,3 @@ class SearchAndFiltersWidget extends StatelessWidget {
     );
   }
 }
-

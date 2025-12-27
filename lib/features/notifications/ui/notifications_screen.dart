@@ -236,9 +236,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             if (state is NotificationsLoaded ||
                 state is NotificationActionLoading) {
               final isLoading = state is NotificationActionLoading;
-              final loadedState = state as NotificationsLoaded;
-              final notifications = loadedState.notifications;
-              final unreadCount = loadedState.unreadCount;
+              final notifications = state is NotificationsLoaded
+                  ? state.notifications
+                  : (state as NotificationActionLoading).notifications;
+              final unreadCount = state is NotificationsLoaded
+                  ? state.unreadCount
+                  : (state as NotificationActionLoading).unreadCount;
 
               if (notifications.isEmpty) {
                 return Center(

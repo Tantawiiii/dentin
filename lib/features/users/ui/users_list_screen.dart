@@ -11,6 +11,8 @@ import '../../../core/services/storage_service.dart';
 import '../../friends/cubit/friend_requests_cubit.dart';
 import '../../friends/cubit/friend_requests_state.dart';
 import '../../friends/data/models/friend_request_model.dart';
+import '../../messages/data/models/chat_user_model.dart';
+import '../../profile/data/models/profile_response.dart';
 import '../cubit/users_list_cubit.dart';
 import '../cubit/users_list_state.dart';
 import '../data/models/users_list_response.dart';
@@ -32,7 +34,6 @@ class _UsersListScreenState extends State<UsersListScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _debounceTimer;
-  bool _isLoadingMore = false;
 
   UsersListFilters _filters = UsersListFilters();
   UsersListFilters _tempFilters = UsersListFilters();
@@ -75,14 +76,12 @@ class _UsersListScreenState extends State<UsersListScreen> {
   }
 
   void _onScroll() {
-    if (!_isLoadingMore &&
-        _scrollController.hasClients &&
+    if (_scrollController.hasClients &&
         _scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent * 0.8) {
       final state = _usersListCubit.state;
       if (state is UsersListLoaded) {
-        if (state.currentPage < state.totalPages) {
-          setState(() => _isLoadingMore = true);
+        if (state.currentPage < state.totalPages && !state.isLoadingMore) {
           _usersListCubit.loadNextPage(filters: _filters, perPage: _perPage);
         }
       }
@@ -122,7 +121,9 @@ class _UsersListScreenState extends State<UsersListScreen> {
     _debounceTimer?.cancel();
     _searchController.dispose();
     _scrollController.dispose();
-    _filterControllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _filterControllers.values) {
+      controller.dispose();
+    }
     _filterControllers.clear();
     super.dispose();
   }
@@ -187,15 +188,21 @@ class _UsersListScreenState extends State<UsersListScreen> {
                   }
                   return BlocBuilder<UsersListCubit, UsersListState>(
                     bloc: _usersListCubit,
-                    buildWhen: (previous, current) => previous != current,
-                    builder: (context, state) {
-                      if (state is UsersListLoaded) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) {
-                            setState(() => _isLoadingMore = false);
-                          }
-                        });
+                    buildWhen: (previous, current) {
+                      if (previous.runtimeType != current.runtimeType) {
+                        return true;
                       }
+                      if (previous is UsersListLoaded &&
+                          current is UsersListLoaded) {
+                        // Only rebuild if users list changed, loading state changed, or page changed
+                        return previous.users.length != current.users.length ||
+                            previous.isLoadingMore != current.isLoadingMore ||
+                            previous.currentPage != current.currentPage ||
+                            previous.totalUsers != current.totalUsers;
+                      }
+                      return false;
+                    },
+                    builder: (context, state) {
                       if (state is UsersListLoading) {
                         return Center(
                           child: CircularProgressIndicator(
@@ -255,7 +262,10 @@ class _UsersListScreenState extends State<UsersListScreen> {
                         return Column(
                           children: [
                             Padding(
-                              padding: EdgeInsets.all(16.w),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -279,58 +289,77 @@ class _UsersListScreenState extends State<UsersListScreen> {
                               ),
                             ),
                             Expanded(
-                              child: GridView.builder(
+                              child: ListView.builder(
                                 controller: _scrollController,
-                                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                                physics: const BouncingScrollPhysics(),
-                                cacheExtent: 500,
+                                padding: EdgeInsets.only(
+                                  left: 16.w,
+                                  right: 16.w,
+                                  top: 0,
+                                  bottom: 16.h,
+                                ),
+                                physics: const AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
+                                ),
+                                cacheExtent: 1000,
+                                shrinkWrap: false,
                                 addAutomaticKeepAlives: false,
                                 addRepaintBoundaries: true,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: _getCrossAxisCount(
-                                        context,
-                                      ),
-                                      crossAxisSpacing: 12.w,
-                                      mainAxisSpacing: 12.h,
-                                      childAspectRatio: 0.7,
-                                    ),
-                                itemCount: state.users.length,
+                                itemCount:
+                                    state.users.length +
+                                    (state.isLoadingMore ? 1 : 0),
                                 itemBuilder: (context, index) {
+                                  if (index == state.users.length) {
+                                    return RepaintBoundary(
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 12.h,
+                                        ),
+                                        child: Center(
+                                          child: SizedBox(
+                                            height: 24.h,
+                                            width: 24.w,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    AppColors.primary
+                                                        .withOpacity(0.6),
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
                                   final user = state.users[index];
+                                  final friendStatus =
+                                      _friendStatusMap[user.id] ??
+                                      FriendRequestStatus.none;
                                   return RepaintBoundary(
                                     key: ValueKey('user_${user.id}'),
-                                    child: UserCard(
-                                      user: user,
-                                      friendStatus:
-                                          _friendStatusMap[user.id] ??
-                                          FriendRequestStatus.none,
-                                      onProfileTap: () {
-                                        Navigator.of(context).pushNamed(
-                                          AppRoutes.userProfile,
-                                          arguments: user.id,
-                                        );
-                                      },
-                                      onMessageTap: () {
-                                        // Navigate to chat
-                                      },
-                                      onFriendTap: () {
-                                        _handleFriendAction(user.id);
-                                      },
+                                    child: Padding(
+                                      padding: EdgeInsets.only(bottom: 12.h),
+                                      child: UserCard(
+                                        user: user,
+                                        friendStatus: friendStatus,
+                                        onProfileTap: () {
+                                          Navigator.of(context).pushNamed(
+                                            AppRoutes.userProfile,
+                                            arguments: user.id,
+                                          );
+                                        },
+                                        onMessageTap: () {
+                                          _navigateToChat(user, friendStatus);
+                                        },
+                                        onFriendTap: () {
+                                          _handleFriendAction(user.id);
+                                        },
+                                      ),
                                     ),
                                   );
                                 },
                               ),
                             ),
-                            if (state.currentPage < state.totalPages)
-                              Padding(
-                                padding: EdgeInsets.all(16.h),
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
-                                  ),
-                                ),
-                              ),
                           ],
                         );
                       }
@@ -357,15 +386,6 @@ class _UsersListScreenState extends State<UsersListScreen> {
         _filters.experienceYears != null;
   }
 
-  int _getCrossAxisCount(BuildContext context) {
-    if (!mounted) return 2;
-    final width = MediaQuery.of(context).size.width;
-    if (width > 1200) return 4;
-    if (width > 800) return 3;
-    if (width > 600) return 2;
-    return 1;
-  }
-
   void _handleFriendAction(int userId) {
     final status = _friendStatusMap[userId] ?? FriendRequestStatus.none;
 
@@ -388,5 +408,34 @@ class _UsersListScreenState extends State<UsersListScreen> {
     if (_currentUserId == null) return null;
     final sortedIds = [_currentUserId!, userId]..sort();
     return '${sortedIds[0]}_${sortedIds[1]}';
+  }
+
+  void _navigateToChat(Doctor user, FriendRequestStatus friendStatus) {
+    // Check if user is a friend before allowing chat
+    if (friendStatus != FriendRequestStatus.friends) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'You need to be friends with ${user.firstName} ${user.lastName} to start chatting',
+          ),
+          backgroundColor: AppColors.warning,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Convert Doctor to ChatUser
+    final now = DateTime.now().toIso8601String();
+    final chatUser = ChatUser(
+      id: user.id,
+      userName: user.userName,
+      profileImage: user.profileImage,
+      createdAt: user.createdAt ?? now,
+      updatedAt: user.createdAt ?? now,
+    );
+
+
+    Navigator.of(context).pushNamed(AppRoutes.chat, arguments: chatUser);
   }
 }

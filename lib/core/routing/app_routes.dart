@@ -25,4 +25,5 @@ final class AppRoutes {
   static const String rentClinic = '/rent-clinic';
   static const String friendRequests = '/friend-requests';
   static const String notifications = '/notifications';
+  static const String chat = '/chat';
 }

@@ -30,47 +30,43 @@ class UserCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: InkWell(
         onTap: onProfileTap,
         borderRadius: BorderRadius.circular(12.r),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
             _CoverImage(coverImage: user.coverImage),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(12.w),
-                child: SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _ProfileHeader(
-                        user: user,
-                        friendStatus: friendStatus,
-                        onProfileTap: onProfileTap,
-                      ),
-                      SizedBox(height: 6.h),
-                      if (user.fields.isNotEmpty) _Specializations(fields: user.fields),
-                      SizedBox(height: 6.h),
-                      _UserStats(
-                        postsCount: user.posts.length,
-                        fieldsCount: user.fields.length,
-                      ),
-                      SizedBox(height: 6.h),
-                      _ActionButtons(
-                        onProfileTap: onProfileTap,
-                        onMessageTap: onMessageTap,
-                        onFriendTap: onFriendTap,
-                        friendStatus: friendStatus,
-                      ),
-                    ],
+            Padding(
+              padding: EdgeInsets.all(12.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ProfileHeader(
+                    user: user,
+                    friendStatus: friendStatus,
+                    onProfileTap: onProfileTap,
                   ),
-                ),
+                  SizedBox(height: 8.h),
+                  if (user.fields.isNotEmpty)
+                    _Specializations(fields: user.fields),
+                  SizedBox(height: 8.h),
+                  _UserStats(
+                    postsCount: user.posts.length,
+                    fieldsCount: user.fields.length,
+                  ),
+                  SizedBox(height: 12.h),
+                  _ActionButtons(
+                    onProfileTap: onProfileTap,
+                    onMessageTap: onMessageTap,
+                    onFriendTap: onFriendTap,
+                    friendStatus: friendStatus,
+                  ),
+                ],
               ),
             ),
           ],
@@ -88,6 +84,7 @@ class _CoverImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       height: 180.h,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -109,14 +106,14 @@ class _CoverImage extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: coverImage!,
                 fit: BoxFit.cover,
+                width: double.infinity,
+                height: 180.h,
                 memCacheWidth: 400,
                 memCacheHeight: 200,
                 maxWidthDiskCache: 800,
                 maxHeightDiskCache: 400,
-                placeholder: (_, __) => ShimmerPlaceholder(
-                  width: double.infinity,
-                  height: double.infinity,
-                ),
+                placeholder: (_, __) =>
+                    ShimmerPlaceholder(width: double.infinity, height: 180.h),
               ),
             )
           : null,
@@ -201,10 +198,7 @@ class _UserAvatar extends StatelessWidget {
         height: 60.w,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white,
-            width: 3,
-          ),
+          border: Border.all(color: Colors.white, width: 3),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -227,7 +221,8 @@ class _UserAvatar extends StatelessWidget {
                     height: 60.w,
                     shape: BoxShape.circle,
                   ),
-                  errorWidget: (_, __, ___) => _AvatarFallback(firstName: firstName),
+                  errorWidget: (_, __, ___) =>
+                      _AvatarFallback(firstName: firstName),
                 )
               : _AvatarFallback(firstName: firstName),
         ),
@@ -318,10 +313,7 @@ class _Specializations extends StatelessWidget {
       children: fields.take(2).map((field) {
         return Container(
           key: ValueKey('field_${field.id}'),
-          padding: EdgeInsets.symmetric(
-            horizontal: 6.w,
-            vertical: 2.h,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
           decoration: BoxDecoration(
             color: AppColors.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(6.r),
@@ -346,10 +338,7 @@ class _UserStats extends StatelessWidget {
   final int postsCount;
   final int fieldsCount;
 
-  const _UserStats({
-    required this.postsCount,
-    required this.fieldsCount,
-  });
+  const _UserStats({required this.postsCount, required this.fieldsCount});
 
   @override
   Widget build(BuildContext context) {
@@ -358,17 +347,11 @@ class _UserStats extends StatelessWidget {
       children: [
         Text(
           '$postsCount ${AppTexts.posts}',
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 10.sp, color: AppColors.textSecondary),
         ),
         Text(
           '$fieldsCount ${AppTexts.fields}',
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 10.sp, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -421,4 +404,3 @@ class _ActionButtons extends StatelessWidget {
     );
   }
 }
-
