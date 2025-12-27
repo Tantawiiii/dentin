@@ -129,133 +129,121 @@ class AvailableTimesWidgetState extends State<AvailableTimesWidget> {
           ),
         ),
         SizedBox(height: 16.h),
-        Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(
-              color: AppColors.border,
-              width: 1.5,
+        Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppTexts.day,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      BuildDropdownField(
+                        label: AppTexts.day,
+                        value: _selectedDay,
+                        items: _days,
+                        hint: AppTexts.day,
+                       // icon: Icons.calendar_today_outlined,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedDay = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 6.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppTexts.from,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      BuildDropdownField(
+                        label: AppTexts.from,
+                        value: _selectedFrom,
+                        items: _timeOptions,
+                        hint: AppTexts.from,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedFrom = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 6.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppTexts.to,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      BuildDropdownField(
+                        label: AppTexts.to,
+                        value: _selectedTo,
+                        items: _timeOptions,
+                        hint: AppTexts.to,
+                       // icon: Icons.access_time_outlined,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedTo = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppTexts.day,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        BuildDropdownField(
-                          label: AppTexts.day,
-                          value: _selectedDay,
-                          items: _days,
-                          hint: AppTexts.day,
-                          icon: Icons.calendar_today_outlined,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedDay = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+            SizedBox(height: 16.h),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _addTimeSlot,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppTexts.from,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        BuildDropdownField(
-                          label: AppTexts.from,
-                          value: _selectedFrom,
-                          items: _timeOptions,
-                          hint: AppTexts.from,
-                          icon: Icons.access_time_outlined,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedFrom = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppTexts.to,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        BuildDropdownField(
-                          label: AppTexts.to,
-                          value: _selectedTo,
-                          items: _timeOptions,
-                          hint: AppTexts.to,
-                          icon: Icons.access_time_outlined,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedTo = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.h),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _addTimeSlot,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textOnPrimary,
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    AppTexts.addTimeSlot,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  AppTexts.addTimeSlot,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         if (_errorMessage != null) ...[
           SizedBox(height: 8.h),
@@ -307,7 +295,7 @@ class AvailableTimesWidgetState extends State<AvailableTimesWidget> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: 6.w),
                   Text(
                     '${slot.from} - ${slot.to}',
                     style: TextStyle(

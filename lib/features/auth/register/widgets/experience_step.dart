@@ -244,12 +244,12 @@ class ExperienceStep extends StatelessWidget {
               hint: AppTexts.addTool,
               addButtonText: AppTexts.addToolButton,
               icon: Icons.build_outlined,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return AppTexts.toolsRequired;
-                }
-                return null;
-              },
+              // validator: (value) {
+              //   if (value == null || value.isEmpty) {
+              //     return AppTexts.toolsRequired;
+              //   }
+              //   return null;
+              // },
             ),
             ChipInputField(
               label: AppTexts.skills,

@@ -9,10 +9,10 @@ import '../../core/constant/app_texts.dart';
 import '../../core/extensions/image_picker_extension.dart';
 import '../../core/di/inject.dart' as di;
 import '../../shared/widgets/app_toast.dart';
-import '../../features/home/data/repo/post_repository.dart';
 import 'data/models/product_models.dart';
 import 'data/repo/product_repository.dart';
 import '../auth/register/widgets/image_source_dialog.dart';
+import '../auth/register/data/repo/register_repository.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -30,7 +30,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   final ImagePicker _imagePicker = ImagePicker();
   final ProductRepository _productRepository = di.sl<ProductRepository>();
-  final PostRepository _postRepository = di.sl<PostRepository>();
+  final RegisterRepository _registerRepository = di.sl<RegisterRepository>();
 
   File? _imageFile;
   bool _isNew = true;
@@ -86,7 +86,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     try {
-      final mediaResponse = await _postRepository.uploadMedia(_imageFile!);
+      final mediaResponse = await _registerRepository.uploadMedia(_imageFile!);
       final imageId = mediaResponse.data?.id;
 
       if (imageId == null) {

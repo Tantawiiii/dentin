@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'storage_service.dart';
+import 'firebase_service.dart';
 
 class FCMService {
   static final FCMService _instance = FCMService._internal();
@@ -29,9 +30,17 @@ class FCMService {
         await _getFCMToken(storageService);
 
         // Listen for token refresh
-        _messaging.onTokenRefresh.listen((newToken) {
+        _messaging.onTokenRefresh.listen((newToken) async {
           _fcmToken = newToken;
-          _saveFCMToken(newToken, storageService);
+          await _saveFCMToken(newToken, storageService);
+          
+          // Update FCM token in Firebase Realtime Database
+          final userData = storageService.getUserData();
+          if (userData != null) {
+            final firebaseService = FirebaseService();
+            await firebaseService.saveUserFCMToken(userData.id, newToken);
+          }
+          
           if (kDebugMode) {
             print('🔄 FCM Token refreshed: $newToken');
           }
@@ -56,6 +65,14 @@ class FCMService {
       _fcmToken = await _messaging.getToken();
       if (_fcmToken != null) {
         await _saveFCMToken(_fcmToken!, storageService);
+        
+        // Save FCM token to Firebase Realtime Database for Cloud Functions
+        final userData = storageService.getUserData();
+        if (userData != null) {
+          final firebaseService = FirebaseService();
+          await firebaseService.saveUserFCMToken(userData.id, _fcmToken!);
+        }
+        
         if (kDebugMode) {
           print('✅ FCM Token: $_fcmToken');
         }

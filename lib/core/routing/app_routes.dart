@@ -20,6 +20,8 @@ final class AppRoutes {
   static const String userInfo = '/user-info';
   static const String orderDetails = '/order-details';
   static const String profile = '/profile';
+  static const String userProfile = '/user-profile';
+  static const String usersList = '/users-list';
   static const String rentClinic = '/rent-clinic';
   static const String friendRequests = '/friend-requests';
   static const String notifications = '/notifications';
