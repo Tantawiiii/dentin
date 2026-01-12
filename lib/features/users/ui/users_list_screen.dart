@@ -411,7 +411,6 @@ class _UsersListScreenState extends State<UsersListScreen> {
   }
 
   void _navigateToChat(Doctor user, FriendRequestStatus friendStatus) {
-    // Check if user is a friend before allowing chat
     if (friendStatus != FriendRequestStatus.friends) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -434,7 +433,6 @@ class _UsersListScreenState extends State<UsersListScreen> {
       createdAt: user.createdAt ?? now,
       updatedAt: user.createdAt ?? now,
     );
-
 
     Navigator.of(context).pushNamed(AppRoutes.chat, arguments: chatUser);
   }

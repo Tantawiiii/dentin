@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constant/app_colors.dart';
@@ -18,177 +19,255 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper>
     with SingleTickerProviderStateMixin {
   final ConnectivityService _connectivityService = ConnectivityService();
   bool _isConnected = true;
+  bool _isChecking = false;
   late AnimationController _animationController;
-  late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  StreamSubscription<bool>? _connectionSubscription;
+  Timer? _autoCheckTimer;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-
-    _slideAnimation = Tween<double>(begin: -1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+      duration: const Duration(milliseconds: 400),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+    _checkConnection();
 
-    // Check initial connection
-    _connectivityService.checkConnection().then((connected) {
+    _connectionSubscription = _connectivityService.connectionStream.listen((
+      connected,
+    ) {
       if (mounted) {
         setState(() {
           _isConnected = connected;
-        });
-        if (!connected) {
-          _animationController.forward();
-        }
-      }
-    });
-
-    // Listen to connection changes
-    _connectivityService.connectionStream.listen((connected) {
-      if (mounted) {
-        setState(() {
-          _isConnected = connected;
+          _isChecking = false;
         });
 
         if (connected) {
-          // Hide offline banner when connected
           _animationController.reverse();
+          _autoCheckTimer?.cancel();
         } else {
-          // Show offline banner when disconnected
           _animationController.forward();
+          _startAutoCheck();
         }
+      }
+    });
+    _startAutoCheck();
+  }
+
+  void _startAutoCheck() {
+    _autoCheckTimer?.cancel();
+    _autoCheckTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (!_isConnected && mounted) {
+        _checkConnection();
+      } else {
+        timer.cancel();
       }
     });
   }
 
+  Future<void> _checkConnection() async {
+    if (_isChecking) return;
+
+    setState(() {
+      _isChecking = true;
+    });
+
+    try {
+      final connected = await _connectivityService.checkConnection();
+      if (mounted) {
+        setState(() {
+          _isConnected = connected;
+          _isChecking = false;
+        });
+
+        if (connected) {
+          _animationController.reverse();
+          _autoCheckTimer?.cancel();
+        } else {
+          _animationController.forward();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isChecking = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _connectionSubscription?.cancel();
+    _autoCheckTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Stack(
+    return Scaffold(
+      body: Stack(
         children: [
-          // Main app content
           widget.child,
 
-          // Offline banner
           if (!_isConnected)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.0, -1.0),
-                  end: Offset.zero,
-                ).animate(_slideAnimation),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: _buildOfflineBanner(),
-                ),
-              ),
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: _buildNoInternetScreen(),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildOfflineBanner() {
+  Widget _buildNoInternetScreen() {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.error, AppColors.error.withValues(alpha: 0.9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.error.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      color: AppColors.background,
       child: SafeArea(
-        bottom: false,
-        child: Row(
-          children: [
-            // WiFi off icon with animation
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 500),
-              builder: (context, value, child) {
-                return Transform.rotate(
-                  angle: value * 0.1,
-                  child: Icon(
-                    Icons.wifi_off_rounded,
-                    color: Colors.white,
-                    size: 24.sp,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.elasticOut,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Container(
+                        width: 120.w,
+                        height: 120.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.error.withValues(alpha: 0.1),
+                        ),
+                        child: Icon(
+                          Icons.wifi_off_rounded,
+                          size: 64.sp,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 32.h),
+
+                // Title
+                Text(
+                  AppTexts.noInternetTitle,
+                  style: TextStyle(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
-                );
-              },
-            ),
-            SizedBox(width: 12.w),
-            // Message
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    AppTexts.noInternetConnection,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16.h),
+
+                // Description
+                Text(
+                  AppTexts.noInternetDescription,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 48.h),
+
+                // Retry button
+                ElevatedButton.icon(
+                  onPressed: _isChecking ? null : _checkConnection,
+                  icon: _isChecking
+                      ? SizedBox(
+                          width: 20.w,
+                          height: 20.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textOnPrimary,
+                            ),
+                          ),
+                        )
+                      : Icon(Icons.refresh_rounded, size: 24.sp),
+                  label: Text(
+                    _isChecking
+                        ? AppTexts.connecting
+                        : AppTexts.retryConnection,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14.sp,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    AppTexts.checkInternetConnection,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textOnPrimary,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 32.w,
+                      vertical: 16.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+
+                // Check connection button
+                TextButton.icon(
+                  onPressed: _isChecking ? null : _checkConnection,
+                  icon: Icon(Icons.settings_outlined, size: 20.sp),
+                  label: Text(
+                    AppTexts.checkConnection,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12.sp,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
-              ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.w,
+                      vertical: 12.h,
+                    ),
+                  ),
+                ),
+
+                // Auto-check indicator
+                SizedBox(height: 32.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16.sp,
+                      color: AppColors.textTertiary,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Checking connection automatically...',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            // Retry button
-            IconButton(
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: Colors.white,
-                size: 20.sp,
-              ),
-              onPressed: () async {
-                final connected = await _connectivityService.checkConnection();
-                if (connected && mounted) {
-                  setState(() {
-                    _isConnected = true;
-                  });
-                  _animationController.reverse();
-                }
-              },
-              tooltip: AppTexts.retry,
-            ),
-          ],
+          ),
         ),
       ),
     );

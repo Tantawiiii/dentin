@@ -32,9 +32,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final ProductRepository _productRepository = di.sl<ProductRepository>();
   final RegisterRepository _registerRepository = di.sl<RegisterRepository>();
 
-  File? _imageFile;
+  List<File> _imageFiles = [];
+  Map<int, double> _uploadProgress = {};
   bool _isNew = true;
   bool _isSubmitting = false;
+  String? _selectedType;
 
   @override
   void dispose() {
@@ -45,7 +47,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     ImageSourceDialog.show(
       context,
       onCameraSelected: () async {
@@ -54,21 +56,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
         );
         if (file != null) {
           setState(() {
-            _imageFile = file;
+            _imageFiles.add(file);
           });
         }
       },
       onGallerySelected: () async {
-        final file = await _imagePicker.pickImageFile(
-          source: ImageSource.gallery,
-        );
-        if (file != null) {
+        final files = await _imagePicker.pickMultipleImageFiles();
+        if (files.isNotEmpty) {
           setState(() {
-            _imageFile = file;
+            _imageFiles.addAll(files);
           });
         }
       },
     );
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _imageFiles.removeAt(index);
+    });
   }
 
   Future<void> _submit() async {
@@ -76,7 +82,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    if (_imageFile == null) {
+    if (_imageFiles.isEmpty) {
       AppToast.showError(AppTexts.productImageRequired, context: context);
       return;
     }
@@ -86,22 +92,69 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     try {
-      final mediaResponse = await _registerRepository.uploadMedia(_imageFile!);
-      final imageId = mediaResponse.data?.id;
+      final List<int> galleryIds = [];
+      _uploadProgress.clear();
 
-      if (imageId == null) {
-        throw Exception('Failed to upload image');
+      for (int index = 0; index < _imageFiles.length; index++) {
+        if (!mounted) return;
+        setState(() {
+          _uploadProgress[index] = 0.1;
+        });
+
+        final imageFile = _imageFiles[index];
+
+        final mediaResponse = await _registerRepository.uploadMedia(imageFile);
+
+        if (mounted) {
+          setState(() {
+            _uploadProgress[index] = 0.9;
+          });
+        }
+
+        final imageId = mediaResponse.data?.id;
+
+        if (imageId == null) {
+          throw Exception('Failed to upload image ${index + 1}');
+        }
+
+        galleryIds.add(imageId);
+
+        if (mounted) {
+          setState(() {
+            _uploadProgress[index] = 1.0;
+          });
+        }
+      }
+
+      if (galleryIds.isEmpty) {
+        throw Exception('No images were uploaded');
+      }
+
+      // Clear progress after all uploads complete
+      if (mounted) {
+        setState(() {
+          _uploadProgress.clear();
+        });
       }
 
       final price = num.tryParse(_priceController.text.trim()) ?? 0;
       final discount = num.tryParse(_discountController.text.trim()) ?? 0;
 
+      if (_selectedType == null) {
+        AppToast.showError(AppTexts.productTypeRequired, context: context);
+        setState(() {
+          _isSubmitting = false;
+        });
+        return;
+      }
+
       final request = CreateProductRequest(
         name: _nameController.text.trim(),
+        type: _selectedType!,
         price: price,
         discount: discount,
         description: _descriptionController.text.trim(),
-        image: imageId,
+        gallery: galleryIds,
         isNew: _isNew,
       );
 
@@ -118,6 +171,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
     } catch (e) {
       if (!mounted) return;
       print("Error: $e");
+      // Clear progress on error
+      setState(() {
+        _uploadProgress.clear();
+      });
       AppToast.showError(
         e.toString().replaceFirst('Exception: ', ''),
         context: context,
@@ -126,6 +183,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       if (mounted) {
         setState(() {
           _isSubmitting = false;
+          _uploadProgress.clear();
         });
       }
     }
@@ -136,7 +194,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppTexts.addProduct),
+        title: Text(AppTexts.addProduct , style: TextStyle(
+          fontSize: 18.sp
+        ),),
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
@@ -147,8 +207,99 @@ class _AddProductScreenState extends State<AddProductScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (_imageFiles.isNotEmpty)
+                SizedBox(
+                  height: 160.h,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _imageFiles.length,
+                    itemBuilder: (context, index) {
+                      final progress = _uploadProgress[index] ?? 0.0;
+                      final isUploading = _isSubmitting && progress < 1.0;
+
+                      return Container(
+                        margin: EdgeInsets.only(right: 8.w),
+                        width: 160.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16.r),
+                              child: Image.file(
+                                _imageFiles[index],
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            // Upload progress overlay
+                            if (isUploading)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(16.r),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        value: progress > 0 ? progress : null,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.primary,
+                                            ),
+                                        strokeWidth: 3,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      Text(
+                                        '${(progress * 100).toInt()}%',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            Positioned(
+                              top: 4.h,
+                              right: 4.w,
+                              child: GestureDetector(
+                                onTap: isUploading
+                                    ? null
+                                    : () => _removeImage(index),
+                                child: Container(
+                                  padding: EdgeInsets.all(4.w),
+                                  decoration: BoxDecoration(
+                                    color: isUploading
+                                        ? AppColors.textSecondary
+                                        : AppColors.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 16.sp,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              if (_imageFiles.isNotEmpty) SizedBox(height: 12.h),
               GestureDetector(
-                onTap: _pickImage,
+                onTap: _pickImages,
                 child: Container(
                   height: 160.h,
                   width: double.infinity,
@@ -157,34 +308,34 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: _imageFile != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Image.file(
-                            _imageFile!,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo_outlined,
-                              size: 40.sp,
-                              color: AppColors.textSecondary,
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              AppTexts.productImageTapToAdd,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_a_photo_outlined,
+                        size: 40.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        AppTexts.productImageTapToAdd,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textSecondary,
                         ),
+                      ),
+                      if (_imageFiles.isNotEmpty) ...[
+                        SizedBox(height: 4.h),
+                        Text(
+                          '(${_imageFiles.length} ${_imageFiles.length == 1 ? 'image' : 'images'})',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               SizedBox(height: 20.h),
@@ -253,6 +404,34 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 },
               ),
               SizedBox(height: 12.h),
+              DropdownButtonFormField<String>(
+                value: _selectedType,
+                decoration: const InputDecoration(
+                  labelText: AppTexts.productType,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'person',
+                    child: Text(AppTexts.productTypePerson),
+                  ),
+                  DropdownMenuItem(
+                    value: 'company',
+                    child: Text(AppTexts.productTypeCompany),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedType = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return AppTexts.productTypeRequired;
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 12.h),
               Row(
                 children: [
                   Switch(
@@ -294,6 +473,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                 ),
               ),
+              SizedBox(height: 44.h),
             ],
           ),
         ),

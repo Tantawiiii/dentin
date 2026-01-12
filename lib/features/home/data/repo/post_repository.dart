@@ -31,6 +31,33 @@ class PostRepository {
     }
   }
 
+  Future<void> reportPost({
+    required int postId,
+    required String complaint,
+    String? note,
+  }) async {
+    try {
+      final response = await _apiService.post<dynamic>(
+        ApiConstants.reportPost(postId),
+        data: {
+          'complaint': complaint,
+          if (note != null && note.isNotEmpty) 'note': note,
+        },
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        return;
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to report post: ${e.toString()}');
+    }
+  }
+
   Future<MediaUploadResponse> uploadMedia(
     File file, {
     ProgressCallback? onSendProgress,
@@ -63,7 +90,7 @@ class PostRepository {
   Future<CreatePostResponse> createPost(CreatePostRequest request) async {
     try {
       final response = await _apiService.post<dynamic>(
-        '/api/post',
+        ApiConstants.postCreate,
         data: request.toJson(),
       );
 
@@ -133,6 +160,44 @@ class PostRepository {
       throw Exception(_extractErrorMessageFromDioException(e));
     } catch (e) {
       throw Exception('Failed to like post: ${e.toString()}');
+    }
+  }
+
+  Future<void> togglePostHidden(int postId) async {
+    try {
+      final response = await _apiService.put<dynamic>(
+        ApiConstants.togglePostHidden(postId),
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        return;
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to update post hidden state: ${e.toString()}');
+    }
+  }
+
+  Future<void> togglePostSaved(int postId) async {
+    try {
+      final response = await _apiService.put<dynamic>(
+        ApiConstants.togglePostSaved(postId),
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        return;
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to update post saved state: ${e.toString()}');
     }
   }
 

@@ -8,6 +8,7 @@ import '../../core/constant/app_texts.dart';
 import '../../core/di/inject.dart' as di;
 import '../../shared/widgets/app_text_field.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../auth/register/data/specialties.dart';
 import 'data/models/job_models.dart';
 import 'data/repo/job_repository.dart';
 import 'job_details_screen.dart';
@@ -36,6 +37,7 @@ class _JobsScreenState extends State<JobsScreen> {
   bool _isLoadingMore = false;
   String? _errorMessage;
   String _selectedJobType = AppTexts.jobsAllJobs;
+  String? _selectedSpecialization;
   Timer? _searchDebounceTimer;
   String _previousSearchQuery = '';
 
@@ -86,7 +88,10 @@ class _JobsScreenState extends State<JobsScreen> {
     try {
       final pageToLoad = refresh ? 1 : _currentPage;
 
-      final response = await _jobRepository.getJobs(page: pageToLoad);
+      final response = await _jobRepository.getJobs(
+        page: pageToLoad,
+        specialization: _selectedSpecialization,
+      );
 
       if (mounted) {
         setState(() {
@@ -127,7 +132,6 @@ class _JobsScreenState extends State<JobsScreen> {
 
     List<Job> filtered = List.from(_allJobs);
 
-
     if (searchQuery.isNotEmpty) {
       filtered = filtered.where((job) {
         final title = job.title.toLowerCase();
@@ -135,7 +139,8 @@ class _JobsScreenState extends State<JobsScreen> {
         final location = job.location.toLowerCase();
         final companyName = job.company.name?.toLowerCase() ?? '';
         return title.contains(searchQuery) ||
-            description.contains(searchQuery) || location.contains(searchQuery) ||
+            description.contains(searchQuery) ||
+            location.contains(searchQuery) ||
             companyName.contains(searchQuery);
       }).toList();
     }
@@ -217,6 +222,16 @@ class _JobsScreenState extends State<JobsScreen> {
       _scrollController.jumpTo(0);
     }
     _applyFilters();
+  }
+
+  void _handleSpecializationFilter(String? specialization) {
+    setState(() {
+      _selectedSpecialization = specialization;
+    });
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    _loadJobs(refresh: true);
   }
 
   @override
@@ -305,6 +320,23 @@ class _JobsScreenState extends State<JobsScreen> {
               ],
             ),
           ),
+          SizedBox(height: 8.h),
+          SizedBox(
+            height: 40.h,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildSpecializationChip(AppTexts.jobsAllSpecializations),
+                SizedBox(width: 4.w),
+                ...Specialties.specialties.map((specialty) {
+                  return Padding(
+                    padding: EdgeInsets.only(right: 4.w),
+                    child: _buildSpecializationChip(specialty),
+                  );
+                }),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -318,6 +350,33 @@ class _JobsScreenState extends State<JobsScreen> {
       onSelected: (selected) {
         if (selected) {
           _handleJobTypeFilter(label);
+        }
+      },
+      selectedColor: AppColors.primary,
+      checkmarkColor: AppColors.textOnPrimary,
+      labelStyle: TextStyle(
+        color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: AppColors.surfaceVariant,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+    );
+  }
+
+  Widget _buildSpecializationChip(String label) {
+    final isSelected =
+        _selectedSpecialization == label ||
+        (label == AppTexts.jobsAllSpecializations &&
+            _selectedSpecialization == null);
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          _handleSpecializationFilter(
+            label == AppTexts.jobsAllSpecializations ? null : label,
+          );
         }
       },
       selectedColor: AppColors.primary,
