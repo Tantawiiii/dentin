@@ -493,7 +493,26 @@ final class AppTexts {
 
   // Network Connectivity
   static const String noInternetConnection = 'No Internet Connection';
-  static const String checkInternetConnection = 'Please check your internet connection and try again';
+  static const String checkInternetConnection =
+      'Please check your internet connection and try again';
   static const String connecting = 'Connecting...';
   static const String connected = 'Connected';
+
+  // Users List Screen
+  static const String medicalProfessionals = 'Medical Professionals';
+  static const String searchByUsernameEmail = 'name, email...';
+  static const String perPage = 'per page';
+  static const String advancedFilters = 'Advanced Filters';
+  static const String applyFilters = 'Apply Filters';
+
+  static const String clearFilters = 'Clear filters';
+  static const String showingUsers = 'Showing';
+  static const String ofUsers = 'of';
+  static const String users = 'users';
+  static const String noUsersFound = 'No users found';
+  static const String view = 'View';
+  static const String msg = 'Msg';
+  static const String add = 'Add';
+  static const String posts = 'posts';
+  static const String fields = 'fields';
 }

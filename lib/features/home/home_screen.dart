@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.8) {
       final state = _postCubit.state;
@@ -69,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
           body: Padding(
             padding: const EdgeInsets.all(8.0),
             child: BlocBuilder<PostCubit, PostState>(
+              buildWhen: (previous, current) => previous != current,
               builder: (context, state) {
                 if (state is PostLoading) {
                   return CustomScrollView(
@@ -170,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               );
                             },
                             childCount: posts.length,
-                            addAutomaticKeepAlives: true,
+                            addAutomaticKeepAlives: false,
                             addRepaintBoundaries: true,
                           ),
                         ),

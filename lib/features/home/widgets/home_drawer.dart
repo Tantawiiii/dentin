@@ -26,48 +26,69 @@ class HomeDrawer extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              child: Stack(
                 children: [
-                  if (userData?.profileImage != null)
-                    CircleAvatar(
-                      radius: 40.r,
-                      backgroundImage: NetworkImage(userData!.profileImage!),
-                    )
-                  else
-                    CircleAvatar(
-                      radius: 40.r,
-                      backgroundColor: AppColors.surface,
-                      child: Icon(
-                        Icons.person,
-                        size: 40.sp,
-                        color: AppColors.textSecondary,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (userData?.profileImage != null)
+                        CircleAvatar(
+                          radius: 40.r,
+                          backgroundImage: NetworkImage(
+                            userData!.profileImage!,
+                          ),
+                        )
+                      else
+                        CircleAvatar(
+                          radius: 40.r,
+                          backgroundColor: AppColors.surface,
+                          child: Icon(
+                            Icons.person,
+                            size: 40.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      SizedBox(height: 16.h),
+                      Text(
+                        '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      if (userData != null && userData.email.isNotEmpty) ...[
+                        SizedBox(height: 4.h),
+                        Text(
+                          userData.email,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.primary.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        color: AppColors.textSecondary,
+                        size: 24.sp,
+                      ),
+                      onPressed: () {
+                        sliderDrawerKey.currentState?.closeSlider();
+                      },
                     ),
                   ),
-                  if (userData != null && userData.email.isNotEmpty) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      userData.email,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.primary.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
             Expanded(
-              child: Column(
+              child: ListView(
+                shrinkWrap: true,
                 children: [
                   ListTile(
                     leading: Icon(
@@ -122,7 +143,24 @@ class HomeDrawer extends StatelessWidget {
                       Navigator.of(context).pushNamed(AppRoutes.friendRequests);
                     },
                   ),
-                  const Spacer(),
+                  const Divider(),
+                  ListTile(
+                    leading: Icon(
+                      Icons.people_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      'Medical Professionals',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      Navigator.of(context).pushNamed(AppRoutes.usersList);
+                    },
+                  ),
                 ],
               ),
             ),

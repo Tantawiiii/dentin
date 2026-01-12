@@ -59,6 +59,30 @@ class FirebaseService {
     return databaseRef.child('notifications/$userId');
   }
 
+  // Get user FCM tokens reference (to store FCM tokens for push notifications)
+  DatabaseReference getUserFCMTokensRef(int userId) {
+    return databaseRef.child('users/$userId/fcm_tokens');
+  }
+
+  // Save FCM token for a user (to be used by Cloud Functions for push notifications)
+  Future<void> saveUserFCMToken(int userId, String fcmToken) async {
+    try {
+      final tokenRef = getUserFCMTokensRef(userId).child(fcmToken);
+      await tokenRef.set({
+        'token': fcmToken,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+        'platform': 'flutter',
+      });
+      if (kDebugMode) {
+        print('✅ FCM token saved for user: $userId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error saving FCM token: $e');
+      }
+    }
+  }
+
   // Send notification to Realtime Database
   // Note: This only saves to database, doesn't send push notification
   // For push notifications, use FCMService or send to backend API

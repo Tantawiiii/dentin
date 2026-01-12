@@ -8,9 +8,13 @@ import 'package:dentin/features/home/main_navigation_screen.dart';
 import 'package:dentin/features/onboarding/onboarding_screen.dart';
 import 'package:dentin/features/onboarding/splash_screen.dart';
 import 'package:dentin/features/profile/ui/profile_screen.dart';
+import 'package:dentin/features/users/ui/users_list_screen.dart';
+import 'package:dentin/features/users/ui/user_profile_screen.dart';
 import 'package:dentin/features/rent_clinic/ui/rent_list_screen.dart';
 import 'package:dentin/features/friends/ui/friend_requests_screen.dart';
 import 'package:dentin/features/notifications/ui/notifications_screen.dart';
+import 'package:dentin/features/messages/ui/chat_detail_screen.dart';
+import 'package:dentin/features/messages/data/models/chat_user_model.dart';
 import 'package:flutter/material.dart';
 
 import 'app_routes.dart';
@@ -53,7 +57,22 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
 
     case AppRoutes.profile:
+      final userId = settings.arguments as int?;
+      if (userId != null) {
+        return MaterialPageRoute(
+          builder: (_) => UserProfileScreen(userId: userId),
+        );
+      }
       return MaterialPageRoute(builder: (_) => const ProfileScreen());
+
+    case AppRoutes.userProfile:
+      final userId = settings.arguments as int;
+      return MaterialPageRoute(
+        builder: (_) => UserProfileScreen(userId: userId),
+      );
+
+    case AppRoutes.usersList:
+      return MaterialPageRoute(builder: (_) => const UsersListScreen());
 
     case AppRoutes.rentClinic:
       return MaterialPageRoute(builder: (_) => const RentListScreen());
@@ -63,6 +82,12 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
 
     case AppRoutes.notifications:
       return MaterialPageRoute(builder: (_) => const NotificationsScreen());
+
+    case AppRoutes.chat:
+      final chatUser = settings.arguments as ChatUser;
+      return MaterialPageRoute(
+        builder: (_) => ChatDetailScreen(receiverUser: chatUser),
+      );
 
     default:
       return MaterialPageRoute(

@@ -8,7 +8,7 @@ Widget BuildDropdownField({
   required String? value,
   required List<String> items,
   required String hint,
-  required IconData icon,
+  IconData? icon,
   required Function(String?) onChanged,
   String? title,
 }) {
@@ -22,11 +22,13 @@ Widget BuildDropdownField({
       hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 10.sp),
       filled: true,
       fillColor: isFocused ? AppColors.surface : AppColors.surfaceVariant,
-      prefixIcon: Icon(
-        icon,
-        color: isFocused ? AppColors.primary : AppColors.textSecondary,
-        size: 20.sp,
-      ),
+      prefixIcon: icon != null
+          ? Icon(
+              icon,
+              color: isFocused ? AppColors.primary : AppColors.textSecondary,
+              size: 20.sp,
+            )
+          : null,
       suffixIcon: Icon(
         Icons.arrow_drop_down,
         color: AppColors.textSecondary,
@@ -79,8 +81,8 @@ Widget BuildDropdownField({
           item,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
           ),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
@@ -89,8 +91,8 @@ Widget BuildDropdownField({
     },
     style: TextStyle(
       color: AppColors.textPrimary,
-      fontSize: 15.sp,
-      fontWeight: FontWeight.w500,
+      fontSize: 14.sp,
+      fontWeight: FontWeight.w600,
     ),
     dropdownColor: AppColors.surface,
     iconSize: 0,

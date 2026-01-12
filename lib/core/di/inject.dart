@@ -25,6 +25,9 @@ import '../../features/rent_clinic/data/repo/rent_repository.dart';
 import '../../features/rent_clinic/cubit/rent_cubit.dart';
 import '../../features/friends/cubit/friend_requests_cubit.dart';
 import '../../features/notifications/cubit/notifications_cubit.dart';
+import '../../features/home/services/firebase_comments_service.dart';
+import '../../features/users/data/repo/users_repository.dart';
+import '../../features/users/cubit/users_list_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -83,6 +86,9 @@ Future<void> init() async {
   // Rent Repository
   sl.registerLazySingleton(() => RentRepository(sl<ApiService>()));
 
+  // Users Repository
+  sl.registerLazySingleton(() => UsersRepository(sl<ApiService>()));
+
   sl.registerFactory(
     () => LoginCubit(
       repository: sl<LoginRepository>(),
@@ -129,5 +135,15 @@ Future<void> init() async {
   // Notifications Cubit
   sl.registerLazySingleton(
     () => NotificationsCubit(sl<FirebaseService>(), sl<StorageService>()),
+  );
+
+  // Users List Cubit
+  sl.registerFactory(() => UsersListCubit(sl<UsersRepository>()));
+
+  // Firebase Comments Service
+  sl.registerLazySingleton(
+    () => FirebaseCommentsService(
+      firebaseService: sl<FirebaseService>(),
+    ),
   );
 }

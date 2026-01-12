@@ -19,7 +19,7 @@ class FileUploadField extends StatelessWidget {
 
   final String label;
   final File? file;
-  final String? imageUrl; // URL for existing image/document
+  final String? imageUrl;
   final String? error;
   final VoidCallback onTap;
   final VoidCallback onRemove;
@@ -211,9 +211,7 @@ class FileUploadField extends StatelessWidget {
             placeholder: (context, url) => Container(
               color: AppColors.surfaceVariant,
               child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
+                child: CircularProgressIndicator(color: AppColors.primary),
               ),
             ),
             errorWidget: (context, url, error) => Container(
@@ -294,4 +292,3 @@ class FileUploadField extends StatelessWidget {
     }
   }
 }
-

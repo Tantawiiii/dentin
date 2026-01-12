@@ -31,7 +31,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
   File? _selectedImage;
   File? _selectedVideo;
   List<File> _selectedGallery = [];
-  bool _isAdRequest = true;
+  bool _isAdRequest = false;
   bool _isCreating = false;
 
   UserData? _userData;
@@ -98,7 +98,6 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
       _isCreating = true;
     });
 
-    // Fire-and-forget; actual result is handled in BlocListener
     widget.postCubit.createPost(
       content: _contentController.text.trim().isNotEmpty
           ? _contentController.text.trim()

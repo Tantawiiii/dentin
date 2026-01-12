@@ -14,6 +14,20 @@ class RegisterCubit extends Cubit<RegisterState> {
   final StorageService _storageService;
   final DioClient _dioClient;
 
+  // Cached uploaded file IDs to avoid re-uploading on retry
+  int? _cachedProfileImageId;
+  int? _cachedCvId;
+  int? _cachedCoverImageId;
+  int? _cachedGraduationCertificateId;
+  List<int>? _cachedCourseCertificateIds;
+
+  // Track which files were uploaded to avoid re-uploading if files haven't changed
+  File? _lastProfileImage;
+  File? _lastCv;
+  File? _lastCoverImage;
+  File? _lastGraduationCertificate;
+  List<File>? _lastCourseCertificates;
+
   RegisterCubit({
     required RegisterRepository repository,
     required StorageService storageService,
@@ -22,6 +36,31 @@ class RegisterCubit extends Cubit<RegisterState> {
        _storageService = storageService,
        _dioClient = dioClient,
        super(RegisterInitial());
+
+  // Helper method to check if two file lists are equal
+  bool _areListsEqual(List<File>? list1, List<File>? list2) {
+    if (list1 == null && list2 == null) return true;
+    if (list1 == null || list2 == null) return false;
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i].path != list2[i].path) return false;
+    }
+    return true;
+  }
+
+  // Clear cached file IDs (called on success)
+  void _clearCachedFiles() {
+    _cachedProfileImageId = null;
+    _cachedCvId = null;
+    _cachedCoverImageId = null;
+    _cachedGraduationCertificateId = null;
+    _cachedCourseCertificateIds = null;
+    _lastProfileImage = null;
+    _lastCv = null;
+    _lastCoverImage = null;
+    _lastGraduationCertificate = null;
+    _lastCourseCertificates = null;
+  }
 
   Future<void> register({
     required String email,
@@ -57,21 +96,85 @@ class RegisterCubit extends Cubit<RegisterState> {
     List<File>? courseCertificates,
   }) async {
     try {
-      // Step 1: Upload files first
+      // Step 1: Upload files first (only if files changed or not uploaded before)
       int? profileImageId;
       int? cvId;
       int? coverImageId;
       int? graduationCertificateId;
       List<int>? courseCertificateIds;
 
-      final filesToUpload = <String, File>{};
-      if (profileImage != null) filesToUpload['profile_image'] = profileImage;
-      if (cv != null) filesToUpload['cv'] = cv;
-      if (coverImage != null) filesToUpload['cover_image'] = coverImage;
+      // Check if files changed (compare paths, not objects)
+      final profileImageChanged = profileImage?.path != _lastProfileImage?.path;
+      final cvChanged = cv?.path != _lastCv?.path;
+      final coverImageChanged = coverImage?.path != _lastCoverImage?.path;
+      final graduationCertificateChanged =
+          graduationCertificate?.path != _lastGraduationCertificate?.path;
+      final courseCertificatesChanged = !_areListsEqual(
+        courseCertificates,
+        _lastCourseCertificates,
+      );
+
+      // Use cached IDs if files haven't changed, otherwise upload new files
+      if (profileImage != null) {
+        if (!profileImageChanged && _cachedProfileImageId != null) {
+          profileImageId = _cachedProfileImageId;
+        } else {
+          profileImageId = null; // Will be uploaded
+        }
+      }
+
+      if (cv != null) {
+        if (!cvChanged && _cachedCvId != null) {
+          cvId = _cachedCvId;
+        } else {
+          cvId = null; // Will be uploaded
+        }
+      }
+
+      if (coverImage != null) {
+        if (!coverImageChanged && _cachedCoverImageId != null) {
+          coverImageId = _cachedCoverImageId;
+        } else {
+          coverImageId = null; // Will be uploaded
+        }
+      }
+
       if (graduationCertificate != null) {
+        if (!graduationCertificateChanged &&
+            _cachedGraduationCertificateId != null) {
+          graduationCertificateId = _cachedGraduationCertificateId;
+        } else {
+          graduationCertificateId = null; // Will be uploaded
+        }
+      }
+
+      if (courseCertificates != null && courseCertificates.isNotEmpty) {
+        if (!courseCertificatesChanged &&
+            _cachedCourseCertificateIds != null &&
+            _cachedCourseCertificateIds!.isNotEmpty) {
+          courseCertificateIds = List.from(_cachedCourseCertificateIds!);
+        } else {
+          courseCertificateIds = null; // Will be uploaded
+        }
+      }
+
+      // Prepare files to upload (only new or changed files)
+      final filesToUpload = <String, File>{};
+      if (profileImage != null && profileImageId == null) {
+        filesToUpload['profile_image'] = profileImage;
+      }
+      if (cv != null && cvId == null) {
+        filesToUpload['cv'] = cv;
+      }
+      if (coverImage != null && coverImageId == null) {
+        filesToUpload['cover_image'] = coverImage;
+      }
+      if (graduationCertificate != null && graduationCertificateId == null) {
         filesToUpload['graduation_certificate'] = graduationCertificate;
       }
-      if (courseCertificates != null && courseCertificates.isNotEmpty) {
+      if (courseCertificates != null &&
+          courseCertificates.isNotEmpty &&
+          courseCertificateIds == null) {
         for (int i = 0; i < courseCertificates.length; i++) {
           filesToUpload['course_certificate_$i'] = courseCertificates[i];
         }
@@ -126,15 +229,23 @@ class RegisterCubit extends Cubit<RegisterState> {
             switch (fileName) {
               case 'profile_image':
                 profileImageId = fileId;
+                _cachedProfileImageId = fileId;
+                _lastProfileImage = profileImage;
                 break;
               case 'cv':
                 cvId = fileId;
+                _cachedCvId = fileId;
+                _lastCv = cv;
                 break;
               case 'cover_image':
                 coverImageId = fileId;
+                _cachedCoverImageId = fileId;
+                _lastCoverImage = coverImage;
                 break;
               case 'graduation_certificate':
                 graduationCertificateId = fileId;
+                _cachedGraduationCertificateId = fileId;
+                _lastGraduationCertificate = graduationCertificate;
                 break;
               default:
                 if (fileName.startsWith('course_certificate_')) {
@@ -148,6 +259,14 @@ class RegisterCubit extends Cubit<RegisterState> {
           uploadedFiles++;
         }
 
+        // Cache course certificates IDs if uploaded
+        if (courseCertificates != null &&
+            courseCertificates.isNotEmpty &&
+            courseCertificateIds != null) {
+          _cachedCourseCertificateIds = List.from(courseCertificateIds);
+          _lastCourseCertificates = List.from(courseCertificates);
+        }
+
         emit(
           RegisterUploadingFiles(
             currentFile: 'All files uploaded',
@@ -156,6 +275,26 @@ class RegisterCubit extends Cubit<RegisterState> {
             totalFiles: totalFiles,
           ),
         );
+      } else {
+        // If no files to upload, use cached IDs and update last files
+        profileImageId = _cachedProfileImageId;
+        cvId = _cachedCvId;
+        coverImageId = _cachedCoverImageId;
+        graduationCertificateId = _cachedGraduationCertificateId;
+        courseCertificateIds = _cachedCourseCertificateIds != null
+            ? List.from(_cachedCourseCertificateIds!)
+            : null;
+
+        // Update last files even when using cached IDs
+        if (profileImage != null) _lastProfileImage = profileImage;
+        if (cv != null) _lastCv = cv;
+        if (coverImage != null) _lastCoverImage = coverImage;
+        if (graduationCertificate != null) {
+          _lastGraduationCertificate = graduationCertificate;
+        }
+        if (courseCertificates != null && courseCertificates.isNotEmpty) {
+          _lastCourseCertificates = List.from(courseCertificates);
+        }
       }
 
       // Step 2: Submit registration
@@ -205,6 +344,9 @@ class RegisterCubit extends Cubit<RegisterState> {
         await _storageService.saveUserData(response.data!.doctor!);
 
         _dioClient.setAuthToken(response.data!.token!);
+
+        // Clear cached files on success
+        _clearCachedFiles();
 
         emit(
           RegisterSuccess(
