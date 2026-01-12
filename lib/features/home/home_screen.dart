@@ -15,7 +15,10 @@ import 'widgets/custom_app_bar.dart';
 import 'widgets/home_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(int)? onTabChange;
+  final Function(VoidCallback)? onRefreshReady;
+
+  const HomeScreen({super.key, this.onTabChange, this.onRefreshReady});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -33,6 +36,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _postCubit = di.sl<PostCubit>();
     _postCubit.loadPosts();
     _scrollController.addListener(_onScroll);
+    // Register refresh callback with parent
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onRefreshReady?.call(_refreshPosts);
+    });
   }
 
   @override
@@ -57,13 +64,20 @@ class _HomeScreenState extends State<HomeScreen> {
     _postCubit.refreshPosts();
   }
 
+  void refresh() {
+    _refreshPosts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _postCubit,
       child: SliderDrawer(
         key: _sliderDrawerKey,
-        slider: HomeDrawer(sliderDrawerKey: _sliderDrawerKey),
+        slider: HomeDrawer(
+          sliderDrawerKey: _sliderDrawerKey,
+          onTabChange: widget.onTabChange,
+        ),
         appBar: CustomAppBar(sliderDrawerKey: _sliderDrawerKey),
         child: Scaffold(
           backgroundColor: AppColors.background,
@@ -168,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   key: ValueKey(post.id),
                                   post: post,
                                   index: index,
+                                  onPostUpdated: _refreshPosts,
                                 ),
                               );
                             },

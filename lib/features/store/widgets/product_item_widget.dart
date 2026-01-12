@@ -7,7 +7,7 @@ import '../../../core/constant/app_colors.dart';
 import '../../../shared/widgets/shimmer_placeholder.dart';
 import '../data/models/product_models.dart';
 
-class ProductItemWidget extends StatelessWidget {
+class ProductItemWidget extends StatefulWidget {
   final Product product;
   final VoidCallback onTap;
   final int index;
@@ -20,10 +20,31 @@ class ProductItemWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final imageUrl =
-        product.gallery.isNotEmpty ? product.gallery.first.fullUrl : null;
+  State<ProductItemWidget> createState() => _ProductItemWidgetState();
+}
 
+class _ProductItemWidgetState extends State<ProductItemWidget> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final galleryUrls = widget.product.gallery
+        .map((gallery) => gallery.fullUrl)
+        .where((url) => url.isNotEmpty)
+        .toList();
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
@@ -39,7 +60,7 @@ class ProductItemWidget extends StatelessWidget {
         );
       },
       child: Bounce(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Container(
           margin: EdgeInsets.only(bottom: 12.h),
           decoration: BoxDecoration(
@@ -57,27 +78,75 @@ class ProductItemWidget extends StatelessWidget {
           child: Column(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12.r),
+                  topRight: Radius.circular(12.r),
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   height: 180.h,
-                  child: imageUrl != null && imageUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => ShimmerPlaceholder(
-                            width: 96.w,
-                            height: 96.w,
-                            borderRadius: BorderRadius.circular(18.r),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: AppColors.surfaceVariant,
-                            child: Icon(
-                              Icons.broken_image_outlined,
-                              size: 32.sp,
-                              color: AppColors.textSecondary,
+                  child: galleryUrls.isNotEmpty
+                      ? Stack(
+                          children: [
+                            PageView.builder(
+                              controller: _pageController,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
+                              itemCount: galleryUrls.length,
+                              itemBuilder: (context, index) {
+                                return CachedNetworkImage(
+                                  imageUrl: galleryUrls[index],
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) =>
+                                      ShimmerPlaceholder(
+                                        width: double.infinity,
+                                        height: 180.h,
+                                        borderRadius: BorderRadius.zero,
+                                      ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                        color: AppColors.surfaceVariant,
+                                        child: Icon(
+                                          Icons.broken_image_outlined,
+                                          size: 32.sp,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                );
+                              },
                             ),
-                          ),
+                            if (galleryUrls.length > 1)
+                              Positioned(
+                                bottom: 8.h,
+                                left: 0,
+                                right: 0,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    galleryUrls.length,
+                                    (index) => Container(
+                                      margin: EdgeInsets.symmetric(
+                                        horizontal: 3.w,
+                                      ),
+                                      width: _currentPage == index ? 24.w : 8.w,
+                                      height: 8.h,
+                                      decoration: BoxDecoration(
+                                        color: _currentPage == index
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary
+                                                  .withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         )
                       : Container(
                           color: AppColors.surfaceVariant,
@@ -101,7 +170,7 @@ class ProductItemWidget extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            product.name,
+                            widget.product.name,
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
@@ -112,7 +181,7 @@ class ProductItemWidget extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: 4.w),
-                        if (product.isNew)
+                        if (widget.product.isNew)
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 8.w,
@@ -146,9 +215,9 @@ class ProductItemWidget extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
 
-                    if (product.description?.isNotEmpty == true)
+                    if (widget.product.description?.isNotEmpty == true)
                       Text(
-                        product.description!,
+                        widget.product.description!,
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: AppColors.textSecondary,
@@ -170,7 +239,7 @@ class ProductItemWidget extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
-                            '${product.price} EGP',
+                            '${widget.product.price} EGP',
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w700,
@@ -179,9 +248,9 @@ class ProductItemWidget extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: 6.w),
-                        if (product.discount > 0)
+                        if (widget.product.discount > 0)
                           Text(
-                            '${product.discount} EGP',
+                            '${widget.product.discount} EGP',
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: AppColors.textSecondary,
@@ -206,5 +275,3 @@ class ProductItemWidget extends StatelessWidget {
     );
   }
 }
-
-

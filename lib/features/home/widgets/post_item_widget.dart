@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
 import '../../../core/di/inject.dart' as di;
+import '../../../core/routing/app_routes.dart';
 import '../../../shared/widgets/app_toast.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../shared/widgets/shimmer_placeholder.dart';
@@ -109,30 +110,38 @@ class _PostItemWidgetState extends State<PostItemWidget> {
   List<PostMediaItem> _buildMediaItems() {
     final List<PostMediaItem> items = [];
 
-    final hasImage = !_isDefaultImage(_currentPost.image);
     final hasVideo = !_isDefaultImage(_currentPost.video);
     final hasGallery = _currentPost.gallery.isNotEmpty;
 
+    // Use gallery items (with fullUrl) for images
     if (hasGallery) {
       for (final galleryItem in _currentPost.gallery) {
         items.add(
           PostMediaItem(type: PostMediaType.image, url: galleryItem.fullUrl),
         );
       }
-    }
-
-    if (hasImage) {
-      items.add(
-        PostMediaItem(type: PostMediaType.image, url: _currentPost.image),
-      );
+    } else {
+      final hasImage = !_isDefaultImage(_currentPost.image);
+      if (hasImage) {
+        items.add(
+          PostMediaItem(type: PostMediaType.image, url: _currentPost.image),
+        );
+      }
     }
 
     if (hasVideo) {
+      String? thumbnailUrl;
+      if (hasGallery && _currentPost.gallery.isNotEmpty) {
+        thumbnailUrl = _currentPost.gallery.first.fullUrl;
+      } else if (!_isDefaultImage(_currentPost.image)) {
+        thumbnailUrl = _currentPost.image;
+      }
+
       items.add(
         PostMediaItem(
           type: PostMediaType.video,
           url: _currentPost.video,
-          thumbnailUrl: _currentPost.image,
+          thumbnailUrl: thumbnailUrl,
         ),
       );
     }
@@ -255,6 +264,191 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     );
   }
 
+  void _handleMenuAction(String action) {
+    switch (action) {
+      case 'report':
+        _handleReport();
+        break;
+      case 'hide':
+        _handleHide();
+        break;
+      case 'save':
+        _handleSave();
+        break;
+    }
+  }
+
+  Future<void> _handleReport() async {
+    final result = await _showReportDialog();
+    if (result == null) return;
+
+    final complaint = result['complaint']!.trim();
+    final note = result['note']!.trim();
+    if (complaint.isEmpty) return;
+
+    try {
+      await _postRepository.reportPost(
+        postId: _currentPost.id,
+        complaint: complaint,
+        note: note,
+      );
+
+      // Also hide the post after reporting
+      await _postRepository.togglePostHidden(_currentPost.id);
+
+      setState(() {
+        _currentPost = _currentPost.copyWith(isHidden: true);
+      });
+
+      if (mounted) {
+        AppToast.showSuccess(AppTexts.postReported, context: context);
+        // Ask parent to refresh list so the post disappears
+        widget.onPostUpdated?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.showError(
+          'Failed to report post: ${e.toString()}',
+          context: context,
+        );
+      }
+    }
+  }
+
+  Future<void> _handleHide() async {
+    try {
+      await _postRepository.togglePostHidden(_currentPost.id);
+
+      final newHidden = !_currentPost.isHidden;
+
+      setState(() {
+        _currentPost = _currentPost.copyWith(isHidden: newHidden);
+      });
+
+      if (mounted) {
+        AppToast.showSuccess(
+          newHidden ? AppTexts.postHidden : AppTexts.postUnhidden,
+          context: context,
+        );
+        // Ask parent to refresh list (home / saved / hidden screens)
+        widget.onPostUpdated?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.showError(
+          'Failed to hide post: ${e.toString()}',
+          context: context,
+        );
+      }
+    }
+  }
+
+  Future<void> _handleSave() async {
+    try {
+      await _postRepository.togglePostSaved(_currentPost.id);
+
+      // Toggle local saved state for better UX
+      final wasSaved = _currentPost.isSaved;
+      setState(() {
+        _currentPost = _currentPost.copyWith(isSaved: !_currentPost.isSaved);
+      });
+
+      if (mounted) {
+        AppToast.showSuccess(
+          wasSaved ? AppTexts.postUnsaved : AppTexts.postSaved,
+          context: context,
+        );
+        // Let parent refresh lists if needed (e.g. SavedPostsScreen)
+        widget.onPostUpdated?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.showError(
+          'Failed to save post: ${e.toString()}',
+          context: context,
+        );
+      }
+    }
+  }
+
+  Future<Map<String, String>?> _showReportDialog() async {
+    final complaintController = TextEditingController();
+    final noteController = TextEditingController(text: '');
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Text(
+            'إبلاغ عن المنشور',
+            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+          ),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: complaintController,
+                    decoration: const InputDecoration(
+                      labelText: 'سبب الشكوى *',
+                    ),
+                    maxLines: 2,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'الرجاء كتابة سبب الشكوى';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 12.h),
+                  TextFormField(
+                    controller: noteController,
+                    decoration: const InputDecoration(
+                      labelText: 'ملاحظات إضافية (اختياري)',
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: Text(
+                AppTexts.cancel,
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.of(context).pop({
+                    'complaint': complaintController.text,
+                    'note': noteController.text,
+                  });
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+              ),
+              child: const Text('إرسال'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaItems = _buildMediaItems();
@@ -322,26 +516,34 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                 children: [
                   Row(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8.r),
-                        child: CachedNetworkImage(
-                          imageUrl: _currentPost.user.profileImage,
-                          width: 40.w,
-                          height: 40.w,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => ShimmerPlaceholder(
+                      Bounce(
+                        onTap: () {
+                          Navigator.of(context).pushNamed(
+                            AppRoutes.userProfile,
+                            arguments: _currentPost.user.id,
+                          );
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8.r),
+                          child: CachedNetworkImage(
+                            imageUrl: _currentPost.user.profileImage,
                             width: 40.w,
                             height: 40.w,
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            width: 40.w,
-                            height: 40.w,
-                            color: AppColors.surfaceVariant,
-                            child: Icon(
-                              Icons.person,
-                              size: 24.sp,
-                              color: AppColors.textSecondary,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => ShimmerPlaceholder(
+                              width: 40.w,
+                              height: 40.w,
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              width: 40.w,
+                              height: 40.w,
+                              color: AppColors.surfaceVariant,
+                              child: Icon(
+                                Icons.person,
+                                size: 24.sp,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
                         ),
@@ -386,11 +588,79 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                           ],
                         ),
                       ),
-                      IconButton(
+                      PopupMenuButton<String>(
                         icon: Icon(Icons.more_vert, size: 20.sp),
-                        onPressed: () {},
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
+                        color: AppColors.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        itemBuilder: (context) => [
+                          PopupMenuItem<String>(
+                            value: 'report',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.flag_outlined,
+                                  size: 20.sp,
+                                  color: AppColors.textPrimary,
+                                ),
+                                SizedBox(width: 12.w),
+                                Text(
+                                  AppTexts.report,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'hide',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.visibility_off_outlined,
+                                  size: 20.sp,
+                                  color: AppColors.textPrimary,
+                                ),
+                                SizedBox(width: 12.w),
+                                Text(
+                                  AppTexts.hide,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'save',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.bookmark_outline,
+                                  size: 20.sp,
+                                  color: AppColors.textPrimary,
+                                ),
+                                SizedBox(width: 12.w),
+                                Text(
+                                  AppTexts.save,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onSelected: (value) {
+                          _handleMenuAction(value);
+                        },
                       ),
                     ],
                   ),

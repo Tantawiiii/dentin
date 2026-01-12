@@ -55,17 +55,32 @@ void main() async {
 
         try {
           if (Firebase.apps.isEmpty) {
-            await Firebase.initializeApp(
-              options: FirebaseConfig.currentPlatform,
-            );
+            final options = FirebaseConfig.currentPlatform;
             if (kDebugMode) {
-              print('✅ Firebase initialized successfully with explicit config');
-              print(
-                '📊 Project ID: ${FirebaseConfig.currentPlatform.projectId}',
-              );
-              print(
-                '📊 Auth Domain: ${FirebaseConfig.currentPlatform.authDomain}',
-              );
+              if (options != null) {
+                print('📦 Calling Firebase.initializeApp with explicit options...');
+                print('📦 Project ID: ${options.projectId}');
+              } else {
+                print('📦 Calling Firebase.initializeApp (auto-detect from config files)...');
+              }
+            }
+            
+            await (options != null
+                ? Firebase.initializeApp(options: options)
+                : Firebase.initializeApp()).timeout(
+              const Duration(seconds: 30),
+            );
+            
+            if (kDebugMode) {
+              final app = Firebase.app();
+              print('✅ Firebase initialized successfully');
+              print('📊 Project ID: ${app.options.projectId}');
+              if (app.options.authDomain != null) {
+                print('📊 Auth Domain: ${app.options.authDomain}');
+              }
+              if (app.options.databaseURL != null) {
+                print('📊 Database URL: ${app.options.databaseURL}');
+              }
             }
           } else {
             if (kDebugMode) {
@@ -73,28 +88,51 @@ void main() async {
               print('📊 Using existing Firebase instance');
             }
           }
-        } catch (e) {
+        } catch (e, stackTrace) {
           if (e.toString().contains('duplicate-app')) {
             if (kDebugMode) {
               print('✅ Firebase already initialized (duplicate-app caught)');
             }
           } else {
-            rethrow;
+            if (kDebugMode) {
+              print('❌ Firebase.initializeApp failed: $e');
+              print('Stack trace: $stackTrace');
+            }
+            // Don't rethrow - let the app continue even if Firebase fails
+            if (kDebugMode) {
+              print('⚠️ Continuing app initialization despite Firebase error');
+            }
           }
         }
 
-        await FirebaseService.initialize();
+        try {
+          if (kDebugMode) {
+            print('📊 Initializing FirebaseService...');
+          }
+          await FirebaseService.initialize();
+          if (kDebugMode) {
+            print('✅ FirebaseService initialized');
+          }
+        } catch (e, stackTrace) {
+          if (kDebugMode) {
+            print('⚠️ FirebaseService initialization failed: $e');
+            print('Stack trace: $stackTrace');
+          }
+        }
 
         try {
           if (kDebugMode) {
-            print('📱 Initializing FCM...');
+            print('📱 Initializing FCM background handler...');
           }
           FirebaseMessaging.onBackgroundMessage(
             firebaseMessagingBackgroundHandler,
           );
+          if (kDebugMode) {
+            print('✅ FCM background handler registered');
+          }
         } catch (e, stackTrace) {
           if (kDebugMode) {
-            print('⚠️ FCM initialization failed: $e');
+            print('⚠️ FCM background handler registration failed: $e');
             print('Stack trace: $stackTrace');
           }
         }

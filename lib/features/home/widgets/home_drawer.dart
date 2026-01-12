@@ -10,8 +10,13 @@ import '../../../core/services/storage_service.dart';
 
 class HomeDrawer extends StatelessWidget {
   final GlobalKey<SliderDrawerState> sliderDrawerKey;
+  final Function(int)? onTabChange;
 
-  const HomeDrawer({super.key, required this.sliderDrawerKey});
+  const HomeDrawer({
+    super.key,
+    required this.sliderDrawerKey,
+    this.onTabChange,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +30,7 @@ class HomeDrawer extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24),
+              padding: EdgeInsets.all(14),
               child: Stack(
                 children: [
                   Column(
@@ -107,10 +112,74 @@ class HomeDrawer extends StatelessWidget {
                       Navigator.of(context).pushNamed(AppRoutes.profile);
                     },
                   ),
-                  const Divider(),
                   ListTile(
                     leading: Icon(
-                      Icons.business_center_outlined,
+                      Icons.home_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      AppTexts.home,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      onTabChange?.call(0);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.work_outline, color: AppColors.primary),
+                    title: Text(
+                      AppTexts.jobs,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      onTabChange?.call(1);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.explore_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      AppTexts.exploreStories,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      onTabChange?.call(2);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.store_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      AppTexts.store,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      onTabChange?.call(3);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.business_outlined,
                       color: AppColors.primary,
                     ),
                     title: Text(
@@ -122,9 +191,27 @@ class HomeDrawer extends StatelessWidget {
                     ),
                     onTap: () {
                       sliderDrawerKey.currentState?.closeSlider();
-                      Navigator.of(context).pushNamed(AppRoutes.rentClinic);
+                      onTabChange?.call(4);
                     },
                   ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.message_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      AppTexts.messages,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      onTabChange?.call(5);
+                    },
+                  ),
+
                   const Divider(),
                   ListTile(
                     leading: Icon(
@@ -132,7 +219,7 @@ class HomeDrawer extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                     title: Text(
-                      'Friend Requests',
+                      AppTexts.friendRequests,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -150,7 +237,7 @@ class HomeDrawer extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                     title: Text(
-                      'Medical Professionals',
+                      AppTexts.medicalProfessionals,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -159,6 +246,40 @@ class HomeDrawer extends StatelessWidget {
                     onTap: () {
                       sliderDrawerKey.currentState?.closeSlider();
                       Navigator.of(context).pushNamed(AppRoutes.usersList);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.bookmark_outline,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      AppTexts.savedPosts,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      Navigator.of(context).pushNamed(AppRoutes.savedPosts);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.visibility_off_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      AppTexts.hiddenPosts,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      Navigator.of(context).pushNamed(AppRoutes.hiddenPosts);
                     },
                   ),
                 ],
@@ -183,7 +304,7 @@ class HomeDrawer extends StatelessWidget {
                 }
               },
             ),
-            SizedBox(height: 44.h),
+            SizedBox(height: 14.h),
           ],
         ),
       ),

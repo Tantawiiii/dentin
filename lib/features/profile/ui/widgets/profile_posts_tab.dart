@@ -48,7 +48,27 @@ class ProfilePostsTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (post.image != null && post.image!.isNotEmpty)
+              if (post.gallery.isNotEmpty)
+                ...post.gallery.map(
+                  (galleryItem) => Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12.r),
+                      child: CachedNetworkImage(
+                        imageUrl: galleryItem.fullUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => ShimmerPlaceholder(
+                          width: double.infinity,
+                          height: 180.h,
+                        ),
+                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                )
+              else if (post.image != null &&
+                  post.image!.isNotEmpty &&
+                  !post.image!.contains('default-logo.png'))
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12.r),
                   child: CachedNetworkImage(
@@ -128,5 +148,3 @@ class ProfilePostsTab extends StatelessWidget {
     );
   }
 }
-
-

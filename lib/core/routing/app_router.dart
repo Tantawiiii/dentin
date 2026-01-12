@@ -5,6 +5,8 @@ import 'package:dentin/features/auth/forget_password/ui/forget_password_screen.d
 import 'package:dentin/features/auth/forget_password/ui/forget_password_otp_screen.dart';
 import 'package:dentin/features/auth/forget_password/ui/forget_password_reset_screen.dart';
 import 'package:dentin/features/home/main_navigation_screen.dart';
+import 'package:dentin/features/home/saved_posts_screen.dart';
+import 'package:dentin/features/home/hidden_posts_screen.dart';
 import 'package:dentin/features/onboarding/onboarding_screen.dart';
 import 'package:dentin/features/onboarding/splash_screen.dart';
 import 'package:dentin/features/profile/ui/profile_screen.dart';
@@ -76,6 +78,12 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
 
     case AppRoutes.rentClinic:
       return MaterialPageRoute(builder: (_) => const RentListScreen());
+
+    case AppRoutes.savedPosts:
+      return MaterialPageRoute(builder: (_) => const SavedPostsScreen());
+
+    case AppRoutes.hiddenPosts:
+      return MaterialPageRoute(builder: (_) => const HiddenPostsScreen());
 
     case AppRoutes.friendRequests:
       return MaterialPageRoute(builder: (_) => const FriendRequestsScreen());

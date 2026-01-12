@@ -180,6 +180,7 @@ class Post {
   final int id;
   final String? content;
   final String? image;
+  final List<PostGallery> gallery;
   final bool isAdRequest;
   final int likesCount;
   final String? createdAt;
@@ -188,6 +189,7 @@ class Post {
     required this.id,
     this.content,
     this.image,
+    required this.gallery,
     required this.isAdRequest,
     required this.likesCount,
     this.createdAt,
@@ -198,9 +200,47 @@ class Post {
       id: json['id'] as int,
       content: json['content'] as String?,
       image: json['image'] as String?,
+      gallery: (json['gallery'] as List<dynamic>? ?? [])
+          .map((e) => PostGallery.fromJson(e as Map<String, dynamic>))
+          .toList(),
       isAdRequest: json['is_ad_request'] as bool? ?? false,
       likesCount: json['likes_count'] as int? ?? 0,
       createdAt: json['created_at'] as String?,
+    );
+  }
+}
+
+class PostGallery {
+  final int id;
+  final String name;
+  final String mimeType;
+  final int size;
+  final int? authorId;
+  final String previewUrl;
+  final String fullUrl;
+  final String createdAt;
+
+  PostGallery({
+    required this.id,
+    required this.name,
+    required this.mimeType,
+    required this.size,
+    this.authorId,
+    required this.previewUrl,
+    required this.fullUrl,
+    required this.createdAt,
+  });
+
+  factory PostGallery.fromJson(Map<String, dynamic> json) {
+    return PostGallery(
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      mimeType: json['mimeType'] as String? ?? '',
+      size: json['size'] as int? ?? 0,
+      authorId: json['authorId'] as int?,
+      previewUrl: json['previewUrl'] as String? ?? '',
+      fullUrl: json['fullUrl'] as String? ?? '',
+      createdAt: json['createdAt'] as String? ?? '',
     );
   }
 }

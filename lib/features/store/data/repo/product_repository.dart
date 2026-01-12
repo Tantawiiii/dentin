@@ -9,17 +9,33 @@ class ProductRepository {
 
   ProductRepository(this._apiService);
 
-  Future<ProductResponse> getProducts({int page = 1}) async {
+  Future<ProductResponse> getProducts({
+    int page = 1,
+    String? search,
+    String? type,
+  }) async {
     try {
+      final requestBody = <String, dynamic>{
+        'filters': <String, dynamic>{'active': 1},
+      };
+
+      if (type != null && type.isNotEmpty && type != 'all') {
+        (requestBody['filters'] as Map<String, dynamic>)['type'] = type;
+      }
+
+      final queryParams = <String, dynamic>{'page': page};
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+
       final response = await _apiService.post<dynamic>(
         ApiConstants.productIndex,
-        queryParameters: {'page': page},
+        data: requestBody,
+        queryParameters: queryParams,
       );
 
       if (response.statusCode != null && response.statusCode! < 400) {
-        return ProductResponse.fromJson(
-          response.data as Map<String, dynamic>,
-        );
+        return ProductResponse.fromJson(response.data as Map<String, dynamic>);
       } else {
         final errorMessage = _extractErrorMessage(response);
         throw Exception(errorMessage);
@@ -95,5 +111,3 @@ class ProductRepository {
     return 'Network error: ${exception.message ?? "Unknown error"}';
   }
 }
-
-

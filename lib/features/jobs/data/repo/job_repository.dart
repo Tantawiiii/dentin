@@ -17,6 +17,7 @@ class JobRepository {
     String? search,
     String? location,
     String? type,
+    String? specialization,
   }) async {
     try {
       final queryParams = <String, dynamic>{'page': page};
@@ -30,9 +31,17 @@ class JobRepository {
         queryParams['type'] = type;
       }
 
+      final filters = <String, dynamic>{
+        'active': 1,
+      };
+      if (specialization != null && specialization.isNotEmpty && specialization != 'All') {
+        filters['specialization'] = specialization;
+      }
+
       final response = await _apiService.post<dynamic>(
         ApiConstants.jobIndex,
         queryParameters: queryParams,
+        data: {'filters': filters},
       );
 
       if (response.statusCode != null && response.statusCode! < 400) {

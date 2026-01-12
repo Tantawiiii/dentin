@@ -8,6 +8,7 @@ import '../explore_stories/explore_stories_screen.dart';
 import '../messages/messages_screen.dart';
 import '../store/store_screen.dart';
 import '../jobs/jobs_screen.dart';
+import '../rent_clinic/ui/rent_list_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,14 +19,41 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  VoidCallback? _homeRefreshCallback;
+  late final List<Widget> _screens;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const ExploreStoriesScreen(),
-    const MessagesScreen(),
-    const StoreScreen(),
-    const JobsScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(
+        onTabChange: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        onRefreshReady: (callback) {
+          _homeRefreshCallback = callback;
+        },
+      ),
+      const JobsScreen(),
+      const ExploreStoriesScreen(),
+      const StoreScreen(),
+      const RentListScreen(),
+      const MessagesScreen(),
+    ];
+  }
+
+  void _handleBottomNavTap(int index) {
+    if (index == 0 && _currentIndex == 0) {
+      _homeRefreshCallback?.call();
+    } else {
+      // غير التبويب العادي
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +74,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
+          onTap: _handleBottomNavTap,
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.primary,
@@ -74,14 +98,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: AppTexts.home,
             ),
             BottomNavigationBarItem(
+              icon: const Icon(Icons.work_outline),
+              activeIcon: const Icon(Icons.work),
+              label: AppTexts.jobs,
+            ),
+            BottomNavigationBarItem(
               icon: const Icon(Icons.explore_outlined),
               activeIcon: const Icon(Icons.explore),
               label: AppTexts.exploreStories,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.message_outlined),
-              activeIcon: const Icon(Icons.message),
-              label: AppTexts.messages,
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.store_outlined),
@@ -89,9 +113,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: AppTexts.store,
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.work_outline),
-              activeIcon: const Icon(Icons.work),
-              label: AppTexts.jobs,
+              icon: const Icon(Icons.business_outlined),
+              activeIcon: const Icon(Icons.business),
+              label: AppTexts.rentClinic,
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.message_outlined),
+              activeIcon: const Icon(Icons.message),
+              label: AppTexts.messages,
             ),
           ],
         ),

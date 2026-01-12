@@ -227,6 +227,14 @@ final class AppTexts {
   static const String like = 'Like';
   static const String comment = 'Comment';
   static const String share = 'Share';
+  static const String report = 'Report';
+  static const String hide = 'Hide';
+  static const String save = 'Save';
+  static const String postReported = 'Post reported successfully';
+  static const String postHidden = 'Post hidden successfully';
+  static const String postUnhidden = 'Post unhidden successfully';
+  static const String postSaved = 'Post saved successfully';
+  static const String postUnsaved = 'Post removed from saved';
   static const String sponsored = 'Sponsored';
   static const String regular = 'Regular';
   static const String promotedPost = 'Promoted Post';
@@ -243,6 +251,8 @@ final class AppTexts {
   static const String messages = 'Chats';
   static const String store = 'Store';
   static const String jobs = 'Jobs';
+  static const String savedPosts = 'Saved Posts';
+  static const String hiddenPosts = 'Hidden Posts';
 
   // Comments
   static const String writeComment = 'Write a comment...';
@@ -301,6 +311,7 @@ final class AppTexts {
   static const String addProduct = 'Add Product';
   static const String noProductsYet = 'No products yet';
   static const String tapToAddFirstProduct = 'Tap + to add your first product';
+  static const String productsSearchPlaceholder = 'Search products...';
   static const String productCreatedSuccessfully =
       'Product created successfully';
   static const String productDetailsTitle = 'Product Details';
@@ -328,6 +339,14 @@ final class AppTexts {
   static const String sendMessage = 'Send Message';
   static const String pleaseLoginToSendMessage =
       'Please login to send a message';
+  static const String productType = 'Product Type';
+  static const String productTypePerson = 'Person';
+  static const String productTypeCompany = 'Company';
+  static const String productTypeRequired = 'Please select product type';
+  static const String filterByType = 'Filter by Type';
+  static const String allTypes = 'All Types';
+  static const String noProductsFound = 'No products found';
+  static const String tryDifferentKeywords = 'Try searching with different keywords';
 
   // Jobs
   static const String jobsTitle = 'Hiring Dentist';
@@ -393,6 +412,17 @@ final class AppTexts {
       'أنا مهتم جدًا بالوظيفة ولدي خبرة سابقة في هذا المجال.\n\nWhy are you interested in this position? What makes you a good fit?';
   static const String jobsDetailsNotLoaded = 'Job details not loaded yet.';
   static const String jobsJobFallback = 'job';
+  static const String jobsTapToAddCompanyLogo = 'Tap to add company logo';
+  static const String jobsCompanyInformation = 'Company Information';
+  static const String jobsJobInformation = 'Job Information';
+  static const String jobsSpecialization = 'Specialization';
+  static const String jobsSelectSpecializationOptional =
+      'Select Specialization (Optional)';
+  static const String jobsImageUploadFailedNoData =
+      'Image upload failed: No data returned';
+  static const String jobsImageUploadFailedInvalidId =
+      'Image upload failed: Invalid image ID';
+  static const String jobsAllSpecializations = 'All';
 
   // Rent Clinic
   static const String rentClinic = 'Rent Clinic';
@@ -497,6 +527,11 @@ final class AppTexts {
       'Please check your internet connection and try again';
   static const String connecting = 'Connecting...';
   static const String connected = 'Connected';
+  static const String noInternetTitle = 'No Internet Connection';
+  static const String noInternetDescription =
+      'It looks like you\'re not connected to the internet. Please check your connection and try again.';
+  static const String retryConnection = 'Retry Connection';
+  static const String checkConnection = 'Check Connection';
 
   // Users List Screen
   static const String medicalProfessionals = 'Medical Professionals';

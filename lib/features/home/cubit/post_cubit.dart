@@ -32,10 +32,12 @@ class PostCubit extends Cubit<PostState> {
 
     try {
       final response = await _repository.getPosts(page: _currentPage);
+      final fetchedPosts = response.data;
+
       if (refresh || _currentPage == 1) {
-        _posts = response.data;
+        _posts = fetchedPosts.where((post) => !post.isHidden).toList();
       } else {
-        _posts.addAll(response.data);
+        _posts.addAll(fetchedPosts.where((post) => !post.isHidden));
       }
 
       _hasMore = response.meta?.hasMorePages ?? false;
@@ -57,7 +59,8 @@ class PostCubit extends Cubit<PostState> {
 
     try {
       final response = await _repository.getPosts(page: _currentPage);
-      _posts.addAll(response.data);
+      final fetchedPosts = response.data;
+      _posts.addAll(fetchedPosts.where((post) => !post.isHidden));
       _hasMore = response.meta?.hasMorePages ?? false;
       _currentPage++;
 

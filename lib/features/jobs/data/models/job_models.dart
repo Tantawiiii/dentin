@@ -102,6 +102,7 @@ class Job {
   final String requirements;
   final String benefits;
   final int applicationsCount;
+  final String? specialization;
   final String createdAt;
 
   Job({
@@ -119,6 +120,7 @@ class Job {
     required this.requirements,
     required this.benefits,
     required this.applicationsCount,
+    this.specialization,
     required this.createdAt,
   });
 
@@ -146,6 +148,7 @@ class Job {
       requirements: json['requirements'] ?? '',
       benefits: json['benefits'] ?? '',
       applicationsCount: json['applications_count'] ?? 0,
+      specialization: json['specialization'] as String?,
       createdAt: json['created_at']?.toString() ?? '',
     );
   }
@@ -224,12 +227,12 @@ class ApplyJobResponse {
 }
 
 class CreateJobRequest {
-  final String companyName;
-  final String? companySize;
-  final String? companyIndustry;
-  final String? companyFounded;
-  final String? companyWebsite;
-  final String? companyLocation;
+  // final String companyName;
+  // final String? companySize;
+  // final String? companyIndustry;
+  // final String? companyFounded;
+  // final String? companyWebsite;
+  // final String? companyLocation;
   final String title;
   final String location;
   final String type;
@@ -240,14 +243,15 @@ class CreateJobRequest {
   final String? responsibilities;
   final String? requirements;
   final String? benefits;
+  final String? specialization;
 
   CreateJobRequest({
-    required this.companyName,
-    this.companySize,
-    this.companyIndustry,
-    this.companyFounded,
-    this.companyWebsite,
-    this.companyLocation,
+    // required this.companyName,
+    // this.companySize,
+    // this.companyIndustry,
+    // this.companyFounded,
+    // this.companyWebsite,
+    // this.companyLocation,
     required this.title,
     required this.location,
     required this.type,
@@ -258,16 +262,17 @@ class CreateJobRequest {
     this.responsibilities,
     this.requirements,
     this.benefits,
+    this.specialization,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'company_name': companyName,
-      if (companySize != null) 'company_size': companySize,
-      if (companyIndustry != null) 'company_industry': companyIndustry,
-      if (companyFounded != null) 'company_founded': companyFounded,
-      if (companyWebsite != null) 'company_website': companyWebsite,
-      if (companyLocation != null) 'company_location': companyLocation,
+      // 'company_name': companyName,
+      // if (companySize != null) 'company_size': companySize,
+      // if (companyIndustry != null) 'company_industry': companyIndustry,
+      // if (companyFounded != null) 'company_founded': companyFounded,
+      // if (companyWebsite != null) 'company_website': companyWebsite,
+      // if (companyLocation != null) 'company_location': companyLocation,
       'title': title,
       'location': location,
       'type': type,
@@ -278,6 +283,7 @@ class CreateJobRequest {
       if (responsibilities != null) 'responsibilities': responsibilities,
       if (requirements != null) 'requirements': requirements,
       if (benefits != null) 'benefits': benefits,
+      if (specialization != null) 'specialization': specialization,
     };
   }
 }

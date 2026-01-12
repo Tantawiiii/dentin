@@ -17,7 +17,8 @@ class ProductResponse {
 
   factory ProductResponse.fromJson(Map<String, dynamic> json) {
     return ProductResponse(
-      data: (json['data'] as List<dynamic>?)
+      data:
+          (json['data'] as List<dynamic>?)
               ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -124,15 +125,18 @@ class Product {
       priceAfterDiscount:
           num.tryParse(json['price_after_discount']?.toString() ?? '0') ?? 0,
       description: json['des'],
-      isNew: json['is_new'] == true ||
+      isNew:
+          json['is_new'] == true ||
           json['is_new'] == 1 ||
           json['is_new'] == '1',
-      gallery: (json['gallery'] as List<dynamic>?)
+      gallery:
+          (json['gallery'] as List<dynamic>?)
               ?.map((e) => ProductGallery.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       user: ProductUser.fromJson(json['user'] as Map<String, dynamic>),
-      active: json['active'] == true ||
+      active:
+          json['active'] == true ||
           json['active'] == 1 ||
           json['active'] == '1',
       createdAt: json['created_at'] ?? '',
@@ -204,28 +208,31 @@ class ProductGallery {
 
 class CreateProductRequest {
   final String name;
+  final String type;
   final num price;
   final num discount;
   final String description;
-  final int image;
+  final List<int> gallery;
   final bool isNew;
 
   CreateProductRequest({
     required this.name,
+    required this.type,
     required this.price,
     required this.discount,
     required this.description,
-    required this.image,
+    required this.gallery,
     required this.isNew,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
+      'type': type,
       'price': price,
       'discount': discount,
       'des': description,
-      'image': image,
+      'gallery': gallery,
       'is_new': isNew ? 1 : 0,
     };
   }
@@ -235,10 +242,7 @@ class CreateProductResponse {
   final Product? data;
   final String? message;
 
-  CreateProductResponse({
-    this.data,
-    this.message,
-  });
+  CreateProductResponse({this.data, this.message});
 
   factory CreateProductResponse.fromJson(Map<String, dynamic> json) {
     // Backend may return:
@@ -266,10 +270,7 @@ class CreateProductResponse {
       message = rawMessage['message']?.toString();
     }
 
-    return CreateProductResponse(
-      data: product,
-      message: message,
-    );
+    return CreateProductResponse(data: product, message: message);
   }
 }
 
@@ -295,5 +296,3 @@ class ProductDetailsResponse {
     );
   }
 }
-
-
