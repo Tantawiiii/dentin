@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,6 +25,11 @@ class RentListScreen extends StatefulWidget {
 class _RentListScreenState extends State<RentListScreen> {
   late final RentCubit _rentCubit;
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  List<RentItem> _filteredRents = [];
+  String _searchQuery = '';
+
+  Timer? _searchDebounceTimer;
 
   @override
   void initState() {
@@ -31,13 +37,47 @@ class _RentListScreenState extends State<RentListScreen> {
     _rentCubit = di.sl<RentCubit>();
     _rentCubit.loadRents(refresh: true);
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final currentQuery = _searchController.text.trim();
+    if (currentQuery == _searchQuery) return;
+
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted && _searchController.text.trim() == currentQuery) {
+        setState(() {
+          _searchQuery = currentQuery;
+          _applyFilters();
+        });
+      }
+    });
+  }
+
+  void _applyFilters() {
+    final allRents = _rentCubit.rents;
+    if (_searchQuery.isEmpty) {
+      _filteredRents = List.from(allRents);
+    } else {
+      final queryLower = _searchQuery.toLowerCase();
+      _filteredRents = allRents.where((rent) {
+        return rent.name.toLowerCase().contains(queryLower) ||
+            rent.des.toLowerCase().contains(queryLower) ||
+            (rent.city?.toLowerCase().contains(queryLower) ?? false) ||
+            (rent.address?.toLowerCase().contains(queryLower) ?? false) ||
+            (rent.governorate?.toLowerCase().contains(queryLower) ?? false);
+      }).toList();
+    }
   }
 
   void _onScroll() {
@@ -72,123 +112,169 @@ class _RentListScreenState extends State<RentListScreen> {
           backgroundColor: AppColors.background,
           elevation: 0,
         ),
-        body: BlocConsumer<RentCubit, RentState>(
-          listener: (context, state) {
-            if (state is RentCreated) {
-              AppToast.showSuccess(
-                AppTexts.rentCreatedSuccessfully,
-                context: context,
-              );
-            } else if (state is RentCreateError) {
-              AppToast.showError(state.message, context: context);
-            }
-          },
-          builder: (context, state) {
-            if (state is RentLoading) {
-              return ListView.builder(
-                padding: EdgeInsets.all(12.w),
-                cacheExtent: 500,
-                addAutomaticKeepAlives: true,
-                addRepaintBoundaries: true,
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return _buildRentShimmer();
+        body: Column(
+          children: [
+            _buildSearchField(),
+            Expanded(
+              child: BlocConsumer<RentCubit, RentState>(
+                listener: (context, state) {
+                  if (state is RentCreated) {
+                    AppToast.showSuccess(
+                      AppTexts.rentCreatedSuccessfully,
+                      context: context,
+                    );
+                  } else if (state is RentCreateError) {
+                    AppToast.showError(state.message, context: context);
+                  } else if (state is RentLoaded || state is RentLoadingMore) {
+                    _applyFilters();
+                  }
                 },
-              );
-            }
+                builder: (context, state) {
+                  if (state is RentLoading && _rentCubit.rents.isEmpty) {
+                    return ListView.builder(
+                      padding: EdgeInsets.all(12.w),
+                      itemCount: 5,
+                      itemBuilder: (context, index) {
+                        return _buildRentShimmer();
+                      },
+                    );
+                  }
 
-            if (state is RentError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64.sp,
-                      color: AppColors.error,
-                    ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      state.message,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 24.h),
-                    ElevatedButton(
-                      onPressed: _refreshRents,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                      ),
-                      child: Text(AppTexts.retry),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            final rents = state is RentLoaded ? state.rents : [];
-            final isLoadingMore = state is RentLoadingMore;
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                _refreshRents();
-                await Future.delayed(const Duration(milliseconds: 500));
-              },
-              child: rents.isEmpty
-                  ? Center(
+                  if (state is RentError && _rentCubit.rents.isEmpty) {
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.business_center_outlined,
+                            Icons.error_outline,
                             size: 64.sp,
-                            color: AppColors.textSecondary,
+                            color: AppColors.error,
                           ),
                           SizedBox(height: 16.h),
                           Text(
-                            AppTexts.noRentsYet,
+                            state.message,
                             style: TextStyle(
                               fontSize: 16.sp,
                               color: AppColors.textSecondary,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            AppTexts.tapToAddFirstRent,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: AppColors.textSecondary,
+                          SizedBox(height: 24.h),
+                          ElevatedButton(
+                            onPressed: _refreshRents,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.textOnPrimary,
                             ),
+                            child: Text(AppTexts.retry),
                           ),
                         ],
                       ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: EdgeInsets.all(12.w),
-                      itemCount: rents.length + (isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == rents.length) {
-                          return Padding(
-                            padding: EdgeInsets.all(12.w),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.primary,
+                    );
+                  }
+
+                  final isLoadingMore = state is RentLoadingMore;
+                  
+                  if (_filteredRents.isEmpty && _rentCubit.rents.isNotEmpty && _searchQuery.isEmpty) {
+                    _filteredRents = List.from(_rentCubit.rents);
+                  }
+
+                  if (_filteredRents.isEmpty && _searchQuery.isNotEmpty) {
+                    return ListView(
+                      children: [
+                        SizedBox(height: 120.h),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 64.sp,
+                                color: AppColors.textSecondary,
+                              ),
+                              SizedBox(height: 16.h),
+                              Text(
+                                AppTexts.noProductsFound,
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
+                              SizedBox(height: 8.h),
+                              Text(
+                                AppTexts.tryDifferentKeywordsRent,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      _refreshRents();
+                      await Future.delayed(const Duration(milliseconds: 500));
+                    },
+                    child: _filteredRents.isEmpty && state is! RentLoading
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.business_center_outlined,
+                                  size: 64.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                                SizedBox(height: 16.h),
+                                Text(
+                                  AppTexts.noRentsYet,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  AppTexts.tapToAddFirstRent,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        }
-                        return _buildRentItem(rents[index]);
-                      },
-                    ),
-            );
-          },
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: EdgeInsets.all(12.w),
+                            itemCount: _filteredRents.length + (isLoadingMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _filteredRents.length) {
+                                return Padding(
+                                  padding: EdgeInsets.all(12.w),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return _buildRentItem(_filteredRents[index]);
+                            },
+                          ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
@@ -212,6 +298,63 @@ class _RentListScreenState extends State<RentListScreen> {
     );
   }
 
+  Widget _buildSearchField() {
+    return Container(
+      color: AppColors.background,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      child: TextFormField(
+        controller: _searchController,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: AppTexts.rentSearchPlaceholder,
+          hintStyle: TextStyle(
+            color: AppColors.textSecondary.withOpacity(0.6),
+            fontSize: 14.sp,
+          ),
+          filled: true,
+          fillColor: AppColors.surfaceVariant.withOpacity(0.5),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 12.h,
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: AppColors.textSecondary,
+            size: 20.sp,
+          ),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                      _applyFilters();
+                    });
+                  },
+                  icon: Icon(
+                    Icons.clear,
+                    color: AppColors.textSecondary,
+                    size: 20.sp,
+                  ),
+                )
+              : null,
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.divider.withOpacity(0.5), width: 1),
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRentItem(RentItem rent) {
     return Card(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -220,12 +363,8 @@ class _RentListScreenState extends State<RentListScreen> {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => BlocProvider.value(
-                value: _rentCubit,
-                child: RentDetailsScreen(
-                  rentId: rent.id,
-                  rentCubit: _rentCubit,
-                ),
+              builder: (context) => RentDetailsScreen(
+                rentId: rent.id,
               ),
             ),
           );

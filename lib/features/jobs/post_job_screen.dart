@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:bounce/bounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,11 +7,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
 import '../../../core/di/inject.dart' as di;
-import '../../../core/extensions/image_picker_extension.dart';
 import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../auth/register/data/specialties.dart';
-import '../auth/register/widgets/image_source_dialog.dart';
 import '../home/data/repo/post_repository.dart';
 import 'data/models/job_models.dart';
 import 'data/repo/job_repository.dart';

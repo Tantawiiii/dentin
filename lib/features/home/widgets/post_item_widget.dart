@@ -459,18 +459,19 @@ class _PostItemWidgetState extends State<PostItemWidget> {
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
       builder: (context, value, child) {
         return Opacity(
           opacity: value,
           child: Transform.translate(
-            offset: Offset(0, (1 - value) * 16),
+            offset: Offset(0, (1 - value) * 10),
             child: child,
           ),
         );
       },
-      child: Container(
+      child: RepaintBoundary(
+        child: Container(
         margin: EdgeInsets.only(bottom: 16.h),
         decoration: BoxDecoration(
           color: isAd
@@ -969,6 +970,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

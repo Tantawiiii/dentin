@@ -38,7 +38,7 @@ class _UsersListScreenState extends State<UsersListScreen> {
   UsersListFilters _filters = UsersListFilters();
   UsersListFilters _tempFilters = UsersListFilters();
   bool _showFilters = false;
-  int _perPage = 10;
+  final int _perPage = 20;
   int? _currentUserId;
   Map<int, FriendRequestStatus> _friendStatusMap = {};
 
@@ -75,6 +75,12 @@ class _UsersListScreenState extends State<UsersListScreen> {
     });
   }
 
+  void _loadFriendStatuses() {
+    if (_currentUserId != null) {
+      _friendRequestsCubit.loadFriendRequests();
+    }
+  }
+
   void _onScroll() {
     if (_scrollController.hasClients &&
         _scrollController.position.pixels >=
@@ -92,16 +98,52 @@ class _UsersListScreenState extends State<UsersListScreen> {
     _usersListCubit.loadUsers(filters: _filters, page: 1, perPage: _perPage);
   }
 
-  void _loadFriendStatuses() {
-    if (_currentUserId != null) {
-      _friendRequestsCubit.loadFriendRequests();
-    }
+  void _showAdvancedFilters() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AdvancedFiltersWidget(
+            tempFilters: _tempFilters,
+            filterControllers: _filterControllers,
+            onFiltersChanged: (filters) {
+              setModalState(() {
+                _tempFilters = filters;
+              });
+              // Also update the screen state so it persists if needed, 
+              // though tempFilters usually lives until apply.
+              setState(() {
+                _tempFilters = filters;
+              });
+            },
+            onApplyFilters: () {
+              Navigator.pop(context);
+              _applyFilters();
+            },
+            onClearFilters: () {
+              setModalState(() {
+                _tempFilters = UsersListFilters();
+                // Clear controllers too
+                for (var controller in _filterControllers.values) {
+                  controller.clear();
+                }
+              });
+              setState(() {
+                _tempFilters = UsersListFilters();
+              });
+            },
+          );
+        },
+      ),
+    );
   }
 
   void _applyFilters() {
     setState(() {
       _filters = _tempFilters;
-      _showFilters = false;
+      _showFilters = true; // Mark as having active filters
     });
     _loadUsers();
   }
@@ -112,6 +154,9 @@ class _UsersListScreenState extends State<UsersListScreen> {
       _filters = UsersListFilters();
       _searchController.clear();
       _showFilters = false;
+      for (var controller in _filterControllers.values) {
+        controller.clear();
+      }
     });
     _loadUsers();
   }
@@ -146,30 +191,8 @@ class _UsersListScreenState extends State<UsersListScreen> {
           children: [
             SearchAndFiltersWidget(
               searchController: _searchController,
-              showFilters: _showFilters,
-              perPage: _perPage,
-              onFilterToggle: () {
-                setState(() {
-                  _showFilters = !_showFilters;
-                });
-              },
-              onPerPageChanged: (value) {
-                setState(() {
-                  _perPage = value;
-                });
-                _loadUsers();
-              },
-              advancedFilters: AdvancedFiltersWidget(
-                tempFilters: _tempFilters,
-                filterControllers: _filterControllers,
-                onFiltersChanged: (filters) {
-                  setState(() {
-                    _tempFilters = filters;
-                  });
-                },
-                onApplyFilters: _applyFilters,
-                onClearFilters: _clearFilters,
-              ),
+              showFilters: _hasActiveFilters(),
+              onFilterToggle: _showAdvancedFilters,
             ),
             Expanded(
               child: BlocBuilder<FriendRequestsCubit, dynamic>(

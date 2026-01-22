@@ -61,7 +61,7 @@ class Doctor {
   final List<Field> fields;
   final String? profileImage;
   final String? coverImage;
-  final List<Post> posts;
+  final List<ProfilePost> posts;
   final String? graduationCertificateImage;
   final String? cv;
   final List<CourseCertificate> courseCertificates;
@@ -145,7 +145,7 @@ class Doctor {
       profileImage: json['profile_image'] as String?,
       coverImage: json['cover_image'] as String?,
       posts: (json['posts'] as List<dynamic>? ?? [])
-          .map((e) => Post.fromJson(e as Map<String, dynamic>))
+          .map((e) => ProfilePost.fromJson(e as Map<String, dynamic>))
           .toList(),
       graduationCertificateImage:
           json['graduation_certificate_image'] as String?,
@@ -176,16 +176,16 @@ class Field {
   }
 }
 
-class Post {
+class ProfilePost {
   final int id;
   final String? content;
   final String? image;
-  final List<PostGallery> gallery;
+  final List<ProfilePostGallery> gallery;
   final bool isAdRequest;
   final int likesCount;
   final String? createdAt;
 
-  Post({
+  ProfilePost({
     required this.id,
     this.content,
     this.image,
@@ -195,13 +195,13 @@ class Post {
     this.createdAt,
   });
 
-  factory Post.fromJson(Map<String, dynamic> json) {
-    return Post(
+  factory ProfilePost.fromJson(Map<String, dynamic> json) {
+    return ProfilePost(
       id: json['id'] as int,
       content: json['content'] as String?,
       image: json['image'] as String?,
       gallery: (json['gallery'] as List<dynamic>? ?? [])
-          .map((e) => PostGallery.fromJson(e as Map<String, dynamic>))
+          .map((e) => ProfilePostGallery.fromJson(e as Map<String, dynamic>))
           .toList(),
       isAdRequest: json['is_ad_request'] as bool? ?? false,
       likesCount: json['likes_count'] as int? ?? 0,
@@ -210,7 +210,7 @@ class Post {
   }
 }
 
-class PostGallery {
+class ProfilePostGallery {
   final int id;
   final String name;
   final String mimeType;
@@ -220,7 +220,7 @@ class PostGallery {
   final String fullUrl;
   final String createdAt;
 
-  PostGallery({
+  ProfilePostGallery({
     required this.id,
     required this.name,
     required this.mimeType,
@@ -231,8 +231,8 @@ class PostGallery {
     required this.createdAt,
   });
 
-  factory PostGallery.fromJson(Map<String, dynamic> json) {
-    return PostGallery(
+  factory ProfilePostGallery.fromJson(Map<String, dynamic> json) {
+    return ProfilePostGallery(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       mimeType: json['mimeType'] as String? ?? '',

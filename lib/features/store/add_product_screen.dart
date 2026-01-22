@@ -32,8 +32,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final ProductRepository _productRepository = di.sl<ProductRepository>();
   final RegisterRepository _registerRepository = di.sl<RegisterRepository>();
 
-  List<File> _imageFiles = [];
-  Map<int, double> _uploadProgress = {};
+  final List<File> _imageFiles = [];
+  final Map<int, double> _uploadProgress = {};
   bool _isNew = true;
   bool _isSubmitting = false;
   String? _selectedType;

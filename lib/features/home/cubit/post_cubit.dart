@@ -23,15 +23,15 @@ class PostCubit extends Cubit<PostState> {
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
-      _posts = [];
+      // Don't clear _posts immediately for a smoother feel
     }
 
-    if (_currentPage == 1) {
+    if (_currentPage == 1 && _posts.isEmpty) {
       emit(PostLoading());
     }
 
     try {
-      final response = await _repository.getPosts(page: _currentPage);
+      final response = await _repository.getPosts(page: _currentPage, perPage: 20);
       final fetchedPosts = response.data;
 
       if (refresh || _currentPage == 1) {
@@ -47,7 +47,12 @@ class PostCubit extends Cubit<PostState> {
         PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1),
       );
     } catch (e) {
-      emit(PostError(e.toString().replaceFirst('Exception: ', '')));
+      if (_posts.isEmpty) {
+        emit(PostError(e.toString().replaceFirst('Exception: ', '')));
+      } else {
+        // If we have posts, just stay in PostLoaded but maybe we could emit a non-breaking error
+        emit(PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1));
+      }
     }
   }
 
@@ -58,7 +63,7 @@ class PostCubit extends Cubit<PostState> {
     emit(PostLoadingMore(_posts, _currentPage));
 
     try {
-      final response = await _repository.getPosts(page: _currentPage);
+      final response = await _repository.getPosts(page: _currentPage, perPage: 20);
       final fetchedPosts = response.data;
       _posts.addAll(fetchedPosts.where((post) => !post.isHidden));
       _hasMore = response.meta?.hasMorePages ?? false;
@@ -132,9 +137,16 @@ class PostCubit extends Cubit<PostState> {
       );
 
       final response = await _repository.createPost(request);
-      _posts.insert(0, response.data);
+
+      if (!isAdRequest) {
+        _posts.insert(0, response.data);
+      }
+
       emit(PostCreated(response.data));
-      emit(PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage));
+
+      if (!isAdRequest) {
+        emit(PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage));
+      }
     } catch (e) {
       emit(PostCreateError(e.toString().replaceFirst('Exception: ', '')));
     }

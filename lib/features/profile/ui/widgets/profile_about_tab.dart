@@ -53,11 +53,11 @@ class ProfileAboutTab extends StatelessWidget {
             label: AppTexts.profileBirthDate,
             value: _formatDate(doctor.birthDate),
           ),
-          _InfoTile(
-            icon: Icons.calendar_today_outlined,
-            label: AppTexts.profileJoined,
-            value: _formatDate(doctor.createdAt),
-          ),
+          // _InfoTile(
+          //   icon: Icons.calendar_today_outlined,
+          //   label: AppTexts.profileJoined,
+          //   value: _formatDate(doctor.createdAt),
+          // ),
           if (doctor.university != null && doctor.university!.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
