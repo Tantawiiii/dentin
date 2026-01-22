@@ -11,11 +11,14 @@ class PostRepository {
 
   PostRepository(this._apiService);
 
-  Future<PostResponse> getPosts({int page = 1}) async {
+  Future<PostResponse> getPosts({int page = 1, int? perPage}) async {
     try {
       final response = await _apiService.post<dynamic>(
         ApiConstants.postIndexPublic,
-        queryParameters: {'page': page},
+        queryParameters: {
+          'page': page,
+          if (perPage != null) 'per_page': perPage,
+        },
       );
 
       if (response.statusCode != null && response.statusCode! < 400) {

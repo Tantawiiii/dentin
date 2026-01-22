@@ -28,6 +28,8 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
   final TextEditingController _contentController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
+  final FocusNode _contentFocusNode = FocusNode();
+
   File? _selectedImage;
   File? _selectedVideo;
   List<File> _selectedGallery = [];
@@ -52,6 +54,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
   @override
   void dispose() {
     _contentController.dispose();
+    _contentFocusNode.dispose();
     super.dispose();
   }
 
@@ -94,6 +97,8 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
 
     if (_isCreating) return;
 
+    _contentFocusNode.unfocus();
+
     setState(() {
       _isCreating = true;
     });
@@ -121,6 +126,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
             _isCreating = true;
           });
         } else if (state is PostCreated) {
+          final wasAdRequest = _isAdRequest;
           _contentController.clear();
           _clearMedia();
           _isAdRequest = false;
@@ -128,7 +134,9 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
             _isCreating = false;
           });
           AppToast.showSuccess(
-            AppTexts.postCreatedSuccessfully,
+            wasAdRequest
+                ? AppTexts.postAdWaitingApproval
+                : AppTexts.postCreatedSuccessfully,
             context: context,
           );
         } else if (state is PostCreateError) {
@@ -189,6 +197,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                 Expanded(
                   child: TextField(
                     controller: _contentController,
+                    focusNode: _contentFocusNode,
                     decoration: InputDecoration(
                       hintText: AppTexts.whatsOnYourMind,
                       border: InputBorder.none,

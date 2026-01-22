@@ -219,6 +219,8 @@ final class AppTexts {
   static const String createPost = 'Create Post';
   static const String pleaseAddContentOrMedia = 'Please add content or media';
   static const String postCreatedSuccessfully = 'Post created successfully';
+  static const String postAdWaitingApproval =
+      'Post submitted and waiting for approval';
 
   // Post Item
   static const String justNow = 'Just now';
@@ -404,7 +406,7 @@ final class AppTexts {
   static const String jobsAllJobs = 'All Jobs';
   static const String jobsFullTime = 'Full-time';
   static const String jobsPartTime = 'Part-time';
-  static const String jobsRemote = 'Remote';
+  static const String jobsRemote = 'On Call';
   static const String jobsFindYourNextCareer =
       'Find your next career opportunity';
   static const String jobsJobCreatedSuccessfully = 'Job posted successfully';
@@ -470,6 +472,8 @@ final class AppTexts {
   static const String governoratePlaceholder = 'governorate';
   static const String cityPlaceholder = 'city';
   static const String enterAddress = 'Enter address';
+  static const String rentSearchPlaceholder = 'Search by name, city or location...';
+  static const String tryDifferentKeywordsRent = 'Try searching with different keywords';
   static const String failedToUploadImage = 'Failed to upload image';
   static const String failedToUploadImages = 'Failed to upload images';
   static const String uploadingImages = 'Uploading images...';

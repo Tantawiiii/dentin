@@ -36,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _postCubit = di.sl<PostCubit>();
     _postCubit.loadPosts();
     _scrollController.addListener(_onScroll);
-    // Register refresh callback with parent
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onRefreshReady?.call(_refreshPosts);
     });
@@ -84,10 +84,20 @@ class _HomeScreenState extends State<HomeScreen> {
           body: Padding(
             padding: const EdgeInsets.all(8.0),
             child: BlocBuilder<PostCubit, PostState>(
-              buildWhen: (previous, current) => previous != current,
+              buildWhen: (previous, current) {
+                // Avoid unnecessary full-screen rebuilds if only loading more
+                if (current is PostLoadingMore || previous is PostLoadingMore) {
+                  return false; 
+                }
+                return previous != current;
+              },
               builder: (context, state) {
-                if (state is PostLoading) {
+                final posts = _postCubit.posts;
+                final isLoading = state is PostLoading && posts.isEmpty;
+                
+                if (isLoading) {
                   return CustomScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
                     slivers: [
                       SliverToBoxAdapter(
                         child: CreatePostWidget(postCubit: _postCubit),
@@ -101,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
-                if (state is PostError) {
+                if (state is PostError && posts.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -134,9 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
-                final posts = state is PostLoaded ? state.posts : [];
-                final isLoadingMore = state is PostLoadingMore;
-
                 return RefreshIndicator(
                   onRefresh: () async {
                     _postCubit.refreshPosts();
@@ -144,12 +151,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   child: CustomScrollView(
                     controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
                     slivers: [
                       SliverToBoxAdapter(
                         child: CreatePostWidget(postCubit: _postCubit),
                       ),
-                      if (posts.isEmpty && !isLoadingMore)
+                      if (posts.isEmpty)
                         SliverFillRemaining(
+                          hasScrollBody: false,
                           child: Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -191,19 +202,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             addRepaintBoundaries: true,
                           ),
                         ),
-                        if (isLoadingMore)
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.all(12.w),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
+                        SliverToBoxAdapter(
+                          child: BlocBuilder<PostCubit, PostState>(
+                            buildWhen: (p, c) => c is PostLoadingMore || p is PostLoadingMore || c is PostLoaded,
+                            builder: (context, state) {
+                              if (state is PostLoadingMore) {
+                                return Padding(
+                                  padding: EdgeInsets.all(12.w),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.primary.withOpacity(0.5),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ),
+                                );
+                              }
+                              return SizedBox(height: 20.h);
+                            },
                           ),
+                        ),
                       ],
                     ],
                   ),

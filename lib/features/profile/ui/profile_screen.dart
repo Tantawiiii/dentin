@@ -322,7 +322,7 @@ class _ProfileContent extends StatelessWidget {
       },
       body: TabBarView(
         children: [
-          ProfilePostsTab(posts: doctor.posts),
+          ProfilePostsTab(doctor: doctor),
           ProfileAboutTab(doctor: doctor),
         ],
       ),

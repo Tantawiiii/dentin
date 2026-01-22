@@ -3,6 +3,8 @@ import 'package:bounce/bounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constant/app_colors.dart';
@@ -62,16 +64,36 @@ class _AddRentScreenState extends State<AddRentScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImages() async {
-    final ImagePicker picker = ImagePicker();
-    final List<XFile> images = await picker.pickMultiImage();
+  bool _isPicking = false;
 
-    if (images.isNotEmpty) {
-      setState(() {
-        _selectedImages.addAll(
-          images.map((xFile) => File(xFile.path)).toList(),
-        );
-      });
+  Future<void> _pickImages() async {
+    if (_isPicking) return;
+
+    setState(() {
+      _isPicking = true;
+    });
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final List<XFile> images = await picker.pickMultiImage();
+
+      if (images.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(
+            images.map((xFile) => File(xFile.path)).toList(),
+          );
+        });
+      }
+    } catch (e) {
+      if (kDebugMode && e is! PlatformException) {
+        print('Error picking images: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPicking = false;
+        });
+      }
     }
   }
 
@@ -229,6 +251,7 @@ class _AddRentScreenState extends State<AddRentScreen> {
           );
           Navigator.of(context).pop();
         } else if (state is RentCreateError) {
+          print("RentCreateError${state.message}");
           AppToast.showError(state.message, context: context);
         }
       },
@@ -563,6 +586,7 @@ class _AddRentScreenState extends State<AddRentScreen> {
                     );
                   },
                 ),
+                60.verticalSpace,
               ],
             ),
           ),

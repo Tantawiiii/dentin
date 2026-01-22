@@ -88,17 +88,40 @@ class ConnectivityService {
     _updateConnectionStatus(status == InternetStatus.connected);
   }
 
+  Timer? _debounceTimer;
+
   void _updateConnectionStatus(bool connected) {
     if (_isConnected != connected) {
-      _isConnected = connected;
-      _connectionController.add(connected);
+      if (!connected) {
+        // Debounce lost connection to avoid flickering on transient state changes
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 2), () {
+          if (_isConnected != connected) {
+            _isConnected = connected;
+            _connectionController.add(connected);
+            if (kDebugMode) {
+              print('❌ Internet connection lost (confirmed after debounce)');
+            }
+          }
+        });
+      } else {
+        // Immediate update for restored connection
+        _debounceTimer?.cancel();
+        _isConnected = connected;
+        _connectionController.add(connected);
 
-      if (kDebugMode) {
-        print(
-          connected
-              ? '✅ Internet connection restored'
-              : '❌ Internet connection lost',
-        );
+        if (kDebugMode) {
+          print('✅ Internet connection restored');
+        }
+      }
+    } else {
+      // If we got a 'connected' signal while a debounce timer was running for 'disconnected',
+      // it means the connection was restored before the debounce period ended.
+      if (connected && _debounceTimer != null && _debounceTimer!.isActive) {
+        _debounceTimer?.cancel();
+        if (kDebugMode) {
+          print('ℹ️ Internet connection flickered but recovered quickly');
+        }
       }
     }
   }

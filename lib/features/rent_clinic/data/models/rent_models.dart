@@ -15,11 +15,11 @@ class RentUser {
 
   factory RentUser.fromJson(Map<String, dynamic> json) {
     return RentUser(
-      id: json['id'] as int,
-      userName: json['user_name'] as String,
-      profileImage: json['profile_image'] as String?,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      userName: json['user_name']?.toString() ?? '',
+      profileImage: json['profile_image']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
     );
   }
 }
@@ -47,14 +47,14 @@ class RentGallery {
 
   factory RentGallery.fromJson(Map<String, dynamic> json) {
     return RentGallery(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      mimeType: json['mimeType'] as String,
-      size: json['size'] as int,
-      authorId: json['authorId'] as int?,
-      previewUrl: json['previewUrl'] as String,
-      fullUrl: json['fullUrl'] as String,
-      createdAt: json['createdAt'] as String,
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      mimeType: json['mimeType']?.toString() ?? '',
+      size: json['size'] is int ? json['size'] as int : int.tryParse(json['size']?.toString() ?? '0') ?? 0,
+      authorId: json['authorId'] is int ? json['authorId'] as int : int.tryParse(json['authorId']?.toString() ?? ''),
+      previewUrl: json['previewUrl']?.toString() ?? '',
+      fullUrl: json['fullUrl']?.toString() ?? '',
+      createdAt: json['createdAt']?.toString() ?? '',
     );
   }
 }
@@ -98,25 +98,27 @@ class RentItem {
 
   factory RentItem.fromJson(Map<String, dynamic> json) {
     return RentItem(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      price: json['price'] as String,
-      des: json['des'] as String,
-      type: json['type'] as String,
-      duration: json['duration'] as int,
-      startDate: json['start_date'] as String?,
-      endDate: json['end_date'] as String?,
-      governorate: json['governorate'] as String?,
-      city: json['city'] as String?,
-      address: json['address'] as String?,
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      price: json['price']?.toString() ?? '0',
+      des: json['des']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      duration: json['duration'] is int
+          ? json['duration'] as int
+          : int.tryParse(json['duration']?.toString() ?? '0') ?? 0,
+      startDate: json['start_date']?.toString(),
+      endDate: json['end_date']?.toString(),
+      governorate: json['governorate']?.toString(),
+      city: json['city']?.toString(),
+      address: json['address']?.toString(),
       gallery: (json['gallery'] as List<dynamic>?)
               ?.map((e) => RentGallery.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       user: RentUser.fromJson(json['user'] as Map<String, dynamic>),
-      active: json['active'] as bool,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
+      active: json['active'] == true || json['active'] == 1 || json['active'] == "1",
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
     );
   }
 }
@@ -140,14 +142,15 @@ class RentListResponse {
 
   factory RentListResponse.fromJson(Map<String, dynamic> json) {
     return RentListResponse(
-      data: (json['data'] as List<dynamic>)
-          .map((e) => RentItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      data: (json['data'] as List<dynamic>?)
+              ?.map((e) => RentItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       links: RentPaginationLinks.fromJson(json['links'] as Map<String, dynamic>),
       meta: RentPaginationMeta.fromJson(json['meta'] as Map<String, dynamic>),
-      result: json['result'] as String,
-      message: json['message'] as String,
-      status: json['status'] as int,
+      result: json['result']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      status: json['status'] is int ? json['status'] as int : int.tryParse(json['status']?.toString() ?? '0') ?? 0,
     );
   }
 }
@@ -196,13 +199,13 @@ class RentPaginationMeta {
 
   factory RentPaginationMeta.fromJson(Map<String, dynamic> json) {
     return RentPaginationMeta(
-      currentPage: json['current_page'] as int,
-      from: json['from'] as int,
-      lastPage: json['last_page'] as int,
-      path: json['path'] as String,
-      perPage: json['per_page'] as int,
-      to: json['to'] as int,
-      total: json['total'] as int,
+      currentPage: json['current_page'] is int ? json['current_page'] as int : int.tryParse(json['current_page']?.toString() ?? '0') ?? 0,
+      from: json['from'] is int ? json['from'] as int : int.tryParse(json['from']?.toString() ?? '0') ?? 0,
+      lastPage: json['last_page'] is int ? json['last_page'] as int : int.tryParse(json['last_page']?.toString() ?? '0') ?? 0,
+      path: json['path']?.toString() ?? '',
+      perPage: json['per_page'] is int ? json['per_page'] as int : int.tryParse(json['per_page']?.toString() ?? '0') ?? 0,
+      to: json['to'] is int ? json['to'] as int : int.tryParse(json['to']?.toString() ?? '0') ?? 0,
+      total: json['total'] is int ? json['total'] as int : int.tryParse(json['total']?.toString() ?? '0') ?? 0,
     );
   }
 }
@@ -225,9 +228,9 @@ class RentDetailsResponse {
       data: json['data'] != null
           ? RentItem.fromJson(json['data'] as Map<String, dynamic>)
           : null,
-      result: json['result'] as String,
-      message: json['message'] as String,
-      status: json['status'] as int,
+      result: json['result']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      status: json['status'] is int ? json['status'] as int : int.tryParse(json['status']?.toString() ?? '0') ?? 0,
     );
   }
 }
@@ -292,12 +295,12 @@ class CreateRentResponse {
   factory CreateRentResponse.fromJson(Map<String, dynamic> json) {
     final messageData = json['message'] as Map<String, dynamic>?;
     return CreateRentResponse(
-      result: json['result'] as String,
+      result: json['result']?.toString() ?? '',
       rent: messageData?['rent'] != null
           ? RentItem.fromJson(messageData!['rent'] as Map<String, dynamic>)
           : null,
-      message: messageData?['message'] as String? ?? json['message'] as String? ?? '',
-      status: json['status'] as int,
+      message: messageData?['message']?.toString() ?? json['message']?.toString() ?? '',
+      status: json['status'] is int ? json['status'] as int : int.tryParse(json['status']?.toString() ?? '0') ?? 0,
     );
   }
 }

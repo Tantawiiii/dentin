@@ -207,7 +207,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget _buildProfileContent() {
     final doctor = _doctor!;
-    final friendsCount = 0; // TODO: Get from API if available
+    final friendsCount = 0;
     final totalPosts = doctor.posts.length;
     final sponsoredPosts = doctor.posts.where((p) => p.isAdRequest).length;
     final regularPosts = totalPosts - sponsoredPosts;
@@ -419,7 +419,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       },
       body: TabBarView(
         children: [
-          ProfilePostsTab(posts: doctor.posts),
+          ProfilePostsTab(doctor: doctor),
           ProfileAboutTab(doctor: doctor),
         ],
       ),

@@ -5,7 +5,6 @@ import '../constant/app_colors.dart';
 import '../constant/app_texts.dart';
 import '../services/connectivity_service.dart';
 
-/// Widget that wraps the app and shows offline UI when disconnected
 class ConnectivityWrapper extends StatefulWidget {
   final Widget child;
 
@@ -16,18 +15,18 @@ class ConnectivityWrapper extends StatefulWidget {
 }
 
 class _ConnectivityWrapperState extends State<ConnectivityWrapper>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final ConnectivityService _connectivityService = ConnectivityService();
   bool _isConnected = true;
   bool _isChecking = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   StreamSubscription<bool>? _connectionSubscription;
-  Timer? _autoCheckTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _animationController = AnimationController(
       vsync: this,
@@ -50,25 +49,18 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper>
 
         if (connected) {
           _animationController.reverse();
-          _autoCheckTimer?.cancel();
         } else {
           _animationController.forward();
-          _startAutoCheck();
         }
       }
     });
-    _startAutoCheck();
   }
 
-  void _startAutoCheck() {
-    _autoCheckTimer?.cancel();
-    _autoCheckTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (!_isConnected && mounted) {
-        _checkConnection();
-      } else {
-        timer.cancel();
-      }
-    });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkConnection();
+    }
   }
 
   Future<void> _checkConnection() async {
@@ -88,7 +80,6 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper>
 
         if (connected) {
           _animationController.reverse();
-          _autoCheckTimer?.cancel();
         } else {
           _animationController.forward();
         }
@@ -104,8 +95,8 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectionSubscription?.cancel();
-    _autoCheckTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }

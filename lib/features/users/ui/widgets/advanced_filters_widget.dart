@@ -26,210 +26,182 @@ class AdvancedFiltersWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(top: 16.h),
+      padding: EdgeInsets.only(
+        left: 20.w,
+        right: 20.w,
+        top: 8.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40.w,
+              height: 4.h,
+              margin: EdgeInsets.symmetric(vertical: 12.h),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withOpacity(0.1),
-                    AppColors.primaryLight.withOpacity(0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border(
-                  bottom: BorderSide(color: AppColors.borderLight, width: 1),
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+          ),
+          
+          Row(
+            children: [
+              Icon(Icons.tune_rounded, color: AppColors.primary, size: 24.sp),
+              SizedBox(width: 12.w),
+              Text(
+                AppTexts.advancedFilters,
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              child: Row(
+              const Spacer(),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.close, color: AppColors.textSecondary, size: 20.sp),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: 16.h),
+          
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Icon(
-                      Icons.tune_rounded,
-                      color: AppColors.primary,
-                      size: 20.sp,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      AppTexts.advancedFilters,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        letterSpacing: 0.5,
+                  _FilterSection(
+                    title: 'Personal Information',
+                    icon: Icons.person_outline_rounded,
+                    children: [
+                      _FilterTextField(
+                        label: AppTexts.email,
+                        icon: Icons.email_outlined,
+                        value: tempFilters.email ?? '',
+                        controller: filterControllers,
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: (value) => onFiltersChanged(
+                          tempFilters.copyWith(email: value),
+                        ),
                       ),
-                    ),
+                      _FilterTextField(
+                        label: AppTexts.phoneNumber,
+                        icon: Icons.phone_outlined,
+                        value: tempFilters.phone ?? '',
+                        controller: filterControllers,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (value) => onFiltersChanged(
+                          tempFilters.copyWith(phone: value),
+                        ),
+                      ),
+                    ],
                   ),
+                  SizedBox(height: 16.h),
+                  _FilterSection(
+                    title: 'Education',
+                    icon: Icons.school_outlined,
+                    children: [
+                      _FilterTextField(
+                        label: AppTexts.graduationYear,
+                        icon: Icons.calendar_today_outlined,
+                        value: tempFilters.graduationYear ?? '',
+                        controller: filterControllers,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) => onFiltersChanged(
+                          tempFilters.copyWith(graduationYear: value),
+                        ),
+                      ),
+                      _DropdownFilter(
+                        label: AppTexts.graduationGrade,
+                        icon: Icons.star_outline,
+                        value: tempFilters.graduationGrade,
+                        options: ['excellent', 'very_good', 'good', 'pass'],
+                        onChanged: (value) => onFiltersChanged(
+                          tempFilters.copyWith(graduationGrade: value),
+                        ),
+                      ),
+                      _DropdownFilter(
+                        label: AppTexts.postgraduateDegree,
+                        icon: Icons.workspace_premium_outlined,
+                        value: tempFilters.postgraduateDegree,
+                        options: ['diploma', 'master', 'phd'],
+                        onChanged: (value) => onFiltersChanged(
+                          tempFilters.copyWith(postgraduateDegree: value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                  _FilterSection(
+                    title: 'Experience',
+                    icon: Icons.work_outline,
+                    children: [
+                      _FilterTextField(
+                        label: AppTexts.yearsOfExperience,
+                        icon: Icons.trending_up_outlined,
+                        value: tempFilters.experienceYears?.toString() ?? '',
+                        controller: filterControllers,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          final years = int.tryParse(value);
+                          onFiltersChanged(
+                            tempFilters.copyWith(experienceYears: years),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 24.h),
                 ],
               ),
             ),
-            // Scrollable Content
-            Flexible(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Personal Information Section
-                    _FilterSection(
-                      title: 'Personal Information',
-                      icon: Icons.person_outline_rounded,
-                      children: [
-                        _FilterTextField(
-                          label: AppTexts.email,
-                          icon: Icons.email_outlined,
-                          value: tempFilters.email ?? '',
-                          controller: filterControllers,
-                          keyboardType: TextInputType.emailAddress,
-                          onChanged: (value) => onFiltersChanged(
-                            tempFilters.copyWith(email: value),
-                          ),
-                        ),
-                        _FilterTextField(
-                          label: AppTexts.phoneNumber,
-                          icon: Icons.phone_outlined,
-                          value: tempFilters.phone ?? '',
-                          controller: filterControllers,
-                          keyboardType: TextInputType.phone,
-                          onChanged: (value) => onFiltersChanged(
-                            tempFilters.copyWith(phone: value),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20.h),
-                    // Education Section
-                    _FilterSection(
-                      title: 'Education',
-                      icon: Icons.school_outlined,
-                      children: [
-                        _FilterTextField(
-                          label: AppTexts.graduationYear,
-                          icon: Icons.calendar_today_outlined,
-                          value: tempFilters.graduationYear ?? '',
-                          controller: filterControllers,
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) => onFiltersChanged(
-                            tempFilters.copyWith(graduationYear: value),
-                          ),
-                        ),
-                        _DropdownFilter(
-                          label: AppTexts.graduationGrade,
-                          icon: Icons.star_outline,
-                          value: tempFilters.graduationGrade,
-                          options: ['excellent', 'very_good', 'good', 'pass'],
-                          onChanged: (value) => onFiltersChanged(
-                            tempFilters.copyWith(graduationGrade: value),
-                          ),
-                        ),
-                        _DropdownFilter(
-                          label: AppTexts.postgraduateDegree,
-                          icon: Icons.workspace_premium_outlined,
-                          value: tempFilters.postgraduateDegree,
-                          options: ['diploma', 'master', 'phd'],
-                          onChanged: (value) => onFiltersChanged(
-                            tempFilters.copyWith(postgraduateDegree: value),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20.h),
-                    // Experience Section
-                    _FilterSection(
-                      title: 'Experience',
-                      icon: Icons.work_outline,
-                      children: [
-                        _FilterTextField(
-                          label: AppTexts.yearsOfExperience,
-                          icon: Icons.trending_up_outlined,
-                          value: tempFilters.experienceYears?.toString() ?? '',
-                          controller: filterControllers,
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            final years = int.tryParse(value);
-                            onFiltersChanged(
-                              tempFilters.copyWith(experienceYears: years),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 24.h),
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: PrimaryButton(
-                            title: AppTexts.applyFilters,
-                            onPressed: onApplyFilters,
-                            fontSize: 15.sp,
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: onClearFilters,
-                            icon: Icon(
-                              Icons.clear_all_rounded,
-                              size: 18.sp,
-                              color: AppColors.textSecondary,
-                            ),
-                            label: Text(
-                              AppTexts.clearAll,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 12.h),
-                              side: BorderSide(
-                                color: AppColors.border,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+          ),
+          
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: PrimaryButton(
+                  title: AppTexts.applyFilters,
+                  onPressed: onApplyFilters,
                 ),
               ),
-            ),
-          ],
-        ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onClearFilters,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child: Text(
+                    AppTexts.clearAll,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+        ],
       ),
     );
   }
