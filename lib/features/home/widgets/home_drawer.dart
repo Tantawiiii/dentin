@@ -211,7 +211,23 @@ class HomeDrawer extends StatelessWidget {
                       onTabChange?.call(5);
                     },
                   ),
-
+                  ListTile(
+                    leading: Icon(
+                      Icons.calendar_today_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      AppTexts.events,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      Navigator.of(context).pushNamed(AppRoutes.events);
+                    },
+                  ),
                   const Divider(),
                   ListTile(
                     leading: Icon(
@@ -282,29 +298,32 @@ class HomeDrawer extends StatelessWidget {
                       Navigator.of(context).pushNamed(AppRoutes.hiddenPosts);
                     },
                   ),
+
+                  SizedBox(height: 14.h),
+                  ListTile(
+                    leading: Icon(Icons.logout, color: AppColors.error),
+                    title: Text(
+                      AppTexts.logout,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.error,
+                      ),
+                    ),
+                    onTap: () async {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      final storageService = di.sl<StorageService>();
+                      await storageService.clearAll();
+                      if (context.mounted) {
+                        Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+                      }
+                    },
+                  ),
+                  SizedBox(height: 14.h),
                 ],
               ),
             ),
-            ListTile(
-              leading: Icon(Icons.logout, color: AppColors.error),
-              title: Text(
-                AppTexts.logout,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.error,
-                ),
-              ),
-              onTap: () async {
-                sliderDrawerKey.currentState?.closeSlider();
-                final storageService = di.sl<StorageService>();
-                await storageService.clearAll();
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.login);
-                }
-              },
-            ),
-            SizedBox(height: 14.h),
+
           ],
         ),
       ),

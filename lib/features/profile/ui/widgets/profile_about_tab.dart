@@ -5,16 +5,127 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
+import '../../../../core/di/inject.dart' as di;
+import '../../../../shared/widgets/app_toast.dart';
 import '../../../../shared/widgets/shimmer_placeholder.dart';
 import '../../data/models/profile_response.dart';
+import '../../data/repo/profile_repository.dart';
+import 'profile_info_tile.dart';
+import 'profile_inline_info_row.dart';
+import 'profile_phone_info_tile.dart';
+import 'profile_section_card.dart';
 
-class ProfileAboutTab extends StatelessWidget {
+class ProfileAboutTab extends StatefulWidget {
   final Doctor doctor;
+  final bool isOwnProfile;
+  final VoidCallback? onProfileUpdated;
 
-  const ProfileAboutTab({super.key, required this.doctor});
+  const ProfileAboutTab({
+    super.key,
+    required this.doctor,
+    this.isOwnProfile = false,
+    this.onProfileUpdated,
+  });
+
+  @override
+  State<ProfileAboutTab> createState() => _ProfileAboutTabState();
+}
+
+class _ProfileAboutTabState extends State<ProfileAboutTab> {
+  late Doctor _doctor;
+  bool _isToggling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _doctor = widget.doctor;
+  }
+
+  @override
+  void didUpdateWidget(ProfileAboutTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.doctor.id != widget.doctor.id ||
+        oldWidget.doctor.isPhoneHidden != widget.doctor.isPhoneHidden) {
+      _doctor = widget.doctor;
+    }
+  }
+
+  Future<void> _togglePhoneVisibility() async {
+    if (_isToggling) return;
+
+    setState(() => _isToggling = true);
+
+    try {
+      final repository = di.sl<ProfileRepository>();
+      final newValue = (_doctor.isPhoneHidden == true) ? 0 : 1;
+
+      await repository.togglePhoneVisibility(_doctor.id, newValue);
+      setState(() {
+        _doctor = Doctor(
+          id: _doctor.id,
+          userName: _doctor.userName,
+          firstName: _doctor.firstName,
+          lastName: _doctor.lastName,
+          email: _doctor.email,
+          phone: _doctor.phone,
+          birthDate: _doctor.birthDate,
+          description: _doctor.description,
+          address: _doctor.address,
+          university: _doctor.university,
+          graduationYear: _doctor.graduationYear,
+          graduationGrade: _doctor.graduationGrade,
+          postgraduateDegree: _doctor.postgraduateDegree,
+          specialization: _doctor.specialization,
+          experienceYears: _doctor.experienceYears,
+          experience: _doctor.experience,
+          whereDidYouWork: _doctor.whereDidYouWork,
+          availableTimes: _doctor.availableTimes,
+          skills: _doctor.skills,
+          fields: _doctor.fields,
+          profileImage: _doctor.profileImage,
+          coverImage: _doctor.coverImage,
+          posts: _doctor.posts,
+          graduationCertificateImage: _doctor.graduationCertificateImage,
+          cv: _doctor.cv,
+          courseCertificates: _doctor.courseCertificates,
+          createdAt: _doctor.createdAt,
+          isWorkAssistantUniversity: _doctor.isWorkAssistantUniversity,
+          assistantUniversity: _doctor.assistantUniversity,
+          tools: _doctor.tools,
+          hasClinic: _doctor.hasClinic,
+          clinicName: _doctor.clinicName,
+          clinicAddress: _doctor.clinicAddress,
+          isPhoneHidden: newValue == 1,
+        );
+      });
+
+      widget.onProfileUpdated?.call();
+
+      if (mounted) {
+        AppToast.showSuccess(
+          newValue == 1
+              ? AppTexts.phoneNumberHidden
+              : AppTexts.phoneNumberVisible,
+          context: context,
+        );
+      }
+    } catch (e) {
+      print(e);
+      if (mounted) {
+        AppToast.showError(
+          '${AppTexts.failedToUpdatePhoneVisibility}: $e',
+          context: context,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isToggling = false);
+      }
+    }
+  }
 
   String _formatDate(String? date) {
-    if (date == null) return '-';
+    if (date == null) return AppTexts.notAvailable;
     return date;
   }
 
@@ -33,138 +144,140 @@ class ProfileAboutTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoTile(
+          ProfileInfoTile(
             icon: Icons.location_on_outlined,
             label: AppTexts.profileLocation,
-            value: doctor.address ?? '-',
+            value: _doctor.address ?? AppTexts.notAvailable,
           ),
-          _InfoTile(
+          ProfileInfoTile(
             icon: Icons.email_outlined,
             label: AppTexts.email,
-            value: doctor.email,
+            value: _doctor.email,
           ),
-          _InfoTile(
-            icon: Icons.phone_outlined,
-            label: AppTexts.profilePhone,
-            value: doctor.phone,
-          ),
-          _InfoTile(
+          if (_doctor.isPhoneHidden != true || widget.isOwnProfile)
+            ProfilePhoneInfoTile(
+              phone: _doctor.phone,
+              isHidden: _doctor.isPhoneHidden == true,
+              isOwnProfile: widget.isOwnProfile,
+              isToggling: _isToggling,
+              onToggle: _togglePhoneVisibility,
+            ),
+          ProfileInfoTile(
             icon: Icons.cake_outlined,
             label: AppTexts.profileBirthDate,
-            value: _formatDate(doctor.birthDate),
+            value: _formatDate(_doctor.birthDate),
           ),
           // _InfoTile(
           //   icon: Icons.calendar_today_outlined,
           //   label: AppTexts.profileJoined,
-          //   value: _formatDate(doctor.createdAt),
+          //   value: _formatDate(_doctor.createdAt),
           // ),
-          if (doctor.university != null && doctor.university!.isNotEmpty)
+          if (_doctor.university != null && _doctor.university!.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileEducation,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _InlineInfoRow(
+                    ProfileInlineInfoRow(
                       icon: Icons.school_outlined,
                       label: AppTexts.profileUniversity,
-                      value: doctor.university!,
+                      value: _doctor.university!,
                     ),
-                    if (doctor.graduationYear != null &&
-                        doctor.graduationYear!.isNotEmpty)
-                      _InlineInfoRow(
+                    if (_doctor.graduationYear != null &&
+                        _doctor.graduationYear!.isNotEmpty)
+                      ProfileInlineInfoRow(
                         icon: Icons.calendar_month_outlined,
                         label: AppTexts.profileGraduationYear,
-                        value: doctor.graduationYear!,
+                        value: _doctor.graduationYear!,
                       ),
-                    if (doctor.graduationGrade != null &&
-                        doctor.graduationGrade!.isNotEmpty)
-                      _InlineInfoRow(
+                    if (_doctor.graduationGrade != null &&
+                        _doctor.graduationGrade!.isNotEmpty)
+                      ProfileInlineInfoRow(
                         icon: Icons.star_outline,
                         label: AppTexts.profileGraduationGrade,
-                        value: doctor.graduationGrade!,
+                        value: _doctor.graduationGrade!,
                       ),
-                    if (doctor.postgraduateDegree != null &&
-                        doctor.postgraduateDegree!.isNotEmpty)
-                      _InlineInfoRow(
+                    if (_doctor.postgraduateDegree != null &&
+                        _doctor.postgraduateDegree!.isNotEmpty)
+                      ProfileInlineInfoRow(
                         icon: Icons.workspace_premium_outlined,
                         label: AppTexts.profilePostgraduateDegree,
-                        value: doctor.postgraduateDegree!,
+                        value: _doctor.postgraduateDegree!,
                       ),
-                    if (doctor.specialization != null &&
-                        doctor.specialization!.isNotEmpty)
-                      _InlineInfoRow(
+                    if (_doctor.specialization != null &&
+                        _doctor.specialization!.isNotEmpty)
+                      ProfileInlineInfoRow(
                         icon: Icons.medical_services_outlined,
                         label: AppTexts.profileSpecialization,
-                        value: doctor.specialization!,
+                        value: _doctor.specialization!,
                       ),
                   ],
                 ),
               ),
             ),
-          if (doctor.experienceYears != null ||
-              (doctor.experience != null && doctor.experience!.isNotEmpty) ||
-              (doctor.whereDidYouWork != null &&
-                  doctor.whereDidYouWork!.isNotEmpty))
+          if (_doctor.experienceYears != null ||
+              (_doctor.experience != null && _doctor.experience!.isNotEmpty) ||
+              (_doctor.whereDidYouWork != null &&
+                  _doctor.whereDidYouWork!.isNotEmpty))
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileExperience,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (doctor.experienceYears != null)
-                      _InlineInfoRow(
+                    if (_doctor.experienceYears != null)
+                      ProfileInlineInfoRow(
                         icon: Icons.timeline_outlined,
                         label: AppTexts.profileExperienceYears,
-                        value: '${doctor.experienceYears} years',
+                        value: '${_doctor.experienceYears} ${AppTexts.years}',
                       ),
-                    if (doctor.experience != null &&
-                        doctor.experience!.isNotEmpty)
-                      _InlineInfoRow(
+                    if (_doctor.experience != null &&
+                        _doctor.experience!.isNotEmpty)
+                      ProfileInlineInfoRow(
                         icon: Icons.work_outline,
                         label: AppTexts.profileExperience,
-                        value: doctor.experience!,
+                        value: _doctor.experience!,
                       ),
-                    if (doctor.whereDidYouWork != null &&
-                        doctor.whereDidYouWork!.isNotEmpty)
-                      _InlineInfoRow(
+                    if (_doctor.whereDidYouWork != null &&
+                        _doctor.whereDidYouWork!.isNotEmpty)
+                      ProfileInlineInfoRow(
                         icon: Icons.business_outlined,
                         label: AppTexts.profileWhereDidYouWork,
-                        value: doctor.whereDidYouWork!,
+                        value: _doctor.whereDidYouWork!,
                       ),
                   ],
                 ),
               ),
             ),
-          if (doctor.availableTimes.isNotEmpty)
+          if (_doctor.availableTimes.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileAvailableTimes,
                 child: Wrap(
                   spacing: 8.w,
                   runSpacing: 8.h,
-                  children: doctor.availableTimes
+                  children: _doctor.availableTimes
                       .map(
                         (time) => Chip(
                           label: Text(time, style: TextStyle(fontSize: 11.sp)),
-                          backgroundColor:
-                              AppColors.primary.withOpacity(0.08),
+                          backgroundColor: AppColors.primary.withOpacity(0.08),
                         ),
                       )
                       .toList(),
                 ),
               ),
             ),
-          if (doctor.description != null && doctor.description!.isNotEmpty)
+          if (_doctor.description != null && _doctor.description!.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileAboutTab,
                 child: Text(
-                  doctor.description!,
+                  _doctor.description!,
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: AppColors.textSecondary,
@@ -172,23 +285,22 @@ class ProfileAboutTab extends StatelessWidget {
                 ),
               ),
             ),
-          if (doctor.fields.isNotEmpty)
+          if (_doctor.fields.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileFields,
                 child: Wrap(
                   spacing: 4.w,
                   runSpacing: 2.h,
-                  children: doctor.fields
+                  children: _doctor.fields
                       .map(
                         (f) => Chip(
                           label: Text(
                             f.name,
                             style: TextStyle(fontSize: 12.sp),
                           ),
-                          backgroundColor:
-                              AppColors.primary.withOpacity(0.08),
+                          backgroundColor: AppColors.primary.withOpacity(0.08),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24.r),
                           ),
@@ -198,15 +310,15 @@ class ProfileAboutTab extends StatelessWidget {
                 ),
               ),
             ),
-          if (doctor.graduationCertificateImage != null)
+          if (_doctor.graduationCertificateImage != null)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileGraduationCertificate,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12.r),
                   child: CachedNetworkImage(
-                    imageUrl: doctor.graduationCertificateImage!,
+                    imageUrl: _doctor.graduationCertificateImage!,
                     fit: BoxFit.cover,
                     placeholder: (_, __) => ShimmerPlaceholder(
                       width: double.infinity,
@@ -217,20 +329,19 @@ class ProfileAboutTab extends StatelessWidget {
                 ),
               ),
             ),
-          if (doctor.skills.isNotEmpty)
+          if (_doctor.skills.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileSkills,
                 child: Wrap(
                   spacing: 8.w,
                   runSpacing: 8.h,
-                  children: doctor.skills
+                  children: _doctor.skills
                       .map(
                         (s) => Chip(
                           label: Text(s, style: TextStyle(fontSize: 11.sp)),
-                          backgroundColor:
-                              AppColors.primary.withOpacity(0.08),
+                          backgroundColor: AppColors.primary.withOpacity(0.08),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24.r),
                           ),
@@ -240,10 +351,10 @@ class ProfileAboutTab extends StatelessWidget {
                 ),
               ),
             ),
-          if (doctor.cv != null)
+          if (_doctor.cv != null)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.cv,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -253,19 +364,19 @@ class ProfileAboutTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                   ),
-                  onPressed: () => _launchUrl(doctor.cv!),
+                  onPressed: () => _launchUrl(_doctor.cv!),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: const Text(AppTexts.profileCvDownload),
                 ),
               ),
             ),
-          if (doctor.courseCertificates.isNotEmpty)
+          if (_doctor.courseCertificates.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h, bottom: 24.h),
-              child: _SectionCard(
+              child: ProfileSectionCard(
                 title: AppTexts.profileCourseCertificates,
                 child: GridView.builder(
-                  itemCount: doctor.courseCertificates.length,
+                  itemCount: _doctor.courseCertificates.length,
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -275,7 +386,7 @@ class ProfileAboutTab extends StatelessWidget {
                     childAspectRatio: 4 / 3,
                   ),
                   itemBuilder: (context, index) {
-                    final certificate = doctor.courseCertificates[index];
+                    final certificate = _doctor.courseCertificates[index];
                     return GestureDetector(
                       onTap: () => _launchUrl(certificate.fullUrl),
                       child: ClipRRect(
@@ -334,166 +445,3 @@ class ProfileAboutTab extends StatelessWidget {
     );
   }
 }
-
-class _InfoTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      margin: EdgeInsets.only(top: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(6.w),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Icon(icon, size: 18.sp, color: AppColors.primary),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InlineInfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InlineInfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: 12.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18.sp, color: AppColors.primary),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _SectionCard({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-

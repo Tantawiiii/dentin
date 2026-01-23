@@ -28,4 +28,6 @@ final class AppRoutes {
   static const String friendRequests = '/friend-requests';
   static const String notifications = '/notifications';
   static const String chat = '/chat';
+  static const String events = '/events';
+  static const String eventDetails = '/event-details';
 }

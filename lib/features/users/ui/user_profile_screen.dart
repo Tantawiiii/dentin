@@ -54,7 +54,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _loadProfile() async {
     try {
       setState(() => _isLoading = true);
-      final doctor = await di.sl<UsersRepository>().getUserProfile(widget.userId);
+      final doctor = await di.sl<UsersRepository>().getUserProfile(
+        widget.userId,
+      );
       setState(() {
         _doctor = doctor;
         _isLoading = false;
@@ -69,14 +71,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   void _loadFriendStatus() {
     if (_currentUserId == null) return;
-    
+
     _friendRequestsCubit.loadFriendRequests();
-    
-    // Listen to friend status changes
+
     _friendshipSubscription = _friendRequestsCubit.stream.listen((state) {
       if (state is FriendRequestsLoaded) {
         setState(() {
-          _friendStatus = state.friendStatusMap[widget.userId] ?? FriendRequestStatus.none;
+          _friendStatus =
+              state.friendStatusMap[widget.userId] ?? FriendRequestStatus.none;
         });
       }
     });
@@ -154,7 +156,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   void _openChat() {
     if (_doctor == null) return;
-    
+
     final receiverUser = ChatUser(
       id: _doctor!.id,
       userName: _doctor!.userName,
@@ -162,7 +164,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       createdAt: '',
       updatedAt: '',
     );
-    
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ChatDetailScreen(receiverUser: receiverUser),
@@ -179,9 +181,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: _friendRequestsCubit),
-      ],
+      providers: [BlocProvider.value(value: _friendRequestsCubit)],
       child: DefaultTabController(
         length: 2,
         initialIndex: 1,
@@ -190,16 +190,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _doctor == null
-                  ? Center(
-                      child: Text(
-                        'User not found',
-                        style: TextStyle(
-                          color: AppColors.error,
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                    )
-                  : _buildProfileContent(),
+              ? Center(
+                  child: Text(
+                    'User not found',
+                    style: TextStyle(color: AppColors.error, fontSize: 14.sp),
+                  ),
+                )
+              : _buildProfileContent(),
         ),
       ),
     );
@@ -420,7 +417,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       body: TabBarView(
         children: [
           ProfilePostsTab(doctor: doctor),
-          ProfileAboutTab(doctor: doctor),
+          ProfileAboutTab(
+            doctor: doctor,
+            isOwnProfile: _isOwnProfile,
+            onProfileUpdated: _isOwnProfile ? _loadProfile : null,
+          ),
         ],
       ),
     );
@@ -496,20 +497,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 backgroundColor: Colors.white.withOpacity(0.18),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 6.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20.r),
                 ),
               ),
               onPressed: isLoading ? null : _handleFriendAction,
               icon: const Icon(Icons.person_add, size: 16),
-              label: Text(
-                'Add Friend',
-                style: TextStyle(fontSize: 11.sp),
-              ),
+              label: Text('Add Friend', style: TextStyle(fontSize: 11.sp)),
             );
           case FriendRequestStatus.pending:
             return Row(
@@ -530,10 +525,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   onPressed: isLoading ? null : _openChat,
                   icon: const Icon(Icons.message, size: 16),
-                  label: Text(
-                    'Message',
-                    style: TextStyle(fontSize: 11.sp),
-                  ),
+                  label: Text('Message', style: TextStyle(fontSize: 11.sp)),
                 ),
                 SizedBox(width: 8.w),
                 OutlinedButton.icon(
@@ -550,10 +542,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   onPressed: isLoading ? null : _handleFriendAction,
                   icon: const Icon(Icons.close, size: 16),
-                  label: Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 11.sp),
-                  ),
+                  label: Text('Cancel', style: TextStyle(fontSize: 11.sp)),
                 ),
               ],
             );
@@ -576,10 +565,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   onPressed: isLoading ? null : _openChat,
                   icon: const Icon(Icons.message, size: 16),
-                  label: Text(
-                    'Message',
-                    style: TextStyle(fontSize: 11.sp),
-                  ),
+                  label: Text('Message', style: TextStyle(fontSize: 11.sp)),
                 ),
                 SizedBox(width: 8.w),
                 OutlinedButton.icon(
@@ -596,10 +582,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   onPressed: isLoading ? null : _handleFriendAction,
                   icon: const Icon(Icons.person_remove, size: 16),
-                  label: Text(
-                    'Remove',
-                    style: TextStyle(fontSize: 11.sp),
-                  ),
+                  label: Text('Remove', style: TextStyle(fontSize: 11.sp)),
                 ),
               ],
             );
@@ -609,25 +592,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 backgroundColor: Colors.white.withOpacity(0.18),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 6.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20.r),
                 ),
               ),
               onPressed: isLoading ? null : _handleFriendAction,
               icon: const Icon(Icons.person_add, size: 16),
-              label: Text(
-                'Add Friend',
-                style: TextStyle(fontSize: 11.sp),
-              ),
+              label: Text('Add Friend', style: TextStyle(fontSize: 11.sp)),
             );
         }
       },
     );
   }
 }
-
-

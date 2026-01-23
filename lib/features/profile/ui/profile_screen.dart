@@ -323,7 +323,13 @@ class _ProfileContent extends StatelessWidget {
       body: TabBarView(
         children: [
           ProfilePostsTab(doctor: doctor),
-          ProfileAboutTab(doctor: doctor),
+          ProfileAboutTab(
+            doctor: doctor,
+            isOwnProfile: true,
+            onProfileUpdated: () {
+              context.read<ProfileCubit>().loadProfile();
+            },
+          ),
         ],
       ),
     );

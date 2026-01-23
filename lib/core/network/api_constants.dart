@@ -19,6 +19,7 @@ final class ApiConstants {
   static String togglePostSaved(int postId) => '/api/post/$postId/is_saved';
   static const String checkAuth = '/api/user/check-auth';
   static String updateUser(int userId) => '/api/user/$userId';
+  static String togglePhoneVisibility(int userId) => '/api/user/$userId/is_phone_hidden';
 
   // Store / Products
   static const String productIndex = '/api/product/index';
@@ -43,4 +44,8 @@ final class ApiConstants {
   static const String rentCreate = '/api/rent';
   static String rentDetails(int id) => '/api/rent/$id';
   static const String contactSeller = '/api/rent/contact-seller';
+
+  // Events
+  static const String eventIndex = '/api/event/index';
+  static String eventDetails(int id) => '/api/event/$id';
 }

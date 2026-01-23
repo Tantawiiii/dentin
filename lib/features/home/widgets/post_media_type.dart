@@ -1,0 +1,1 @@
+enum PostMediaType { image, video }

@@ -23,7 +23,8 @@ class PostCubit extends Cubit<PostState> {
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
-      // Don't clear _posts immediately for a smoother feel
+      _isLoadingMore = false;
+      _posts.clear();
     }
 
     if (_currentPage == 1 && _posts.isEmpty) {
@@ -31,27 +32,51 @@ class PostCubit extends Cubit<PostState> {
     }
 
     try {
-      final response = await _repository.getPosts(page: _currentPage, perPage: 20);
+      final response = await _repository.getPosts(
+        page: _currentPage,
+        perPage: 20,
+      );
       final fetchedPosts = response.data;
 
       if (refresh || _currentPage == 1) {
         _posts = fetchedPosts.where((post) => !post.isHidden).toList();
       } else {
-        _posts.addAll(fetchedPosts.where((post) => !post.isHidden));
+        final existingIds = _posts.map((p) => p.id).toSet();
+        final newPosts = fetchedPosts
+            .where((post) => !post.isHidden && !existingIds.contains(post.id))
+            .toList();
+        _posts.addAll(newPosts);
       }
 
-      _hasMore = response.meta?.hasMorePages ?? false;
-      _currentPage++;
+      final hasNextLink =
+          response.links?.next != null && response.links!.next!.isNotEmpty;
+      final hasMoreFromMeta = response.meta?.hasMorePages ?? false;
+      _hasMore = hasNextLink || hasMoreFromMeta;
+
+      if (fetchedPosts.isNotEmpty) {
+        _currentPage++;
+      }
 
       emit(
-        PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1),
+        PostLoaded(
+          _posts,
+          hasMore: _hasMore,
+          currentPage:
+              response.meta?.currentPage ??
+              (_currentPage > 1 ? _currentPage - 1 : 1),
+        ),
       );
     } catch (e) {
       if (_posts.isEmpty) {
         emit(PostError(e.toString().replaceFirst('Exception: ', '')));
       } else {
-        // If we have posts, just stay in PostLoaded but maybe we could emit a non-breaking error
-        emit(PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1));
+        emit(
+          PostLoaded(
+            _posts,
+            hasMore: _hasMore,
+            currentPage: _currentPage > 1 ? _currentPage - 1 : 1,
+          ),
+        );
       }
     }
   }
@@ -63,18 +88,47 @@ class PostCubit extends Cubit<PostState> {
     emit(PostLoadingMore(_posts, _currentPage));
 
     try {
-      final response = await _repository.getPosts(page: _currentPage, perPage: 20);
+      final response = await _repository.getPosts(
+        page: _currentPage,
+        perPage: 20,
+      );
       final fetchedPosts = response.data;
-      _posts.addAll(fetchedPosts.where((post) => !post.isHidden));
-      _hasMore = response.meta?.hasMorePages ?? false;
-      _currentPage++;
+
+      final existingIds = _posts.map((p) => p.id).toSet();
+      final newPosts = fetchedPosts
+          .where((post) => !post.isHidden && !existingIds.contains(post.id))
+          .toList();
+
+      _posts.addAll(newPosts);
+
+      // Update hasMore based on API response - check both next link and hasMorePages
+      final hasNextLink =
+          response.links?.next != null && response.links!.next!.isNotEmpty;
+      final hasMoreFromMeta = response.meta?.hasMorePages ?? false;
+      _hasMore = hasNextLink || hasMoreFromMeta;
+
+      // Always increment page after successful fetch if we got posts
+      if (fetchedPosts.isNotEmpty) {
+        _currentPage++;
+      }
 
       emit(
-        PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1),
+        PostLoaded(
+          _posts,
+          hasMore: _hasMore,
+          currentPage:
+              response.meta?.currentPage ??
+              (_currentPage > 1 ? _currentPage - 1 : 1),
+        ),
       );
     } catch (e) {
+      _hasMore = false;
       emit(
-        PostLoaded(_posts, hasMore: _hasMore, currentPage: _currentPage - 1),
+        PostLoaded(
+          _posts,
+          hasMore: false,
+          currentPage: _currentPage > 1 ? _currentPage - 1 : 1,
+        ),
       );
     } finally {
       _isLoadingMore = false;
