@@ -307,6 +307,12 @@ final class AppTexts {
   static const String updateProfile = 'Update Profile';
   static const String filesUploaded = 'files uploaded';
   static const String of = 'of';
+  static const String phoneNumberHidden = 'Phone number hidden';
+  static const String phoneNumberVisible = 'Phone number visible';
+  static const String failedToUpdatePhoneVisibility = 'Failed to update phone visibility';
+  static const String hidden = 'Hidden';
+  static const String notAvailable = '-';
+  static const String years = 'years';
 
   // Store / Products
   static const String storeTitle = 'Store';
@@ -554,4 +560,15 @@ final class AppTexts {
   static const String add = 'Add';
   static const String posts = 'posts';
   static const String fields = 'fields';
+
+  // Events
+  static const String events = 'Events';
+  static const String eventDetails = 'Event Details';
+  static const String eventName = 'Event Name';
+  static const String eventDescription = 'Description';
+  static const String eventStartTime = 'Start Time';
+  static const String eventEndTime = 'End Time';
+  static const String noEventsFound = 'No events found';
+  static const String loadingEvents = 'Loading events...';
+  static const String failedToLoadEvents = 'Failed to load events';
 }

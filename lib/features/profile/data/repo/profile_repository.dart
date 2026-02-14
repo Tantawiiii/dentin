@@ -51,6 +51,20 @@ class ProfileRepository {
     
     throw Exception('Failed to update profile');
   }
+
+  Future<bool> togglePhoneVisibility(int userId, int isPhoneHidden) async {
+    final Response<dynamic> response = await _apiService.put(
+      ApiConstants.togglePhoneVisibility(userId),
+      data: {'is_phone_hidden': isPhoneHidden},
+    );
+
+    // Check HTTP status code instead of response body status
+    if (response.statusCode == 200) {
+      return true;
+    }
+    
+    throw Exception('Failed to toggle phone visibility');
+  }
 }
 
 

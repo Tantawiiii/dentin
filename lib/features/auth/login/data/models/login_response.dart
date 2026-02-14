@@ -57,6 +57,7 @@ class UserData {
   final bool? hasClinic;
   final String? clinicName;
   final String? clinicAddress;
+  final bool? isPhoneHidden;
   final String? createdAt;
   final String? updatedAt;
 
@@ -93,6 +94,7 @@ class UserData {
     this.hasClinic,
     this.clinicName,
     this.clinicAddress,
+    this.isPhoneHidden,
     this.createdAt,
     this.updatedAt,
   });
@@ -143,6 +145,7 @@ class UserData {
       hasClinic: json['has_clinic'],
       clinicName: json['clinic_name'],
       clinicAddress: json['clinic_address'],
+      isPhoneHidden: (json['is_phone_hidden'] == 1 || json['is_phone_hidden'] == true),
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
     );
@@ -183,6 +186,7 @@ class UserData {
       'has_clinic': hasClinic,
       'clinic_name': clinicName,
       'clinic_address': clinicAddress,
+      'is_phone_hidden': isPhoneHidden == true ? 1 : 0,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };

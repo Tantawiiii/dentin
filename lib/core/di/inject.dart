@@ -28,6 +28,7 @@ import '../../features/notifications/cubit/notifications_cubit.dart';
 import '../../features/home/services/firebase_comments_service.dart';
 import '../../features/users/data/repo/users_repository.dart';
 import '../../features/users/cubit/users_list_cubit.dart';
+import '../../features/events/data/repo/event_repository.dart';
 
 final sl = GetIt.instance;
 
@@ -88,6 +89,9 @@ Future<void> init() async {
 
   // Users Repository
   sl.registerLazySingleton(() => UsersRepository(sl<ApiService>()));
+
+  // Event Repository
+  sl.registerLazySingleton(() => EventRepository(sl<ApiService>()));
 
   sl.registerFactory(
     () => LoginCubit(

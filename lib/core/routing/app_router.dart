@@ -17,6 +17,8 @@ import 'package:dentin/features/friends/ui/friend_requests_screen.dart';
 import 'package:dentin/features/notifications/ui/notifications_screen.dart';
 import 'package:dentin/features/messages/ui/chat_detail_screen.dart';
 import 'package:dentin/features/messages/data/models/chat_user_model.dart';
+import 'package:dentin/features/events/ui/events_screen.dart';
+import 'package:dentin/features/events/ui/event_details_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'app_routes.dart';
@@ -95,6 +97,15 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
       final chatUser = settings.arguments as ChatUser;
       return MaterialPageRoute(
         builder: (_) => ChatDetailScreen(receiverUser: chatUser),
+      );
+
+    case AppRoutes.events:
+      return MaterialPageRoute(builder: (_) => const EventsScreen());
+
+    case AppRoutes.eventDetails:
+      final eventId = settings.arguments as int;
+      return MaterialPageRoute(
+        builder: (_) => EventDetailsScreen(eventId: eventId),
       );
 
     default:

@@ -72,6 +72,7 @@ class Doctor {
   final bool? hasClinic;
   final String? clinicName;
   final String? clinicAddress;
+  final bool? isPhoneHidden;
 
   Doctor({
     required this.id,
@@ -107,6 +108,7 @@ class Doctor {
     this.hasClinic,
     this.clinicName,
     this.clinicAddress,
+    this.isPhoneHidden,
   });
 
   factory Doctor.fromJson(Map<String, dynamic> json) {
@@ -161,6 +163,7 @@ class Doctor {
       hasClinic: json['has_clinic'] as bool?,
       clinicName: json['clinic_name'] as String?,
       clinicAddress: json['clinic_address'] as String?,
+      isPhoneHidden: (json['is_phone_hidden'] == 1 || json['is_phone_hidden'] == true),
     );
   }
 }
