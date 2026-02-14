@@ -83,3 +83,17 @@ features/<feature>/
 - **Firebase** — Core, Realtime DB (chat), FCM
 - **SharedPreferences** — Local storage
 - **flutter_screenutil** — Responsive UI
+
+## Preview
+
+<img width="180" height="428" alt="Hotpot 0" src="https://github.com/user-attachments/assets/79239082-be1b-4b89-a0e5-2c5db6bfc6f3" />
+<img width="180" height="428" alt="Hotpot 1" src="https://github.com/user-attachments/assets/fbaee14f-fa7a-4c14-9a06-865f2cf1a4ef" />
+<img width="180" height="428" alt="Hotpot 2" src="https://github.com/user-attachments/assets/b5ff6d11-18b0-482d-87ee-ef2d511eea73" />
+<img width="180" height="428" alt="Hotpot 3" src="https://github.com/user-attachments/assets/441caebd-9312-4802-9bf8-fbf61040898d" />
+<img width="180" height="428" alt="Hotpot 4" src="https://github.com/user-attachments/assets/769e50ca-fa72-42df-b679-e4ca6dc362d4" />
+
+
+
+
+
+
