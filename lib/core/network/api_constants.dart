@@ -18,6 +18,7 @@ final class ApiConstants {
   static String togglePostHidden(int postId) => '/api/post/$postId/is_hidden';
   static String togglePostSaved(int postId) => '/api/post/$postId/is_saved';
   static const String checkAuth = '/api/user/check-auth';
+  static const String deleteAccount = '/api/user/delete-account';
   static String updateUser(int userId) => '/api/user/$userId';
   static String togglePhoneVisibility(int userId) => '/api/user/$userId/is_phone_hidden';
 

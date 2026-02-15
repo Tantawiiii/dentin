@@ -6,6 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
 import '../../../../core/di/inject.dart' as di;
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../../shared/widgets/shimmer_placeholder.dart';
 import '../../data/models/profile_response.dart';
@@ -34,6 +37,7 @@ class ProfileAboutTab extends StatefulWidget {
 class _ProfileAboutTabState extends State<ProfileAboutTab> {
   late Doctor _doctor;
   bool _isToggling = false;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -133,6 +137,77 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _requestDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          AppTexts.deleteAccountWarningTitle,
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          AppTexts.deleteAccountWarningMessage,
+          style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              AppTexts.cancel,
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              AppTexts.deleteAccountConfirm,
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      final repository = di.sl<ProfileRepository>();
+      await repository.deleteAccount();
+
+      di.sl<DioClient>().clearAuthToken();
+      await di.sl<StorageService>().clearAll();
+
+      if (!mounted) return;
+      AppToast.showSuccess(AppTexts.accountDeletedSuccessfully, context: context);
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.login,
+        (route) => false,
+      );
+    } catch (e) {
+      if (mounted) {
+        AppToast.showError(
+          '${AppTexts.failedToDeleteAccount}: $e',
+          context: context,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
     }
   }
 
@@ -372,7 +447,7 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
             ),
           if (_doctor.courseCertificates.isNotEmpty)
             Padding(
-              padding: EdgeInsets.only(top: 16.h, bottom: 24.h),
+              padding: EdgeInsets.only(top: 16.h),
               child: ProfileSectionCard(
                 title: AppTexts.profileCourseCertificates,
                 child: GridView.builder(
@@ -437,6 +512,36 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
                       ),
                     );
                   },
+                ),
+              ),
+            ),
+          if (widget.isOwnProfile)
+            Padding(
+              padding: EdgeInsets.only(top: 24.h, bottom: 24.h),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isDeleting ? null : _requestDeleteAccount,
+                  icon: _isDeleting
+                      ? SizedBox(
+                          width: 20.w,
+                          height: 20.h,
+                          child: const CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(Icons.delete_outline, size: 20.sp, color: AppColors.error),
+                  label: Text(
+                    AppTexts.deleteAccount,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: BorderSide(color: AppColors.error),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
                 ),
               ),
             ),

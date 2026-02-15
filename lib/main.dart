@@ -176,12 +176,6 @@ void main() async {
         }
       }
 
-      // Performance optimizations
-      if (kDebugMode) {
-        // Enable performance overlay in debug mode
-        // PerformanceOverlayOption.all can be enabled if needed
-      }
-
       runApp(const MyApp());
     },
     (error, stack) {
@@ -216,7 +210,6 @@ class MyApp extends StatelessWidget {
             scrollbars: false,
             physics: const BouncingScrollPhysics(),
           ),
-          // Performance optimizations
           showPerformanceOverlay: false,
           checkerboardRasterCacheImages: false,
           checkerboardOffscreenLayers: false,
@@ -224,4 +217,5 @@ class MyApp extends StatelessWidget {
       },
     );
   }
+
 }

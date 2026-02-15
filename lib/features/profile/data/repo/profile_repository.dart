@@ -9,10 +9,7 @@ class ProfileData {
   final Doctor doctor;
   final int friendsCount;
 
-  ProfileData({
-    required this.doctor,
-    required this.friendsCount,
-  });
+  ProfileData({required this.doctor, required this.friendsCount});
 }
 
 class ProfileRepository {
@@ -21,8 +18,9 @@ class ProfileRepository {
   ProfileRepository(this._apiService);
 
   Future<ProfileData> getProfile() async {
-    final Response<dynamic> response =
-        await _apiService.get(ApiConstants.checkAuth);
+    final Response<dynamic> response = await _apiService.get(
+      ApiConstants.checkAuth,
+    );
 
     final data = response.data as Map<String, dynamic>;
     final profileResponse = ProfileResponse.fromJson(data);
@@ -40,7 +38,7 @@ class ProfileRepository {
     );
 
     final data = response.data as Map<String, dynamic>;
-    
+
     // Parse the response structure
     if (data['status'] == 200 && data['message'] != null) {
       final message = data['message'] as Map<String, dynamic>;
@@ -48,7 +46,7 @@ class ProfileRepository {
         return Doctor.fromJson(message['data'] as Map<String, dynamic>);
       }
     }
-    
+
     throw Exception('Failed to update profile');
   }
 
@@ -62,9 +60,17 @@ class ProfileRepository {
     if (response.statusCode == 200) {
       return true;
     }
-    
+
     throw Exception('Failed to toggle phone visibility');
   }
+
+  Future<void> deleteAccount() async {
+    final Response<dynamic> response = await _apiService.delete(
+      ApiConstants.deleteAccount,
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Failed to delete account');
+    }
+  }
 }
-
-
