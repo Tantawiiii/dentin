@@ -310,6 +310,13 @@ final class AppTexts {
   static const String phoneNumberHidden = 'Phone number hidden';
   static const String phoneNumberVisible = 'Phone number visible';
   static const String failedToUpdatePhoneVisibility = 'Failed to update phone visibility';
+  static const String deleteAccount = 'Delete account';
+  static const String deleteAccountWarningTitle = 'Delete account?';
+  static const String deleteAccountWarningMessage =
+      'This action cannot be undone. All your data will be permanently removed. Are you sure you want to delete your account?';
+  static const String deleteAccountConfirm = 'Delete';
+  static const String accountDeletedSuccessfully = 'Your account has been deleted.';
+  static const String failedToDeleteAccount = 'Failed to delete account';
   static const String hidden = 'Hidden';
   static const String notAvailable = '-';
   static const String years = 'years';
