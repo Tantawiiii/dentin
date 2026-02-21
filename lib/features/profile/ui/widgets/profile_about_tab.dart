@@ -242,11 +242,12 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
             label: AppTexts.profileBirthDate,
             value: _formatDate(_doctor.birthDate),
           ),
-          // _InfoTile(
-          //   icon: Icons.calendar_today_outlined,
-          //   label: AppTexts.profileJoined,
-          //   value: _formatDate(_doctor.createdAt),
-          // ),
+          if (_doctor.createdAt != null)
+            ProfileInfoTile(
+              icon: Icons.calendar_today_outlined,
+              label: AppTexts.profileJoined,
+              value: _formatDate(_doctor.createdAt),
+            ),
           if (_doctor.university != null && _doctor.university!.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
@@ -288,6 +289,14 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
                         label: AppTexts.profileSpecialization,
                         value: _doctor.specialization!,
                       ),
+                    if (_doctor.isWorkAssistantUniversity == true &&
+                        _doctor.assistantUniversity != null &&
+                        _doctor.assistantUniversity!.isNotEmpty)
+                      ProfileInlineInfoRow(
+                        icon: Icons.school_outlined,
+                        label: AppTexts.teacherAssistantAtUniversity,
+                        value: _doctor.assistantUniversity!,
+                      ),
                   ],
                 ),
               ),
@@ -322,6 +331,36 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
                         icon: Icons.business_outlined,
                         label: AppTexts.profileWhereDidYouWork,
                         value: _doctor.whereDidYouWork!,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          if (_doctor.hasClinic == true &&
+              ((_doctor.clinicName != null &&
+                      _doctor.clinicName!.isNotEmpty) ||
+                  (_doctor.clinicAddress != null &&
+                      _doctor.clinicAddress!.isNotEmpty)))
+            Padding(
+              padding: EdgeInsets.only(top: 16.h),
+              child: ProfileSectionCard(
+                title: AppTexts.haveClinic,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_doctor.clinicName != null &&
+                        _doctor.clinicName!.isNotEmpty)
+                      ProfileInlineInfoRow(
+                        icon: Icons.local_hospital_outlined,
+                        label: AppTexts.clinicName,
+                        value: _doctor.clinicName!,
+                      ),
+                    if (_doctor.clinicAddress != null &&
+                        _doctor.clinicAddress!.isNotEmpty)
+                      ProfileInlineInfoRow(
+                        icon: Icons.location_on_outlined,
+                        label: AppTexts.clinicAddress,
+                        value: _doctor.clinicAddress!,
                       ),
                   ],
                 ),
@@ -416,6 +455,31 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
                       .map(
                         (s) => Chip(
                           label: Text(s, style: TextStyle(fontSize: 11.sp)),
+                          backgroundColor: AppColors.primary.withOpacity(0.08),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24.r),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+          if (_doctor.tools != null && _doctor.tools!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 16.h),
+              child: ProfileSectionCard(
+                title: AppTexts.toolsYouHave,
+                child: Wrap(
+                  spacing: 8.w,
+                  runSpacing: 8.h,
+                  children: List<String>.from((_doctor.tools ?? []) as Iterable)
+                      .map(
+                        (t) => Chip(
+                          label: Text(
+                            t,
+                            style: TextStyle(fontSize: 11.sp),
+                          ),
                           backgroundColor: AppColors.primary.withOpacity(0.08),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24.r),
