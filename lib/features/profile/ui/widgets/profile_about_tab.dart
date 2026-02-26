@@ -473,7 +473,10 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
                 child: Wrap(
                   spacing: 8.w,
                   runSpacing: 8.h,
-                  children: List<String>.from((_doctor.tools ?? []) as Iterable)
+                  children: (_doctor.tools ?? '')
+                      .split(',')
+                      .map((t) => t.trim())
+                      .where((t) => t.isNotEmpty)
                       .map(
                         (t) => Chip(
                           label: Text(
