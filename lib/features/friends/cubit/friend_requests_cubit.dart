@@ -142,24 +142,46 @@ class FriendRequestsCubit extends Cubit<FriendRequestsState> {
 
       if (userResponse.statusCode != null && userResponse.statusCode! < 400) {
         final userJson = userResponse.data as Map<String, dynamic>;
-        final otherUserData = userJson['data'] as Map<String, dynamic>;
+
+        // Handle different API response structures
+        Map<String, dynamic> otherUserData;
+        if (userJson['data'] != null) {
+          otherUserData = userJson['data'] as Map<String, dynamic>;
+        } else if (userJson['message'] is Map &&
+            userJson['message']['doctor'] != null) {
+          otherUserData = userJson['message']['doctor'] as Map<String, dynamic>;
+        } else {
+          otherUserData = userJson;
+        }
+
+        final userName1 = userData.firstName.isNotEmpty
+            ? '${userData.firstName} ${userData.lastName}'.trim()
+            : userData.userName;
+
+        final otherFirstName = otherUserData['first_name']?.toString() ?? '';
+        final otherLastName = otherUserData['last_name']?.toString() ?? '';
+        final userName2 = otherFirstName.isNotEmpty
+            ? '$otherFirstName $otherLastName'.trim()
+            : (otherUserData['user_name']?.toString() ?? '');
 
         await _firebaseService.sendFriendRequest(
           userId1: _currentUserId!,
-          userName1: userData.userName,
+          userName1: userName1.isNotEmpty ? userName1 : 'User',
           userImage1: userData.profileImage,
           userId2: userId,
-          userName2: otherUserData['user_name'] ?? '',
-          userImage2: otherUserData['profile_image'],
+          userName2: userName2.isNotEmpty ? userName2 : 'User',
+          userImage2: otherUserData['profile_image']?.toString(),
         );
 
         try {
+          // Fire-and-forget backend request
           await _apiService.post<dynamic>('/api/friend-requests/$userId');
         } catch (e) {
           print('Backend API error (ignored): $e');
         }
       }
     } catch (e) {
+      print('Send friend request error: $e');
       emit(FriendRequestsError('Failed to send friend request: $e'));
     }
   }

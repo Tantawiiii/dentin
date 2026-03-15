@@ -5,6 +5,13 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Required to show notifications on Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Required for notification vibration -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <!-- Required so FCM tokens survive device reboots -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
     <application
         android:label="Dentin"
         android:name="${applicationName}"
@@ -29,12 +36,40 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- ── FCM Push Notification Configuration ────────────────────────────
+             These entries control how FCM displays notifications when the app
+             is in the BACKGROUND or TERMINATED state.
+             ──────────────────────────────────────────────────────────────── -->
+
+        <!-- Default notification channel for background/terminated messages.
+             MUST match the channelId created by flutter_local_notifications. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="dentin_notifications" />
+
+        <!-- White monochrome icon shown in the status bar on Android 5+.
+             Using @mipmap/launcher_icon works but on dark backgrounds the
+             full-colour icon can appear as a grey blob. For a crisp white
+             status-bar icon, add a white PNG at
+             android/app/src/main/res/drawable/ic_notification.png
+             and change the value below to @drawable/ic_notification -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/launcher_icon" />
+
+        <!-- Optional: default notification accent colour (hex, no alpha) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.

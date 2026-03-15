@@ -424,25 +424,25 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
                 ),
               ),
             ),
-          if (_doctor.graduationCertificateImage != null)
-            Padding(
-              padding: EdgeInsets.only(top: 16.h),
-              child: ProfileSectionCard(
-                title: AppTexts.profileGraduationCertificate,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
-                  child: CachedNetworkImage(
-                    imageUrl: _doctor.graduationCertificateImage!,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => ShimmerPlaceholder(
-                      width: double.infinity,
-                      height: 160.h,
-                    ),
-                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                  ),
-                ),
-              ),
-            ),
+          // if (_doctor.graduationCertificateImage != null)
+          //   Padding(
+          //     padding: EdgeInsets.only(top: 16.h),
+          //     child: ProfileSectionCard(
+          //       title: AppTexts.profileGraduationCertificate,
+          //       child: ClipRRect(
+          //         borderRadius: BorderRadius.circular(12.r),
+          //         child: CachedNetworkImage(
+          //           imageUrl: _doctor.graduationCertificateImage!,
+          //           fit: BoxFit.cover,
+          //           placeholder: (_, __) => ShimmerPlaceholder(
+          //             width: double.infinity,
+          //             height: 160.h,
+          //           ),
+          //           errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          //         ),
+          //       ),
+          //     ),
+          //   ),
           if (_doctor.skills.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 16.h),
@@ -512,76 +512,76 @@ class _ProfileAboutTabState extends State<ProfileAboutTab> {
                 ),
               ),
             ),
-          if (_doctor.courseCertificates.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(top: 16.h),
-              child: ProfileSectionCard(
-                title: AppTexts.profileCourseCertificates,
-                child: GridView.builder(
-                  itemCount: _doctor.courseCertificates.length,
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 8.w,
-                    mainAxisSpacing: 8.h,
-                    childAspectRatio: 4 / 3,
-                  ),
-                  itemBuilder: (context, index) {
-                    final certificate = _doctor.courseCertificates[index];
-                    return GestureDetector(
-                      onTap: () => _launchUrl(certificate.fullUrl),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12.r),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CachedNetworkImage(
-                              imageUrl: certificate.fullUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (_, __) => ShimmerPlaceholder(
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
-                              errorWidget: (_, __, ___) =>
-                                  const SizedBox.shrink(),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.65),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Padding(
-                                padding: EdgeInsets.all(8.w),
-                                child: Text(
-                                  certificate.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+          // if (_doctor.courseCertificates.isNotEmpty)
+          //   Padding(
+          //     padding: EdgeInsets.only(top: 16.h),
+          //     child: ProfileSectionCard(
+          //       title: AppTexts.profileCourseCertificates,
+          //       child: GridView.builder(
+          //         itemCount: _doctor.courseCertificates.length,
+          //         physics: const NeverScrollableScrollPhysics(),
+          //         shrinkWrap: true,
+          //         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          //           crossAxisCount: 2,
+          //           crossAxisSpacing: 8.w,
+          //           mainAxisSpacing: 8.h,
+          //           childAspectRatio: 4 / 3,
+          //         ),
+          //         itemBuilder: (context, index) {
+          //           final certificate = _doctor.courseCertificates[index];
+          //           return GestureDetector(
+          //             onTap: () => _launchUrl(certificate.fullUrl),
+          //             child: ClipRRect(
+          //               borderRadius: BorderRadius.circular(12.r),
+          //               child: Stack(
+          //                 fit: StackFit.expand,
+          //                 children: [
+          //                   CachedNetworkImage(
+          //                     imageUrl: certificate.fullUrl,
+          //                     fit: BoxFit.cover,
+          //                     placeholder: (_, __) => ShimmerPlaceholder(
+          //                       width: double.infinity,
+          //                       height: double.infinity,
+          //                     ),
+          //                     errorWidget: (_, __, ___) =>
+          //                         const SizedBox.shrink(),
+          //                   ),
+          //                   Container(
+          //                     decoration: BoxDecoration(
+          //                       gradient: LinearGradient(
+          //                         begin: Alignment.topCenter,
+          //                         end: Alignment.bottomCenter,
+          //                         colors: [
+          //                           Colors.transparent,
+          //                           Colors.black.withOpacity(0.65),
+          //                         ],
+          //                       ),
+          //                     ),
+          //                   ),
+          //                   Align(
+          //                     alignment: Alignment.bottomLeft,
+          //                     child: Padding(
+          //                       padding: EdgeInsets.all(8.w),
+          //                       child: Text(
+          //                         certificate.name,
+          //                         maxLines: 2,
+          //                         overflow: TextOverflow.ellipsis,
+          //                         style: TextStyle(
+          //                           color: Colors.white,
+          //                           fontSize: 11.sp,
+          //                           fontWeight: FontWeight.w600,
+          //                         ),
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+          //           );
+          //         },
+          //       ),
+          //     ),
+          //   ),
           if (widget.isOwnProfile)
             Padding(
               padding: EdgeInsets.only(top: 24.h, bottom: 24.h),

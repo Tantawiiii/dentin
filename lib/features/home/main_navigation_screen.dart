@@ -17,14 +17,17 @@ class MainNavigationScreen extends StatefulWidget {
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends State<MainNavigationScreen>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
   VoidCallback? _homeRefreshCallback;
   late final List<Widget> _screens;
+  bool _isKeyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _screens = [
       HomeScreen(
         onTabChange: (index) {
@@ -44,11 +47,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ];
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    final bottomInset = View.of(context).viewInsets.bottom;
+    final isKeyboardVisible = bottomInset > 0.0;
+    if (_isKeyboardVisible != isKeyboardVisible) {
+      if (mounted) {
+        setState(() {
+          _isKeyboardVisible = isKeyboardVisible;
+        });
+      }
+    }
+  }
+
   void _handleBottomNavTap(int index) {
     if (index == 0 && _currentIndex == 0) {
       _homeRefreshCallback?.call();
     } else {
-      // غير التبويب العادي
       setState(() {
         _currentIndex = index;
       });
@@ -58,74 +80,75 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: Container(
-        height: 100.h,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowLight,
-              blurRadius: 10,
-              spreadRadius: 1,
-              offset: const Offset(0, -2),
+      bottomNavigationBar: _isKeyboardVisible
+          ? null
+          : Container(
+              height: 100.h,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowLight,
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: BottomNavigationBar(
+                currentIndex: _currentIndex,
+                onTap: _handleBottomNavTap,
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: AppColors.surface,
+                selectedItemColor: AppColors.primary,
+                unselectedItemColor: AppColors.textSecondary,
+                selectedLabelStyle: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+                iconSize: 24.sp,
+                showSelectedLabels: true,
+                showUnselectedLabels: true,
+                elevation: 0,
+                items: [
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.home_outlined),
+                    activeIcon: const Icon(Icons.home),
+                    label: AppTexts.home,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.work_outline),
+                    activeIcon: const Icon(Icons.work),
+                    label: AppTexts.jobs,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.explore_outlined),
+                    activeIcon: const Icon(Icons.explore),
+                    label: AppTexts.exploreStories,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.store_outlined),
+                    activeIcon: const Icon(Icons.store),
+                    label: AppTexts.store,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.business_outlined),
+                    activeIcon: const Icon(Icons.business),
+                    label: AppTexts.rentClinic,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.message_outlined),
+                    activeIcon: const Icon(Icons.message),
+                    label: AppTexts.messages,
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _handleBottomNavTap,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
-          selectedLabelStyle: TextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: TextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w500,
-          ),
-          iconSize: 24.sp,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          elevation: 0,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home),
-              label: AppTexts.home,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.work_outline),
-              activeIcon: const Icon(Icons.work),
-              label: AppTexts.jobs,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.explore_outlined),
-              activeIcon: const Icon(Icons.explore),
-              label: AppTexts.exploreStories,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.store_outlined),
-              activeIcon: const Icon(Icons.store),
-              label: AppTexts.store,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.business_outlined),
-              activeIcon: const Icon(Icons.business),
-              label: AppTexts.rentClinic,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.message_outlined),
-              activeIcon: const Icon(Icons.message),
-              label: AppTexts.messages,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

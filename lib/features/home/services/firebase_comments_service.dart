@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/services/firebase_service.dart';
 import '../../../features/auth/login/data/models/login_response.dart';
 
@@ -247,7 +248,6 @@ class FirebaseCommentsService {
     }
   }
 
-  // Listen to comments for a post with real-time likes and replies updates
   Stream<List<FirebaseComment>> listenToComments({
     required int postId,
     required int currentUserId,
@@ -506,7 +506,6 @@ class FirebaseCommentsService {
         final key = entry.key.toString();
         final replyData = entry.value as Map<dynamic, dynamic>;
 
-        // Get likes count
         int likesCount = 0;
         bool userHasLiked = false;
 
@@ -547,7 +546,6 @@ class FirebaseCommentsService {
         }
       }
 
-      // Sort by creation date (oldest first for replies)
       replies.sort(
         (a, b) =>
             DateTime.parse(a.createdAt).compareTo(DateTime.parse(b.createdAt)),
@@ -557,8 +555,6 @@ class FirebaseCommentsService {
     });
   }
 
-  // Send notification to Firebase Realtime Database
-  // This matches the web code structure and triggers Cloud Functions for push notifications
   Future<void> sendNotification({
     required int receiverId,
     required String type,
@@ -575,17 +571,16 @@ class FirebaseCommentsService {
   }) async {
     try {
       if (receiverId == senderId) {
-        return; // Don't send notification to self
+        return;
       }
 
-      // Generate unique notification ID (matching web code pattern)
+
       final notificationId =
           'notif_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecondsSinceEpoch}';
       final notificationRef = _firebaseService
           .getNotificationsRef(receiverId)
           .child(notificationId);
 
-      // Build notification data matching web code structure
       final notificationData = <String, dynamic>{
         'id': notificationId,
         'type': type,
@@ -613,15 +608,17 @@ class FirebaseCommentsService {
         notificationData['post_content'] = postContent;
       }
 
-      // Add any additional data
       if (additionalData != null) {
         notificationData.addAll(additionalData);
       }
 
-      // Save to Firebase Realtime Database
-      // Cloud Functions will automatically trigger and send push notification
-      // Path: notifications/{receiverId}/{notificationId}
       await notificationRef.set(notificationData);
+      await FCMService().sendPushDirectly(
+        receiverId: receiverId,
+        title: title,
+        body: message,
+        data: notificationData,
+      );
 
       if (kDebugMode) {
         print('✅ Notification saved to Firebase for user: $receiverId');

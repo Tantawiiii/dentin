@@ -39,7 +39,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
     }
   }
 
-  @override
   Size get preferredSize => Size.fromHeight(56.h);
 
   @override
@@ -66,7 +65,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.menu),
+                icon: const Icon(Icons.menu_sharp),
+                iconSize: 30,
                 color: AppColors.primary,
                 onPressed: () {
                   widget.sliderDrawerKey?.currentState?.openSlider();
@@ -93,6 +93,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                           IconButton(
                             icon: const Icon(Icons.notifications_outlined),
                             color: AppColors.primary,
+                            iconSize: 26.w,
                             onPressed: () {
                               Navigator.of(context)
                                   .pushNamed(AppRoutes.notifications);
@@ -137,8 +138,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                       Navigator.of(context).pushNamed(AppRoutes.profile);
                     },
                     child: Container(
-                      width: 56.w,
-                      height: 56.w,
+                      width: 50.w,
+                      height: 50.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.primary, width: 2),
@@ -148,18 +149,18 @@ class _CustomAppBarState extends State<CustomAppBar> {
                         child: userData?.profileImage != null
                             ? CachedNetworkImage(
                                 imageUrl: userData!.profileImage!,
-                                width: 56.w,
-                                height: 56.w,
+                          width: 50.w,
+                          height: 50.w,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) =>
                                     ShimmerPlaceholder(
-                                      width: 56.w,
-                                      height: 56.w,
+                                      width: 50.w,
+                                      height: 50.w,
                                       shape: BoxShape.circle,
                                     ),
                                 errorWidget: (context, url, error) => Container(
-                                  width: 56.w,
-                                  height: 56.w,
+                                  width: 50.w,
+                                  height: 50.w,
                                   color: AppColors.surface,
                                   child: Icon(
                                     Icons.person,
@@ -169,8 +170,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                                 ),
                               )
                             : Container(
-                                width: 56.w,
-                                height: 56.w,
+                          width: 50.w,
+                          height: 50.w,
                                 color: AppColors.surface,
                                 child: Icon(
                                   Icons.person,

@@ -41,11 +41,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String _formatTime(int timestamp) {
     try {
       final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-      // Format like React: "2:30 PM" or "14:30"
       final hour = date.hour;
       final minute = date.minute.toString().padLeft(2, '0');
 
-      // Use 12-hour format like React
       if (hour == 0) {
         return '12:$minute AM';
       } else if (hour < 12) {
@@ -278,7 +276,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               return Column(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(16.w),
+                    padding: EdgeInsets.all(18.w),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       gradient: LinearGradient(
@@ -288,124 +286,103 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ],
                       ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          AppTexts.bulkActions,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                        ElevatedButton(
+                          onPressed: isLoading || unreadCount == 0
+                              ? null
+                              : () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(AppTexts.markAllAsRead),
+                                      content: Text(
+                                        AppTexts.markAllAsReadConfirmation,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: Text(AppTexts.cancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: Text(
+                                            AppTexts.markAllAsRead,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmed == true) {
+                                    _notificationsCubit.markAllAsRead();
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor:
+                                AppColors.textSecondary,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.done_all, size: 18.sp),
+                              SizedBox(width: 4.w),
+                              Text(AppTexts.markAllAsRead),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          '$unreadCount ${AppTexts.unread} • ${notifications.length} ${AppTexts.totalNotifications}',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textSecondary,
+                        SizedBox(width: 8.w),
+                        OutlinedButton(
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(AppTexts.clearAll),
+                                      content: Text(
+                                        AppTexts.clearAllConfirmation,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: Text(AppTexts.cancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor:
+                                                AppColors.error,
+                                          ),
+                                          child: Text(AppTexts.clearAll),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmed == true) {
+                                    _notificationsCubit
+                                        .clearAllNotifications();
+                                  }
+                                },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.error),
+                            foregroundColor: AppColors.error,
                           ),
-                        ),
-                        Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed: isLoading || unreadCount == 0
-                                  ? null
-                                  : () async {
-                                      final confirmed = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: Text(AppTexts.markAllAsRead),
-                                          content: Text(
-                                            AppTexts.markAllAsReadConfirmation,
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, false),
-                                              child: Text(AppTexts.cancel),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, true),
-                                              child: Text(
-                                                AppTexts.markAllAsRead,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-
-                                      if (confirmed == true) {
-                                        _notificationsCubit.markAllAsRead();
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor:
-                                    AppColors.textSecondary,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.done_all, size: 18.sp),
-                                  SizedBox(width: 4.w),
-                                  Text(AppTexts.markAllAsRead),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            OutlinedButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () async {
-                                      final confirmed = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: Text(AppTexts.clearAll),
-                                          content: Text(
-                                            AppTexts.clearAllConfirmation,
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, false),
-                                              child: Text(AppTexts.cancel),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, true),
-                                              style: TextButton.styleFrom(
-                                                foregroundColor:
-                                                    AppColors.error,
-                                              ),
-                                              child: Text(AppTexts.clearAll),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-
-                                      if (confirmed == true) {
-                                        _notificationsCubit
-                                            .clearAllNotifications();
-                                      }
-                                    },
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: AppColors.error),
-                                foregroundColor: AppColors.error,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete_outline, size: 18.sp),
-                                  SizedBox(width: 4.w),
-                                  Text(AppTexts.clearAll),
-                                ],
-                              ),
-                            ),
-                          ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.delete_outline, size: 18.sp),
+                              SizedBox(width: 4.w),
+                              Text(AppTexts.clearAll),
+                            ],
+                          ),
                         ),
                       ],
                     ),

@@ -10,9 +10,9 @@ class DioClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        sendTimeout: const Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 120),
+        sendTimeout: const Duration(seconds: 120),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -57,7 +57,7 @@ class DioClient {
 
               if (message != null &&
                   message.toLowerCase().contains('unauthenticated')) {
-                // Clear token and show dialog
+              
                 clearAuthToken();
                 _storageService.removeToken();
                 UnauthenticatedDialog.show();

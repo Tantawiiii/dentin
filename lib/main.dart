@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
-import 'core/config/firebase_config.dart';
 import 'core/di/inject.dart' as di;
+import 'firebase_options.dart';
 import 'core/network/dio_client.dart';
 import 'core/routing/app_router.dart';
 import 'core/routing/app_routes.dart';
@@ -31,6 +32,7 @@ void main() async {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      await dotenv.load(fileName: ".env");
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
       try {
@@ -55,19 +57,13 @@ void main() async {
 
         try {
           if (Firebase.apps.isEmpty) {
-            final options = FirebaseConfig.currentPlatform;
             if (kDebugMode) {
-              if (options != null) {
-                print('📦 Calling Firebase.initializeApp with explicit options...');
-                print('📦 Project ID: ${options.projectId}');
-              } else {
-                print('📦 Calling Firebase.initializeApp (auto-detect from config files)...');
-              }
+              print('🔥 Calling Firebase.initializeApp with standard options...');
             }
             
-            await (options != null
-                ? Firebase.initializeApp(options: options)
-                : Firebase.initializeApp()).timeout(
+            await Firebase.initializeApp(
+              options: DefaultFirebaseOptions.currentPlatform,
+            ).timeout(
               const Duration(seconds: 30),
             );
             
