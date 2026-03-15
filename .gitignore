@@ -51,3 +51,6 @@ app.*.map.json
 
 # iOS export options (may contain team ID)
 /ios/ExportOptions.plist
+
+# Env vars
+.env

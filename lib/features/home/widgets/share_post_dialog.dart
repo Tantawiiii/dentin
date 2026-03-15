@@ -15,8 +15,6 @@ class SharePostDialog extends StatelessWidget {
   const SharePostDialog({super.key, required this.post});
 
   String _getPostUrl() {
-    // Assuming the post URL format based on your API base URL
-    // You may need to adjust this based on your actual post URL structure
     return 'https://back.dentin.cloud/posts/${post.id}';
   }
 
@@ -31,7 +29,6 @@ class SharePostDialog extends StatelessWidget {
           Navigator.of(context).pop();
         }
       } else {
-        // Fallback to WhatsApp web
         final webUrl =
             'https://wa.me/?text=${Uri.encodeComponent(_getPostUrl())}';
         final webUri = Uri.parse(webUrl);
@@ -58,7 +55,6 @@ class SharePostDialog extends StatelessWidget {
 
   Future<void> _shareToProfile(BuildContext context) async {
     // TODO: Implement share to profile functionality
-    // This would typically involve making an API call to share the post to user's profile
     if (context.mounted) {
       Navigator.of(context).pop();
       AppToast.showInfo('Feature coming soon', context: context);

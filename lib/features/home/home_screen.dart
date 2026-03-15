@@ -81,11 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: CustomAppBar(sliderDrawerKey: _sliderDrawerKey),
         child: Scaffold(
           backgroundColor: AppColors.background,
+          resizeToAvoidBottomInset: false,
+          extendBody: false,
           body: Padding(
             padding: const EdgeInsets.all(8.0),
             child: BlocBuilder<PostCubit, PostState>(
               buildWhen: (previous, current) {
-                // Avoid unnecessary full-screen rebuilds if only loading more
                 if (current is PostLoadingMore || previous is PostLoadingMore) {
                   return false; 
                 }
@@ -208,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             builder: (context, state) {
                               if (state is PostLoadingMore) {
                                 return Padding(
-                                  padding: EdgeInsets.all(12.w),
+                                  padding: EdgeInsets.all(8.w),
                                   child: Center(
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/available_times_widget.dart';
 
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../data/repo/register_repository.dart';
 import '../data/models/register_request.dart';
@@ -13,6 +14,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   final RegisterRepository _repository;
   final StorageService _storageService;
   final DioClient _dioClient;
+  final FCMService _fcmService;
 
   // Cached uploaded file IDs to avoid re-uploading on retry
   int? _cachedProfileImageId;
@@ -32,9 +34,11 @@ class RegisterCubit extends Cubit<RegisterState> {
     required RegisterRepository repository,
     required StorageService storageService,
     required DioClient dioClient,
+    required FCMService fcmService,
   }) : _repository = repository,
        _storageService = storageService,
        _dioClient = dioClient,
+       _fcmService = fcmService,
        super(RegisterInitial());
 
   // Helper method to check if two file lists are equal
@@ -342,8 +346,12 @@ class RegisterCubit extends Cubit<RegisterState> {
           response.data!.token != null) {
         await _storageService.saveToken(response.data!.token!);
         await _storageService.saveUserData(response.data!.doctor!);
-
         _dioClient.setAuthToken(response.data!.token!);
+
+        // Persist the FCM token for push notifications
+        _fcmService
+            .saveTokenForUser(response.data!.doctor!.id)
+            .ignore();
 
         // Clear cached files on success
         _clearCachedFiles();

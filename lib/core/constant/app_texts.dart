@@ -2,13 +2,13 @@ final class AppTexts {
   AppTexts._();
 
   // Onboarding Screen
-  static const String onTitle1 = 'Connect with Medical Professionals';
+  static const String onTitle1 = 'Connect with Dental Professionals';
   static const String onDesTitle1 =
       'Join a network of doctors, specialists, and healthcare professionals. Build meaningful connections and expand your medical community.';
   static const String onTitle2 = 'Share Knowledge & Insights';
   static const String onDesTitle2 =
       'Exchange medical expertise, discuss cases, and stay updated with the latest healthcare trends and innovations in your field.';
-  static const String onTitle3 = 'Grow Your Medical Career';
+  static const String onTitle3 = 'Grow Your Dental Career';
   static const String onDesTitle3 =
       'Discover opportunities, collaborate on research, and advance your professional journey in the medical community.';
 
@@ -178,7 +178,7 @@ final class AppTexts {
   static const String accountVerification = 'ACCOUNT VERIFICATION';
   static const String registrationUnderReview = 'REGISTRATION UNDER REVIEW';
   static const String welcomeToMedicalCommunity =
-      'Welcome to Our Medical Community';
+      'Welcome to Our Dental Community';
   static const String verificationWelcomeMessage =
       'Thank you for joining Dent, the premier platform for medical professionals. Your registration is currently being reviewed by our verification team to ensure the integrity of our community.';
   static const String verificationProcess = 'Verification Process';
@@ -194,7 +194,7 @@ final class AppTexts {
   static const String jobOpportunities = 'Job Opportunities';
   static const String jobOpportunitiesDescription =
       'Find medical positions & opportunities';
-  static const String medicalContent = 'Medical Content';
+  static const String medicalContent = 'Dental Content';
   static const String medicalContentDescription =
       'Share & discuss medical cases';
   static const String backToLogin = 'Back to Login';
@@ -237,6 +237,14 @@ final class AppTexts {
   static const String postUnhidden = 'Post unhidden successfully';
   static const String postSaved = 'Post saved successfully';
   static const String postUnsaved = 'Post removed from saved';
+  static const String reportPostTitle = 'Report Post';
+  static const String complaintReasonLabel = 'Complaint Reason *';
+  static const String pleaseEnterComplaintReason =
+      'Please enter the complaint reason';
+  static const String additionalNotesLabel = 'Additional Notes (optional)';
+  static const String send = 'Send';
+  static const String someoneLikedYourPost = 'Someone liked your post';
+  static const String likedYourPost = 'liked your post';
   static const String sponsored = 'Sponsored';
   static const String regular = 'Regular';
   static const String promotedPost = 'Promoted Post';
@@ -551,7 +559,7 @@ final class AppTexts {
   static const String checkConnection = 'Check Connection';
 
   // Users List Screen
-  static const String medicalProfessionals = 'Medical Professionals';
+  static const String medicalProfessionals = 'Doctors';
   static const String searchByUsernameEmail = 'name, email...';
   static const String perPage = 'per page';
   static const String advancedFilters = 'Advanced Filters';

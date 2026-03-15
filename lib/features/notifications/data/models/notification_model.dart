@@ -5,6 +5,9 @@ enum NotificationType {
   postLike,
   postComment,
   postShare,
+  commentLike,
+  commentReply,
+  replyLike,
   unknown,
 }
 
@@ -20,6 +23,11 @@ class NotificationModel {
   final bool read;
   final Map<String, dynamic>? data;
 
+  // Optional contextual fields for deep linking
+  final int? postId;
+  final String? commentId;
+  final String? replyId;
+
   NotificationModel({
     required this.id,
     required this.type,
@@ -31,6 +39,9 @@ class NotificationModel {
     required this.timestamp,
     required this.read,
     this.data,
+    this.postId,
+    this.commentId,
+    this.replyId,
   });
 
   String get typeString {
@@ -47,32 +58,68 @@ class NotificationModel {
         return 'post_comment';
       case NotificationType.postShare:
         return 'post_share';
+      case NotificationType.commentLike:
+        return 'comment_like';
+      case NotificationType.commentReply:
+        return 'comment_reply';
+      case NotificationType.replyLike:
+        return 'reply_like';
       default:
         return 'unknown';
     }
   }
 
-  factory NotificationModel.fromFirebase(String id, Map<dynamic, dynamic> data) {
-    // Parse notification type
-    NotificationType parseType(String? typeString) {
-      switch (typeString) {
-        case 'friend_request':
-          return NotificationType.friendRequest;
-        case 'friend_accepted':
-          return NotificationType.friendAccepted;
-        case 'new_message':
-          return NotificationType.newMessage;
-        case 'post_like':
-          return NotificationType.postLike;
-        case 'post_comment':
-          return NotificationType.postComment;
-        case 'post_share':
-          return NotificationType.postShare;
-        default:
-          return NotificationType.unknown;
-      }
+  /// Human-readable icon name for each notification type
+  String get iconName {
+    switch (type) {
+      case NotificationType.postLike:
+        return 'favorite';
+      case NotificationType.commentLike:
+      case NotificationType.replyLike:
+        return 'favorite';
+      case NotificationType.postComment:
+      case NotificationType.commentReply:
+        return 'comment';
+      case NotificationType.friendRequest:
+        return 'person_add';
+      case NotificationType.friendAccepted:
+        return 'people';
+      case NotificationType.newMessage:
+        return 'message';
+      default:
+        return 'notifications';
     }
+  }
 
+  static NotificationType parseType(String? typeString) {
+    switch (typeString) {
+      case 'friend_request':
+        return NotificationType.friendRequest;
+      case 'friend_accepted':
+        return NotificationType.friendAccepted;
+      case 'new_message':
+        return NotificationType.newMessage;
+      case 'post_like':
+        return NotificationType.postLike;
+      case 'post_comment':
+        return NotificationType.postComment;
+      case 'post_share':
+        return NotificationType.postShare;
+      case 'comment_like':
+        return NotificationType.commentLike;
+      case 'comment_reply':
+        return NotificationType.commentReply;
+      case 'reply_like':
+        return NotificationType.replyLike;
+      default:
+        return NotificationType.unknown;
+    }
+  }
+
+  factory NotificationModel.fromFirebase(
+    String id,
+    Map<dynamic, dynamic> data,
+  ) {
     return NotificationModel(
       id: id,
       type: parseType(data['type']?.toString()),
@@ -87,6 +134,11 @@ class NotificationModel {
           ? data['timestamp']
           : int.tryParse(data['timestamp']?.toString() ?? '0') ?? 0,
       read: data['read'] == true || data['read'] == 'true',
+      postId: data['post_id'] is int
+          ? data['post_id']
+          : int.tryParse(data['post_id']?.toString() ?? ''),
+      commentId: data['comment_id']?.toString(),
+      replyId: data['reply_id']?.toString(),
       data: data['data'] != null
           ? Map<String, dynamic>.from(data['data'] as Map)
           : null,
@@ -104,6 +156,9 @@ class NotificationModel {
     int? timestamp,
     bool? read,
     Map<String, dynamic>? data,
+    int? postId,
+    String? commentId,
+    String? replyId,
   }) {
     return NotificationModel(
       id: id ?? this.id,
@@ -116,7 +171,9 @@ class NotificationModel {
       timestamp: timestamp ?? this.timestamp,
       read: read ?? this.read,
       data: data ?? this.data,
+      postId: postId ?? this.postId,
+      commentId: commentId ?? this.commentId,
+      replyId: replyId ?? this.replyId,
     );
   }
 }
-

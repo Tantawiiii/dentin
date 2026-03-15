@@ -58,12 +58,16 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+  Future<void> _pickMultipleImages() async {
+    final List<XFile> images = await _picker.pickMultiImage();
+    if (images.isNotEmpty) {
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedGallery = [
+          ..._selectedGallery,
+          ...images.map((e) => File(e.path)),
+        ];
         _selectedVideo = null;
+        _selectedImage = null;
       });
     }
   }
@@ -107,7 +111,7 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
       content: _contentController.text.trim().isNotEmpty
           ? _contentController.text.trim()
           : null,
-      imageFile: _selectedImage,
+      imageFile: null,
       videoFile: _selectedVideo,
       galleryFiles: _selectedGallery.isNotEmpty ? _selectedGallery : null,
       isAdRequest: _isAdRequest,
@@ -275,11 +279,11 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
             Row(
               children: [
                 GestureDetector(
-                  onTap: _pickImage,
+                  onTap: _pickMultipleImages,
                   child: Row(
                     children: [
                       Icon(
-                        Icons.camera_alt,
+                        Icons.add_photo_alternate_outlined,
                         size: 20.sp,
                         color: AppColors.textSecondary,
                       ),
@@ -354,100 +358,135 @@ class _CreatePostWidgetState extends State<CreatePostWidget> {
                 ),
               ],
             ),
-            if (_selectedImage != null ||
-                _selectedVideo != null ||
-                _selectedGallery.isNotEmpty)
+            if (_selectedVideo != null || _selectedGallery.isNotEmpty)
               Container(
                 margin: EdgeInsets.only(top: 12.h),
-                height: 200.h,
-                child: Stack(
-                  children: [
-                    _selectedImage != null
-                        ? ClipRRect(
+                child: _selectedVideo != null
+                    ? Stack(
+                        children: [
+                          ClipRRect(
                             borderRadius: BorderRadius.circular(8.r),
-                            child: Image.file(
-                              _selectedImage!,
+                            child: Container(
                               width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
+                              height: 200.h,
+                              color: Colors.black,
+                              child: Center(
+                                child: Icon(
+                                  Icons.play_circle_filled,
+                                  size: 64.sp,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                          )
-                        : _selectedVideo != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8.r),
-                            child: Stack(
+                          ),
+                          Positioned(
+                            top: 8.h,
+                            right: 8.w,
+                            child: GestureDetector(
+                              onTap: _clearMedia,
+                              child: Container(
+                                padding: EdgeInsets.all(4.w),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.close,
+                                  size: 16.sp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : SizedBox(
+                        height: 120.h,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _selectedGallery.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == _selectedGallery.length) {
+                              return GestureDetector(
+                                onTap: _pickMultipleImages,
+                                child: Container(
+                                  width: 90.w,
+                                  height: 120.h,
+                                  margin: EdgeInsets.only(left: 8.w),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: AppColors.primary.withOpacity(0.5),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_photo_alternate_outlined,
+                                        size: 28.sp,
+                                        color: AppColors.primary,
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        'Add more',
+                                        style: TextStyle(
+                                          fontSize: 10.sp,
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                            return Stack(
                               children: [
                                 Container(
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  color: Colors.black,
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.play_circle_filled,
-                                      size: 64.sp,
-                                      color: Colors.white,
+                                  margin: EdgeInsets.only(right: 8.w),
+                                  width: 110.w,
+                                  height: 120.h,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    child: Image.file(
+                                      _selectedGallery[index],
+                                      fit: BoxFit.cover,
+                                      width: 110.w,
+                                      height: 120.h,
                                     ),
                                   ),
                                 ),
                                 Positioned(
-                                  top: 8.h,
-                                  right: 8.w,
-                                  child: Container(
-                                    padding: EdgeInsets.all(4.w),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.videocam,
-                                      size: 16.sp,
-                                      color: Colors.white,
+                                  top: 4.h,
+                                  right: 12.w,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedGallery.removeAt(index);
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(3.w),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.close,
+                                        size: 12.sp,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
-                            ),
-                          )
-                        : _selectedGallery.isNotEmpty
-                        ? ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _selectedGallery.length,
-                            itemBuilder: (context, index) {
-                              return Container(
-                                margin: EdgeInsets.only(right: 8.w),
-                                width: 200.w,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                  child: Image.file(
-                                    _selectedGallery[index],
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : const SizedBox(),
-                    Positioned(
-                      top: 8.h,
-                      right: 8.w,
-                      child: GestureDetector(
-                        onTap: _clearMedia,
-                        child: Container(
-                          padding: EdgeInsets.all(4.w),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            size: 16.sp,
-                            color: Colors.white,
-                          ),
+                            );
+                          },
                         ),
                       ),
-                    ),
-                  ],
-                ),
               ),
           ],
         ),

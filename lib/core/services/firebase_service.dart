@@ -1,6 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'fcm_service.dart';
 
 class FirebaseService {
   static DatabaseReference? _databaseRef;
@@ -64,14 +65,19 @@ class FirebaseService {
     return databaseRef.child('users/$userId/fcm_tokens');
   }
 
-  // Save FCM token for a user (to be used by Cloud Functions for push notifications)
   Future<void> saveUserFCMToken(int userId, String fcmToken) async {
     try {
-      final tokenRef = getUserFCMTokensRef(userId).child(fcmToken);
+      final safeKey = fcmToken.replaceAll('.', '_')
+                              .replaceAll(r'$', '_')
+                              .replaceAll('#', '_')
+                              .replaceAll('[', '_')
+                              .replaceAll(']', '_');
+      
+      final tokenRef = getUserFCMTokensRef(userId).child(safeKey);
       await tokenRef.set({
         'token': fcmToken,
         'updated_at': DateTime.now().millisecondsSinceEpoch,
-        'platform': 'flutter',
+        'platform': defaultTargetPlatform.name.toLowerCase(),
       });
       if (kDebugMode) {
         print('✅ FCM token saved for user: $userId');
@@ -84,8 +90,6 @@ class FirebaseService {
   }
 
   // Send notification to Realtime Database
-  // Note: This only saves to database, doesn't send push notification
-  // For push notifications, use FCMService or send to backend API
   Future<void> sendNotification({
     required int receiverId,
     required String type,
@@ -116,10 +120,13 @@ class FirebaseService {
         if (data != null) ...data,
       });
 
-      // Note: To send push notification, you need to:
-      // 1. Get receiver's FCM token from your backend
-      // 2. Send push notification via FCM Admin SDK (backend) or
-      // 3. Use Cloud Functions to trigger on database write
+      // 📱 Trigger direct push
+      await FCMService().sendPushDirectly(
+        receiverId: receiverId,
+        title: title,
+        body: message,
+        data: data,
+      );
     } catch (e) {
       print('Error sending notification: $e');
       rethrow;

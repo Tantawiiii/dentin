@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#039fb3</color>
+    <!-- Accent color shown on the notification dot and expanded panel on Android -->
+    <color name="notification_color">#039fb3</color>
 </resources>

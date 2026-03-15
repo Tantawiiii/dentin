@@ -51,6 +51,7 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
   bool _isAddingComment = false;
   bool _isAddingReply = false;
   final Map<String, bool> _isLikingComment = {};
+  final Map<String, bool> _isLikingReply = {};
   StreamSubscription<List<FirebaseComment>>? _commentsSubscription;
 
   UserData? _currentUser;
@@ -94,11 +95,9 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
               _comments = firebaseComments;
             });
 
-            // Load replies for all comments that have replies immediately
             for (final comment in firebaseComments) {
               if (comment.repliesCount > 0 &&
                   !_repliesSubscriptions.containsKey(comment.id)) {
-                // Load replies immediately when comments are loaded
                 _loadRepliesInBackground(comment.id);
               }
             }
@@ -108,7 +107,7 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
 
   Future<void> _loadRepliesInBackground(String commentId) async {
     if (_currentUserId == null) return;
-    if (_repliesSubscriptions.containsKey(commentId)) return; // Already loaded
+    if (_repliesSubscriptions.containsKey(commentId)) return;
 
     try {
       final repliesStream = _commentsService.listenToReplies(
@@ -121,7 +120,6 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
         if (mounted) {
           setState(() {
             _replies[commentId] = replies;
-            // Auto-expand if replies are loaded and not already expanded
             if (replies.isNotEmpty && _expandedReplies[commentId] != true) {
               _expandedReplies[commentId] = true;
             }
@@ -137,7 +135,6 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
     }
   }
 
-  // Convert PostUser to UserData
   UserData _convertPostUserToUserData(PostUser postUser) {
     return UserData(
       id: postUser.id,
@@ -177,7 +174,6 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
     );
   }
 
-  // Convert backend Comment to FirebaseComment format for display
   List<FirebaseComment> _getAllComments() {
     final allComments = <FirebaseComment>[];
     final backendIds = _backendComments.map((c) => c.id.toString()).toSet();
@@ -267,13 +263,12 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
           user: _currentUser!,
         );
       } catch (e) {
-        // If Firebase fails, continue anyway
+
         if (mounted) {
           print('Firebase comment sync failed: $e');
         }
       }
 
-      // Send notification to post owner
       if (widget.post.user.id != _currentUserId) {
         await _commentsService.sendNotification(
           receiverId: widget.post.user.id,
@@ -332,21 +327,19 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
         orElse: () => throw Exception('Comment not found'),
       );
 
-      // If comment is from backend, add it to Firebase first using backend ID
       if (!_comments.any((c) => c.id == commentId)) {
         try {
           await _commentsService.addComment(
             postId: widget.post.id,
             content: comment.content,
             user: comment.user,
-            commentId: commentId, // Use backend comment ID
+            commentId: commentId,
           );
         } catch (e) {
-          // Continue anyway - might already exist
+
         }
       }
 
-      // Check if user already liked before toggling
       final wasLiked = comment.userHasLiked;
 
       // Toggle like
@@ -357,7 +350,7 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
         user: _currentUser!,
       );
 
-      // Send notification only if user liked (was not liked before, now is liked)
+      // Send notification only if user liked
       if (!wasLiked && comment.user.id != _currentUserId) {
         await _commentsService.sendNotification(
           receiverId: comment.user.id,
@@ -552,6 +545,68 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
           'Failed to load replies: ${e.toString()}',
           context: context,
         );
+      }
+    }
+  }
+
+  Future<void> _toggleReplyLike({
+    required String commentId,
+    required FirebaseReply reply,
+  }) async {
+    if (_currentUser == null || _currentUserId == null) {
+      AppToast.showError('Please login to like replies', context: context);
+      return;
+    }
+
+    final replyKey = '${commentId}_${reply.id}';
+    if (_isLikingReply[replyKey] == true) return;
+
+    setState(() {
+      _isLikingReply[replyKey] = true;
+    });
+
+    try {
+      final wasLiked = reply.userHasLiked;
+
+      await _commentsService.toggleReplyLike(
+        postId: widget.post.id,
+        commentId: commentId,
+        replyId: reply.id,
+        userId: _currentUserId!,
+        user: _currentUser!,
+      );
+
+      // Notify the reply author only when the user ADDS a like
+      if (!wasLiked && reply.user.id != _currentUserId) {
+        _commentsService
+            .sendNotification(
+              receiverId: reply.user.id,
+              type: 'reply_like',
+              title: 'Someone liked your reply',
+              message:
+                  '${_currentUser!.userName} liked your reply: '
+                  '"${reply.content.length > 50 ? '${reply.content.substring(0, 50)}...' : reply.content}"',
+              senderId: _currentUserId!,
+              senderName: _currentUser!.userName,
+              senderImage: _currentUser!.profileImage,
+              postId: widget.post.id,
+              commentId: commentId,
+              replyId: reply.id,
+            )
+            .ignore();
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.showError(
+          'Failed to like reply: ${e.toString()}',
+          context: context,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLikingReply[replyKey] = false;
+        });
       }
     }
   }
@@ -1012,16 +1067,76 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
                                                                   .textPrimary,
                                                             ),
                                                           ),
-                                                          SizedBox(height: 2.h),
-                                                          Text(
-                                                            _formatTime(
-                                                              reply.createdAt,
-                                                            ),
-                                                            style: TextStyle(
-                                                              fontSize: 10.sp,
-                                                              color: AppColors
-                                                                  .textTertiary,
-                                                            ),
+                                                          SizedBox(height: 4.h),
+                                                          Row(
+                                                            children: [
+                                                              Bounce(
+                                                                onTap: () =>
+                                                                    _toggleReplyLike(
+                                                                      commentId:
+                                                                          comment
+                                                                              .id,
+                                                                      reply:
+                                                                          reply,
+                                                                    ),
+                                                                child: Row(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  children: [
+                                                                    Icon(
+                                                                      reply.userHasLiked
+                                                                          ? Icons
+                                                                                .favorite
+                                                                          : Icons
+                                                                                .favorite_border,
+                                                                      size: 12
+                                                                          .sp,
+                                                                      color: reply
+                                                                              .userHasLiked
+                                                                          ? AppColors
+                                                                                .primary
+                                                                          : AppColors
+                                                                                .textSecondary,
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width:
+                                                                          3.w,
+                                                                    ),
+                                                                    Text(
+                                                                      'Like${reply.likesCount > 0 ? ' (${reply.likesCount})' : ''}',
+                                                                      style:
+                                                                          TextStyle(
+                                                                            fontSize:
+                                                                                10.sp,
+                                                                            color: reply.userHasLiked
+                                                                                ? AppColors.primary
+                                                                                : AppColors.textSecondary,
+                                                                            fontWeight: reply.userHasLiked
+                                                                                ? FontWeight.w600
+                                                                                : FontWeight.normal,
+                                                                          ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              SizedBox(
+                                                                width: 10.w,
+                                                              ),
+                                                              Text(
+                                                                _formatTime(
+                                                                  reply
+                                                                      .createdAt,
+                                                                ),
+                                                                style:
+                                                                    TextStyle(
+                                                                      fontSize:
+                                                                          10.sp,
+                                                                      color: AppColors
+                                                                          .textTertiary,
+                                                                    ),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ],
                                                       ),

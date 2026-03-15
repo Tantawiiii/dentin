@@ -166,12 +166,9 @@ class PostCubit extends Cubit<PostState> {
       }
 
       if (galleryFiles != null && galleryFiles.isNotEmpty) {
-        for (var file in galleryFiles) {
-          final id = await uploadMedia(file);
-          if (id != null) {
-            galleryIds.add(id);
-          }
-        }
+        final uploadFutures = galleryFiles.map((file) => uploadMedia(file));
+        final ids = await Future.wait(uploadFutures);
+        galleryIds.addAll(ids.whereType<int>());
       }
 
       if (imageId == null &&

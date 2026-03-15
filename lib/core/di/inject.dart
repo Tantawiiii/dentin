@@ -98,6 +98,7 @@ Future<void> init() async {
       repository: sl<LoginRepository>(),
       storageService: sl<StorageService>(),
       dioClient: sl<DioClient>(),
+      fcmService: sl<FCMService>(),
     ),
   );
 
@@ -106,6 +107,7 @@ Future<void> init() async {
       repository: sl<RegisterRepository>(),
       storageService: sl<StorageService>(),
       dioClient: sl<DioClient>(),
+      fcmService: sl<FCMService>(),
     ),
   );
 
