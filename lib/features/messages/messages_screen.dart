@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,11 +5,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constant/app_colors.dart';
 import '../../core/di/inject.dart' as di;
 import '../../core/services/storage_service.dart';
+import '../friends/cubit/friend_requests_cubit.dart';
 import 'cubit/chat_cubit.dart';
 import 'cubit/chat_state.dart';
 import 'data/models/conversation_model.dart';
 import 'ui/chat_detail_screen.dart';
+import 'widgets/conversation_item_widget.dart';
 import 'widgets/conversation_list_shimmer.dart';
+import 'widgets/conversation_search_field.dart';
+import 'widgets/new_message_friends_sheet.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -21,19 +24,37 @@ class MessagesScreen extends StatefulWidget {
 
 class _MessagesScreenState extends State<MessagesScreen> {
   late ChatCubit _chatCubit;
+  late FriendRequestsCubit _friendRequestsCubit;
   int? _currentUserId;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _chatCubit = di.sl<ChatCubit>();
+    _friendRequestsCubit = di.sl<FriendRequestsCubit>();
     final storageService = di.sl<StorageService>();
     final userData = storageService.getUserData();
     _currentUserId = userData?.id;
 
     if (_currentUserId != null) {
       _chatCubit.loadConversations(_currentUserId!);
+      _friendRequestsCubit.loadFriendRequests();
     }
+
+    _searchController.addListener(() {
+      if (!mounted) return;
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   String _formatTime(String? dateTime) {
@@ -61,14 +82,24 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _chatCubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _chatCubit),
+        BlocProvider.value(value: _friendRequestsCubit),
+      ],
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Messages'),
           backgroundColor: AppColors.surface,
           elevation: 0,
+          actions: [
+            IconButton(
+              onPressed: _showFriendsForNewMessage,
+              icon: Icon(Icons.add_comment_rounded, color: AppColors.primary, size: 30.r,),
+              tooltip: 'New message',
+            ),
+          ],
         ),
         body: BlocBuilder<ChatCubit, ChatState>(
           builder: (context, state) {
@@ -113,6 +144,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
               conversations = state.conversations;
             }
 
+            final filteredConversations = conversations.where((conversation) {
+              if (_searchQuery.isEmpty) return true;
+              final user = conversation.user;
+              return user.userName.toLowerCase().contains(_searchQuery);
+            }).toList();
+
             if (conversations.isEmpty) {
               return Center(
                 child: Column(
@@ -121,7 +158,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     Icon(
                       Icons.message_outlined,
                       size: 64.sp,
-                      color: AppColors.textSecondary,
+                      color: AppColors.primary,
                     ),
                     SizedBox(height: 16.h),
                     Text(
@@ -136,183 +173,84 @@ class _MessagesScreenState extends State<MessagesScreen> {
               );
             }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                if (_currentUserId != null) {
-                  await _chatCubit.refreshConversations(_currentUserId!);
-                }
-              },
-              color: AppColors.primary,
-              backgroundColor: AppColors.surface,
-              strokeWidth: 2.5,
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                cacheExtent: 1000,
-                itemCount: conversations.length,
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                addAutomaticKeepAlives: true,
-                addRepaintBoundaries: true,
-                itemBuilder: (context, index) {
-                  final conversation = conversations[index];
-                  return ConversationItemWidget(
-                    key: ValueKey('conversation_${conversation.user.id}'),
-                    conversation: conversation,
-                    currentUserId: _currentUserId,
-                    formatTime: _formatTime,
-                    chatCubit: _chatCubit,
-                  );
-                },
-              ),
+            return Column(
+              children: [
+                ConversationSearchField(
+                  controller: _searchController,
+                  searchQuery: _searchQuery,
+                  onClear: () => _searchController.clear(),
+                ),
+                Expanded(
+                  child: filteredConversations.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No conversations match your search',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            if (_currentUserId != null) {
+                              await _chatCubit.refreshConversations(
+                                _currentUserId!,
+                              );
+                            }
+                          },
+                          color: AppColors.primary,
+                          backgroundColor: AppColors.surface,
+                          strokeWidth: 2.5,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            cacheExtent: 1000,
+                            itemCount: filteredConversations.length,
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            addAutomaticKeepAlives: true,
+                            addRepaintBoundaries: true,
+                            itemBuilder: (context, index) {
+                              final conversation = filteredConversations[index];
+                              return ConversationItemWidget(
+                                key: ValueKey(
+                                  'conversation_${conversation.user.id}',
+                                ),
+                                conversation: conversation,
+                                currentUserId: _currentUserId,
+                                formatTime: _formatTime,
+                                chatCubit: _chatCubit,
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
             );
           },
         ),
       ),
     );
   }
-}
 
-class ConversationItemWidget extends StatelessWidget {
-  final Conversation conversation;
-  final int? currentUserId;
-  final String Function(String?) formatTime;
-  final ChatCubit chatCubit;
+  void _showFriendsForNewMessage() {
+    if (_currentUserId == null) return;
 
-  const ConversationItemWidget({
-    super.key,
-    required this.conversation,
-    required this.currentUserId,
-    required this.formatTime,
-    required this.chatCubit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final user = conversation.user;
-    final lastMessage = conversation.lastMessage;
-
-    return RepaintBoundary(
-      child: InkWell(
-        onTap: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ChatDetailScreen(receiverUser: user),
-            ),
-          );
-          if (currentUserId != null && context.mounted) {
-            chatCubit.loadConversations(currentUserId!);
-          }
-        },
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border(
-              bottom: BorderSide(color: AppColors.border, width: 0.5),
-            ),
-          ),
-          child: Row(
-            children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 28.r,
-                    backgroundColor: AppColors.primary,
-                    backgroundImage: user.profileImage != null
-                        ? CachedNetworkImageProvider(user.profileImage!)
-                        : null,
-                    child: user.profileImage == null
-                        ? Text(
-                            user.userName.isNotEmpty
-                                ? user.userName[0].toUpperCase()
-                                : 'U',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                  if (conversation.unreadCount > 0)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: EdgeInsets.all(4.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.surface,
-                            width: 2,
-                          ),
-                        ),
-                        constraints: BoxConstraints(
-                          minWidth: 18.w,
-                          minHeight: 18.h,
-                        ),
-                        child: Text(
-                          conversation.unreadCount > 9
-                              ? '9+'
-                              : '${conversation.unreadCount}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      builder: (_) => BlocProvider.value(
+        value: _friendRequestsCubit,
+        child: NewMessageFriendsSheet(
+          currentUserId: _currentUserId!,
+          onFriendSelected: (chatUser) {
+            Navigator.of(context).pop();
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ChatDetailScreen(receiverUser: chatUser),
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            user.userName,
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (lastMessage != null)
-                          Text(
-                            formatTime(lastMessage.createdAt),
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                    SizedBox(height: 4.h),
-                    if (lastMessage != null)
-                      Text(
-                        lastMessage.body,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: conversation.unreadCount > 0
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

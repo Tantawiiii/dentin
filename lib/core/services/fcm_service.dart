@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -46,6 +47,27 @@ class FCMService {
 
   AccessCredentials? _credentials;
 
+  Future<bool> _ensureApnsTokenReady() async {
+    if (!Platform.isIOS) return true;
+    try {
+      for (int attempt = 0; attempt < 10; attempt++) {
+        final apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken != null && apnsToken.isNotEmpty) {
+          if (kDebugMode) print('✅ APNS token is ready');
+          return true;
+        }
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      if (kDebugMode) {
+        print('⚠️ APNS token is not ready yet, skipping iOS FCM operations now');
+      }
+      return false;
+    } catch (e) {
+      if (kDebugMode) print('❌ Error while waiting for APNS token: $e');
+      return false;
+    }
+  }
+
   // ─── Token Management ──────────────────────────────────────────────────────
 
   Future<String?> _getAccessToken() async {
@@ -89,6 +111,10 @@ class FCMService {
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
+        final apnsReady = await _ensureApnsTokenReady();
+        if (Platform.isIOS && !apnsReady) {
+          return;
+        }
         await _getAndSaveFCMToken(storageService);
 
         // Subscribe to global topics for promotions and announcements
@@ -125,6 +151,8 @@ class FCMService {
 
   Future<void> saveTokenForUser(int userId) async {
     try {
+      final apnsReady = await _ensureApnsTokenReady();
+      if (Platform.isIOS && !apnsReady) return;
       final token = _fcmToken ?? await _messaging.getToken();
       if (token != null) {
         _fcmToken = token;
@@ -269,6 +297,8 @@ class FCMService {
 
   Future<void> _getAndSaveFCMToken(StorageService storageService) async {
     try {
+      final apnsReady = await _ensureApnsTokenReady();
+      if (Platform.isIOS && !apnsReady) return;
       _fcmToken = await _messaging.getToken();
       if (_fcmToken != null) {
         await storageService.saveFCMToken(_fcmToken!);
@@ -287,6 +317,8 @@ class FCMService {
 
   Future<void> subscribeToTopic(String topic) async {
     try {
+      final apnsReady = await _ensureApnsTokenReady();
+      if (Platform.isIOS && !apnsReady) return;
       await _messaging.subscribeToTopic(topic);
       if (kDebugMode) print('✅ Subscribed to topic: $topic');
     } catch (e) {
@@ -296,6 +328,8 @@ class FCMService {
 
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
+      final apnsReady = await _ensureApnsTokenReady();
+      if (Platform.isIOS && !apnsReady) return;
       await _messaging.unsubscribeFromTopic(topic);
       if (kDebugMode) print('✅ Unsubscribed from topic: $topic');
     } catch (e) {

@@ -237,7 +237,7 @@ class HomeDrawer extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                     title: Text(
-                      AppTexts.friendRequests,
+                      AppTexts.friends,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,

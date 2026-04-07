@@ -385,6 +385,146 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     );
   }
 
+  Future<void> _openLikesBottomSheet() async {
+    if (_currentPost.likesCount <= 0) return;
+
+    try {
+      final users = await _postRepository.getPostLikesUsers(_currentPost.id);
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: 10.h),
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  child: Row(
+                    children: [
+                      Text(
+                        AppTexts.likes,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${users.length}',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1.h, thickness: 1, color: AppColors.divider),
+                if (users.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+                    child: Text(
+                      'No likes yet',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      itemCount: users.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1.h, thickness: 1, color: AppColors.divider),
+                      itemBuilder: (context, index) {
+                        final user = users[index];
+                        return ListTile(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(this.context).pushNamed(
+                              AppRoutes.userProfile,
+                              arguments: user.id,
+                            );
+                          },
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.r),
+                            child: CachedNetworkImage(
+                              imageUrl: user.profileImage,
+                              width: 42.w,
+                              height: 42.w,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => ShimmerPlaceholder(
+                                width: 42.w,
+                                height: 42.w,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                width: 42.w,
+                                height: 42.w,
+                                color: AppColors.surfaceVariant,
+                                child: Icon(
+                                  Icons.person,
+                                  size: 20.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            user.userName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                SizedBox(height: 12.h),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        AppToast.showError(
+          'Failed to load likes: ${e.toString()}',
+          context: context,
+        );
+      }
+    }
+  }
+
   void _handleMenuAction(String action) {
     switch (action) {
       case 'report':
@@ -892,12 +1032,15 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${_currentPost.likesCount} ${AppTexts.likes}',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
+                        GestureDetector(
+                          onTap: _openLikesBottomSheet,
+                          child: Text(
+                            '${_currentPost.likesCount} ${AppTexts.likes}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                         if (_currentPost.comments.isNotEmpty)

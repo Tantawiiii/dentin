@@ -166,6 +166,29 @@ class PostRepository {
     }
   }
 
+  Future<List<PostUser>> getPostLikesUsers(int postId) async {
+    try {
+      final response = await _apiService.get<dynamic>(ApiConstants.countLikes(postId));
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        final body = response.data as Map<String, dynamic>? ?? <String, dynamic>{};
+        final data = body['data'] as Map<String, dynamic>? ?? <String, dynamic>{};
+        final usersJson = data['users'] as List<dynamic>? ?? <dynamic>[];
+        return usersJson
+            .whereType<Map<String, dynamic>>()
+            .map(PostUser.fromJson)
+            .toList();
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to get post likes: ${e.toString()}');
+    }
+  }
+
   Future<void> togglePostHidden(int postId) async {
     try {
       final response = await _apiService.put<dynamic>(

@@ -505,6 +505,7 @@ final class AppTexts {
 
   // Friend Requests Screen
   static const String friendRequests = 'Friend Requests';
+  static const String requests = 'Requests';
   static const String incoming = 'Incoming';
   static const String outgoing = 'Outgoing';
   static const String friends = 'Friends';

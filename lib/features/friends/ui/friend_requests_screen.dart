@@ -122,7 +122,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen>
                     friendRequestsCubit: _friendRequestsCubit,
                   ),
                 ),
-                Tab(text: AppTexts.outgoing),
+                Tab(text: AppTexts.pending),
               ],
             ),
           ),

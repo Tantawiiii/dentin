@@ -8,6 +8,7 @@ import '../services/connectivity_service.dart';
 import '../services/storage_service.dart';
 import '../services/firebase_service.dart';
 import '../services/fcm_service.dart';
+import '../services/remote_config_service.dart';
 import '../../features/auth/login/data/repo/login_repository.dart';
 import '../../features/auth/login/cubit/login_cubit.dart';
 import '../../features/auth/register/data/repo/register_repository.dart';
@@ -48,6 +49,9 @@ Future<void> init() async {
 
   // Connectivity Service
   sl.registerLazySingleton(() => ConnectivityService());
+
+  // Remote Config Service
+  sl.registerLazySingleton(() => RemoteConfigService());
 
   // Dio Client
   sl.registerLazySingleton(
