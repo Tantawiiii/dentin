@@ -101,13 +101,11 @@ class PostCubit extends Cubit<PostState> {
 
       _posts.addAll(newPosts);
 
-      // Update hasMore based on API response - check both next link and hasMorePages
       final hasNextLink =
           response.links?.next != null && response.links!.next!.isNotEmpty;
       final hasMoreFromMeta = response.meta?.hasMorePages ?? false;
       _hasMore = hasNextLink || hasMoreFromMeta;
 
-      // Always increment page after successful fetch if we got posts
       if (fetchedPosts.isNotEmpty) {
         _currentPage++;
       }

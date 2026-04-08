@@ -59,12 +59,12 @@ class FirebaseCommentsService {
   FirebaseCommentsService({required FirebaseService firebaseService})
     : _firebaseService = firebaseService;
 
-  // Get comments reference for a post
+  // Get comments for a post id
   DatabaseReference _getCommentsRef(int postId) {
     return _firebaseService.databaseRef.child('posts/$postId/comments');
   }
 
-  // Get comment likes reference
+  // Get comment likes indpend on post id _ comnets
   DatabaseReference _getCommentLikesRef(int postId, String commentId) {
     return _firebaseService.databaseRef.child(
       'posts/$postId/comments/$commentId/likes',
@@ -594,7 +594,6 @@ class FirebaseCommentsService {
         'sender_type': 'user',
       };
 
-      // Add optional fields
       if (postId != null) {
         notificationData['post_id'] = postId;
       }

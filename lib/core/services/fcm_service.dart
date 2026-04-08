@@ -132,9 +132,7 @@ class FCMService {
           if (kDebugMode) print('🔄 FCM Token refreshed');
         });
 
-        // Show banner while app is in the foreground
         FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
         // App opened via a notification tap (background → foreground)
         FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
@@ -143,7 +141,7 @@ class FCMService {
         if (initial != null) _handleNotificationTap(initial);
       }
     } catch (e) {
-      if (kDebugMode) print('❌ FCM initialization error: $e');
+      if (kDebugMode) print(' FCM initialization error: $e');
     }
   }
 
@@ -157,10 +155,10 @@ class FCMService {
       if (token != null) {
         _fcmToken = token;
         await FirebaseService().saveUserFCMToken(userId, token);
-        if (kDebugMode) print('✅ FCM token saved for user $userId');
+        if (kDebugMode) print('FCM token saved for user $userId');
       }
     } catch (e) {
-      if (kDebugMode) print('❌ Error saving FCM token for user: $e');
+      if (kDebugMode) print('Error saving FCM token for user: $e');
     }
   }
 
@@ -169,7 +167,7 @@ class FCMService {
   Future<void> _initLocalNotifications() async {
     const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iosInit = DarwinInitializationSettings(
-      requestAlertPermission: false, // already handled by firebase_messaging
+      requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
@@ -183,7 +181,7 @@ class FCMService {
       onDidReceiveNotificationResponse: _onLocalNotificationTap,
     );
 
-    // Create the Android notification channel
+    //Android notification channel
     if (Platform.isAndroid) {
       const channel = AndroidNotificationChannel(
         _kChannelId,
@@ -202,9 +200,8 @@ class FCMService {
 
   void _onLocalNotificationTap(NotificationResponse response) {
     if (kDebugMode) {
-      print('🔔 Local notification tapped: ${response.payload}');
+      print(' Local notification tapped: ${response.payload}');
     }
-    // Navigate to the notifications screen when user taps a local banner
     navigatorKey.currentState?.pushNamed(AppRoutes.notifications);
   }
 
@@ -264,7 +261,7 @@ class FCMService {
 
   void _handleNotificationTap(RemoteMessage message) {
     if (kDebugMode) {
-      print('🔔 Notification tapped: ${message.data}');
+      print(' Notification tapped: ${message.data}');
     }
 
     final data = message.data;
@@ -306,10 +303,10 @@ class FCMService {
         if (userData != null) {
           await FirebaseService().saveUserFCMToken(userData.id, _fcmToken!);
         }
-        if (kDebugMode) print('✅ FCM Token obtained');
+        if (kDebugMode) print('FCM Token obtained');
       }
     } catch (e) {
-      if (kDebugMode) print('❌ Error getting FCM token: $e');
+      if (kDebugMode) print(' Error getting FCM token: $e');
     }
   }
 
@@ -320,9 +317,9 @@ class FCMService {
       final apnsReady = await _ensureApnsTokenReady();
       if (Platform.isIOS && !apnsReady) return;
       await _messaging.subscribeToTopic(topic);
-      if (kDebugMode) print('✅ Subscribed to topic: $topic');
+      if (kDebugMode) print(' Subscribed to topic: $topic');
     } catch (e) {
-      if (kDebugMode) print('❌ Error subscribing to topic: $e');
+      if (kDebugMode) print('Error subscribing to topic: $e');
     }
   }
 
@@ -331,9 +328,9 @@ class FCMService {
       final apnsReady = await _ensureApnsTokenReady();
       if (Platform.isIOS && !apnsReady) return;
       await _messaging.unsubscribeFromTopic(topic);
-      if (kDebugMode) print('✅ Unsubscribed from topic: $topic');
+      if (kDebugMode) print(' Unsubscribed from topic: $topic');
     } catch (e) {
-      if (kDebugMode) print('❌ Error unsubscribing from topic: $e');
+      if (kDebugMode) print(' Error unsubscribing from topic: $e');
     }
   }
 
@@ -346,10 +343,8 @@ class FCMService {
   ) async {
     final result = <String, String>{};
 
-    // Platform
     result['platform'] = Platform.isIOS ? 'iOS' : 'Android';
 
-    // Permission
     try {
       final settings = await _messaging.getNotificationSettings();
       result['permission'] = settings.authorizationStatus.name;
@@ -357,7 +352,6 @@ class FCMService {
       result['permission'] = 'error: $e';
     }
 
-    // Token
     try {
       final token = _fcmToken ?? await _messaging.getToken();
       if (token != null && token.isNotEmpty) {
@@ -410,13 +404,12 @@ class FCMService {
       final token = _fcmToken ?? await _messaging.getToken();
       if (token == null) return false;
 
-      // Ensure token is saved before writing the test notification
+
       await FirebaseService().saveUserFCMToken(userData.id, token);
 
       final notifId =
           'test_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Use direct push since Cloud Functions aren't available on free plan
       await sendPushDirectly(
         receiverId: userData.id,
         title: '✅ Direct Push Works (V1)!',
@@ -446,11 +439,9 @@ class FCMService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      // 1. Get OAuth2 Access Token
       final accessToken = await _getAccessToken();
       if (accessToken == null) return;
 
-      // 2. Get receiver's tokens from Database
       final snap = await FirebaseService().getUserFCMTokensRef(receiverId).get();
       if (!snap.exists) {
         if (kDebugMode) print('⚠️ No tokens found for user $receiverId');
@@ -466,13 +457,11 @@ class FCMService {
         print('📨 Attempting to send push to ${tokens.length} device(s) via V1 API');
       }
 
-      // 3. Send to each token
       final projectId = _serviceAccount['project_id'];
       final url = 'https://fcm.googleapis.com/v1/projects/$projectId/messages:send';
 
       for (final targetToken in tokens) {
         try {
-          // Prepare V1 payload
           final payload = {
             'message': {
               'token': targetToken,
@@ -510,19 +499,19 @@ class FCMService {
             data: payload,
           );
         } catch (e) {
-          if (kDebugMode) print('❌ Failed to send to token $targetToken: $e');
+          if (kDebugMode) print(' Failed to send to token $targetToken: $e');
         }
       }
-      if (kDebugMode) print('✅ Direct push sent via FCM V1 API');
+      if (kDebugMode) print('Direct push sent via FCM V1 API');
     } catch (e) {
-      if (kDebugMode) print('❌ Error sending direct push: $e');
+      if (kDebugMode) print(' Error sending direct push: $e');
     }
   }
 }
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Firebase is guaranteed to be initialized before this function is called.
+
   if (kDebugMode) {
     print('📨 BGHandler: ${message.notification?.title ?? message.data['title']}');
   }
@@ -541,11 +530,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
   const iosInit = DarwinInitializationSettings();
-  const initSettings =
-      InitializationSettings(android: androidInit, iOS: iosInit);
+  const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
   await plugin.initialize(settings: initSettings);
 
-  // Ensure the Android channel exists (idempotent call)
   await plugin
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
