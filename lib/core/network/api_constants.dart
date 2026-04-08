@@ -14,6 +14,7 @@ final class ApiConstants {
   static const String postCreate = '/api/post';
   static const String createComment = '/api/create-comment';
   static String likePost(int postId) => '/api/posts/$postId/like';
+  static String countLikes(int postId) => '/api/posts/$postId/count-likes';
   static String reportPost(int postId) => '/api/posts/$postId/report';
   static String togglePostHidden(int postId) => '/api/post/$postId/is_hidden';
   static String togglePostSaved(int postId) => '/api/post/$postId/is_saved';

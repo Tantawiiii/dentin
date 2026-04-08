@@ -33,7 +33,7 @@ class IncomingTabBadge extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(AppTexts.incoming),
+                Text(AppTexts.requests),
                 SizedBox(width: 6.w),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
@@ -54,7 +54,7 @@ class IncomingTabBadge extends StatelessWidget {
             );
           }
         }
-        return Text(AppTexts.incoming);
+        return Text(AppTexts.requests);
       },
     );
   }

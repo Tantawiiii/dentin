@@ -395,8 +395,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               state is RegisterLoading ||
               state is RegisterUploadingFiles ||
               state is RegisterSubmitting;
+          final isKeyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
 
           return Scaffold(
+            extendBody: false,
+            resizeToAvoidBottomInset: true,
             body: SafeArea(
               child: Stack(
                 children: [
@@ -404,7 +407,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
                     child: Column(
                       children: [
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 6.h),
                         Text(
                           AppTexts.createYourAccount,
                           style: TextStyle(
@@ -422,10 +425,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 32.h),
+                        SizedBox(height: 12.h),
                         _buildProgressIndicator(),
-                        SizedBox(height: 32.h),
-
+                        SizedBox(height: 12.h),
                         Expanded(
                           child: PageView(
                             controller: _pageController,
@@ -619,7 +621,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
             ),
-            bottomNavigationBar: MediaQuery.of(context).viewInsets.bottom > 0
+            bottomNavigationBar: isKeyboardVisible
                 ? null
                 : Container(
                     padding: EdgeInsets.symmetric(

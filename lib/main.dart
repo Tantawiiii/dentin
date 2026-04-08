@@ -18,6 +18,8 @@ import 'core/services/fcm_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/connectivity_wrapper.dart';
+import 'core/services/remote_config_service.dart';
+import 'core/widgets/maintenance_screen.dart';
 import 'shared/widgets/app_toast.dart';
 
 void main() async {
@@ -58,15 +60,16 @@ void main() async {
         try {
           if (Firebase.apps.isEmpty) {
             if (kDebugMode) {
-              print('🔥 Calling Firebase.initializeApp with standard options...');
+              print(
+                  '🔥 Calling Firebase.initializeApp with standard options...');
             }
-            
+
             await Firebase.initializeApp(
               options: DefaultFirebaseOptions.currentPlatform,
             ).timeout(
               const Duration(seconds: 30),
             );
-            
+
             if (kDebugMode) {
               final app = Firebase.app();
               print('✅ Firebase initialized successfully');
@@ -165,26 +168,50 @@ void main() async {
             print('⚠️ FCM initialization error: $e');
           }
         }
-      } catch (e, stackTrace) {
+        try {
+          final remoteConfigService = di.sl<RemoteConfigService>();
+          await remoteConfigService.initialize();
+        } catch (e) {
+          if (kDebugMode) {
+            print('⚠️ Remote Config initialization error: $e');
+          }
+        }
+
+        final remoteConfigService = di.sl<RemoteConfigService>();
+        final isAppWorking = remoteConfigService.isAppWorking;
+        final maintenanceMessage = remoteConfigService.maintenanceMessage;
+
+        runApp(
+          MyApp(
+            isAppWorking: isAppWorking,
+            maintenanceMessage: maintenanceMessage,
+          ),
+        );
+      } catch (error, stack) {
         if (kDebugMode) {
-          print('⚠️ Error setting up services: $e');
-          print('Stack trace: $stackTrace');
+          print('❌ Async Error: $error');
+          print('Stack trace: $stack');
         }
       }
-
-      runApp(const MyApp());
     },
-    (error, stack) {
+    (error, stackTrace) {
       if (kDebugMode) {
-        print('❌ Async Error: $error');
-        print('Stack trace: $stack');
+        print('❌ Uncaught zone error: $error');
+        print('Stack trace: $stackTrace');
       }
     },
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isAppWorking;
+  final String maintenanceMessage;
+
+  const MyApp({
+    super.key,
+    this.isAppWorking = true,
+    this.maintenanceMessage = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -192,6 +219,13 @@ class MyApp extends StatelessWidget {
       designSize: const Size(375, 812),
       minTextAdapt: true,
       builder: (_, child) {
+        if (!isAppWorking) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            home: MaintenanceScreen(message: maintenanceMessage),
+          );
+        }
         return MaterialApp(
           navigatorKey: navigatorKey,
           title: 'DentIn',
