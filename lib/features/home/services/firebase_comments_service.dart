@@ -64,6 +64,11 @@ class FirebaseCommentsService {
     return _firebaseService.databaseRef.child('posts/$postId/comments');
   }
 
+  // Get post likes reference
+  DatabaseReference _getPostLikesRef(int postId) {
+    return _firebaseService.databaseRef.child('posts/$postId/likes');
+  }
+
   // Get comment likes indpend on post id _ comnets
   DatabaseReference _getCommentLikesRef(int postId, String commentId) {
     return _firebaseService.databaseRef.child(
@@ -164,6 +169,53 @@ class FirebaseCommentsService {
     } catch (e) {
       if (kDebugMode) {
         print('Error toggling comment like: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // Like/Unlike post
+  Future<void> togglePostLike({
+    required int postId,
+    required int userId,
+    required UserData user,
+    required bool liked,
+  }) async {
+    try {
+      final likesRef = _getPostLikesRef(postId);
+      final snapshot = await likesRef.get();
+      final existingLikeKeys = <String>[];
+
+      if (snapshot.exists && snapshot.value is Map<dynamic, dynamic>) {
+        final likesData = snapshot.value as Map<dynamic, dynamic>;
+        likesData.forEach((key, value) {
+          if (value is Map && value['user_id'] == userId) {
+            existingLikeKeys.add(key.toString());
+          }
+        });
+      }
+
+      if (liked) {
+        if (existingLikeKeys.isNotEmpty) return;
+
+        final newLikeKey = likesRef.push().key;
+        if (newLikeKey != null) {
+          await likesRef.child(newLikeKey).set({
+            'user_id': userId,
+            'user_name': user.userName,
+            'user_avatar': user.profileImage ?? '',
+            'created_at': DateTime.now().toIso8601String(),
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          });
+        }
+      } else if (existingLikeKeys.isNotEmpty) {
+        for (final likeKey in existingLikeKeys) {
+          await likesRef.child(likeKey).remove();
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error toggling post like: $e');
       }
       rethrow;
     }
