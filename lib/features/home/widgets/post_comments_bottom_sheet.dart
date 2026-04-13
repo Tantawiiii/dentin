@@ -243,7 +243,6 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
     });
 
     try {
-      // Add comment to backend first
       final request = CreateCommentRequest(
         postId: widget.post.id,
         content: content,

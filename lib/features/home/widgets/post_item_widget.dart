@@ -179,10 +179,19 @@ class _PostItemWidgetState extends State<PostItemWidget> {
         LikePostRequest(liked: _isLiked, likesCount: _currentPost.likesCount),
       );
 
+      final storageService = di.sl<StorageService>();
+      final currentUser = storageService.getUserData();
+      if (currentUser != null) {
+        await _commentsService.togglePostLike(
+          postId: _currentPost.id,
+          userId: currentUser.id,
+          user: currentUser,
+          liked: _isLiked,
+        );
+      }
+
       // Send notification to the post owner only when the user ADDS a like
       if (_isLiked) {
-        final storageService = di.sl<StorageService>();
-        final currentUser = storageService.getUserData();
         if (currentUser != null && currentUser.id != _currentPost.user.id) {
           _commentsService
               .sendNotification(

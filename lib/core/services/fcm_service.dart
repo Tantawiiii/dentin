@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -46,6 +47,14 @@ class FCMService {
   String? get fcmToken => _fcmToken;
 
   AccessCredentials? _credentials;
+
+  String _resolveFcmProjectId() {
+    final envProjectId = dotenv.env['FCM_PROJECT_ID']?.trim();
+    if (envProjectId != null && envProjectId.isNotEmpty) {
+      return envProjectId;
+    }
+    return Firebase.app().options.projectId.trim();
+  }
 
   Future<bool> _ensureApnsTokenReady() async {
     if (!Platform.isIOS) return true;
@@ -457,7 +466,13 @@ class FCMService {
         print('📨 Attempting to send push to ${tokens.length} device(s) via V1 API');
       }
 
-      final projectId = _serviceAccount['project_id'];
+      final projectId = _resolveFcmProjectId();
+      if (projectId.isEmpty) {
+        if (kDebugMode) {
+          print('❌ FCM project id is empty. Check FCM_PROJECT_ID or Firebase options.');
+        }
+        return;
+      }
       final url = 'https://fcm.googleapis.com/v1/projects/$projectId/messages:send';
 
       for (final targetToken in tokens) {
@@ -498,8 +513,17 @@ class FCMService {
             ),
             data: payload,
           );
+        } on DioException catch (e) {
+          if (kDebugMode) {
+            print(
+              '❌ Failed to send to token $targetToken: '
+              'status=${e.response?.statusCode}, '
+              'url=${e.requestOptions.uri}',
+            );
+            print('❌ FCM error body: ${e.response?.data}');
+          }
         } catch (e) {
-          if (kDebugMode) print(' Failed to send to token $targetToken: $e');
+          if (kDebugMode) print('❌ Failed to send to token $targetToken: $e');
         }
       }
       if (kDebugMode) print('Direct push sent via FCM V1 API');
