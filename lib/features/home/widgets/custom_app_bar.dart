@@ -93,7 +93,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                           IconButton(
                             icon: const Icon(Icons.notifications_outlined),
                             color: AppColors.primary,
-                            iconSize: 26.w,
+                            iconSize: 28.w,
                             onPressed: () {
                               Navigator.of(context)
                                   .pushNamed(AppRoutes.notifications);
@@ -101,8 +101,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                           ),
                           if (unreadCount > 0)
                             Positioned(
-                              right: 8.w,
-                              top: 8.h,
+                              right: 4.w,
+                              top: 4.h,
                               child: Container(
                                 padding: EdgeInsets.all(4.w),
                                 decoration: BoxDecoration(
@@ -132,56 +132,56 @@ class _CustomAppBarState extends State<CustomAppBar> {
                       );
                     },
                   ),
-                  SizedBox(width: 2.w),
-                  Bounce(
-                    onTap: () {
-                      Navigator.of(context).pushNamed(AppRoutes.profile);
-                    },
-                    child: Container(
-                      width: 50.w,
-                      height: 50.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28.r),
-                        child: userData?.profileImage != null
-                            ? CachedNetworkImage(
-                                imageUrl: userData!.profileImage!,
-                          width: 50.w,
-                          height: 50.w,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) =>
-                                    ShimmerPlaceholder(
-                                      width: 50.w,
-                                      height: 50.w,
-                                      shape: BoxShape.circle,
-                                    ),
-                                errorWidget: (context, url, error) => Container(
-                                  width: 50.w,
-                                  height: 50.w,
-                                  color: AppColors.surface,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 28.sp,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              )
-                            : Container(
-                          width: 50.w,
-                          height: 50.w,
-                                color: AppColors.surface,
-                                child: Icon(
-                                  Icons.person,
-                                  size: 28.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
+                  // SizedBox(width: 2.w),
+                  // Bounce(
+                  //   onTap: () {
+                  //     Navigator.of(context).pushNamed(AppRoutes.profile);
+                  //   },
+                  //   child: Container(
+                  //     width: 50.w,
+                  //     height: 50.w,
+                  //     decoration: BoxDecoration(
+                  //       shape: BoxShape.circle,
+                  //       border: Border.all(color: AppColors.primary, width: 2),
+                  //     ),
+                  //     child: ClipRRect(
+                  //       borderRadius: BorderRadius.circular(28.r),
+                  //       child: userData?.profileImage != null
+                  //           ? CachedNetworkImage(
+                  //               imageUrl: userData!.profileImage!,
+                  //         width: 50.w,
+                  //         height: 50.w,
+                  //               fit: BoxFit.cover,
+                  //               placeholder: (context, url) =>
+                  //                   ShimmerPlaceholder(
+                  //                     width: 50.w,
+                  //                     height: 50.w,
+                  //                     shape: BoxShape.circle,
+                  //                   ),
+                  //               errorWidget: (context, url, error) => Container(
+                  //                 width: 50.w,
+                  //                 height: 50.w,
+                  //                 color: AppColors.surface,
+                  //                 child: Icon(
+                  //                   Icons.person,
+                  //                   size: 28.sp,
+                  //                   color: AppColors.textSecondary,
+                  //                 ),
+                  //               ),
+                  //             )
+                  //           : Container(
+                  //         width: 50.w,
+                  //         height: 50.w,
+                  //               color: AppColors.surface,
+                  //               child: Icon(
+                  //                 Icons.person,
+                  //                 size: 28.sp,
+                  //                 color: AppColors.textSecondary,
+                  //               ),
+                  //             ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ],

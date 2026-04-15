@@ -57,6 +57,62 @@ class JobRepository {
     }
   }
 
+  Future<JobResponse> getOwnerJobs({
+    int page = 1,
+    String? search,
+    String? type,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{'page': page};
+      final filters = <String, dynamic>{};
+
+      if (search != null && search.trim().isNotEmpty) {
+        filters['search'] = search.trim();
+      }
+      if (type != null && type.trim().isNotEmpty && type != 'All Jobs') {
+        filters['type'] = type.trim();
+      }
+
+      final response = await _apiService.post<dynamic>(
+        ApiConstants.jobOwnerIndex,
+        queryParameters: queryParams,
+        data: {'filters': filters},
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        return JobResponse.fromJson(response.data as Map<String, dynamic>);
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to load applied dentists jobs: ${e.toString()}');
+    }
+  }
+
+  Future<JobApplicantsResponse> getJobApplicants(int jobId) async {
+    try {
+      final response = await _apiService.get<dynamic>(
+        ApiConstants.jobApplicants(jobId),
+      );
+
+      if (response.statusCode != null && response.statusCode! < 400) {
+        return JobApplicantsResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      } else {
+        final errorMessage = _extractErrorMessage(response);
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessageFromDioException(e));
+    } catch (e) {
+      throw Exception('Failed to load job applicants: ${e.toString()}');
+    }
+  }
+
   Future<JobDetailsResponse> getJobDetails(int id) async {
     try {
       final response = await _apiService.get<dynamic>(

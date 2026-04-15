@@ -264,7 +264,7 @@ class FriendRequestsCubit extends Cubit<FriendRequestsState> {
     }
   }
 
-  Future<void> removeFriend(String friendshipId, int userId) async {
+  Future<bool> removeFriend(String friendshipId, int userId) async {
     final currentState = state;
     if (currentState is FriendRequestsLoaded) {
       emit(
@@ -286,8 +286,10 @@ class FriendRequestsCubit extends Cubit<FriendRequestsState> {
       } catch (e) {
         print('Backend API error (ignored): $e');
       }
+      return true;
     } catch (e) {
       emit(FriendRequestsError('Failed to remove friend: $e'));
+      return false;
     }
   }
 

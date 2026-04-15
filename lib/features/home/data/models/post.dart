@@ -16,6 +16,7 @@ class Post {
   final String? adApprovedAt;
   final bool isHidden;
   final bool isSaved;
+  final bool isLiked;
 
   Post({
     required this.id,
@@ -31,6 +32,7 @@ class Post {
     this.adApprovedAt,
     required this.isHidden,
     required this.isSaved,
+    required this.isLiked,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
@@ -56,6 +58,10 @@ class Post {
       adApprovedAt: json['ad_approved_at'],
       isHidden: json['is_hidden'] ?? false,
       isSaved: json['is_saved'] ?? false,
+      isLiked:
+          json['is_liked'] == true ||
+          json['liked'] == true ||
+          json['liked_by_me'] == true,
     );
   }
 
@@ -73,6 +79,7 @@ class Post {
     String? adApprovedAt,
     bool? isHidden,
     bool? isSaved,
+    bool? isLiked,
   }) {
     return Post(
       id: id ?? this.id,
@@ -88,6 +95,7 @@ class Post {
       adApprovedAt: adApprovedAt ?? this.adApprovedAt,
       isHidden: isHidden ?? this.isHidden,
       isSaved: isSaved ?? this.isSaved,
+      isLiked: isLiked ?? this.isLiked,
     );
   }
 }

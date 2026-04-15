@@ -30,9 +30,11 @@ final class ApiConstants {
 
   // Jobs
   static const String jobIndex = '/api/job/index';
+  static const String jobOwnerIndex = '/api/job-owner/index';
   static const String jobCreate = '/api/job';
   static String jobDetails(int id) => '/api/job/$id';
   static String applyJob(int id) => '/api/jobs/$id/apply';
+  static String jobApplicants(int id) => '/api/jobs/$id/applicants';
 
   // Messages / Chat
   static const String conversations = '/api/conversations';

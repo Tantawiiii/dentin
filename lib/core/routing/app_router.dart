@@ -19,6 +19,7 @@ import 'package:dentin/features/messages/ui/chat_detail_screen.dart';
 import 'package:dentin/features/messages/data/models/chat_user_model.dart';
 import 'package:dentin/features/events/ui/events_screen.dart';
 import 'package:dentin/features/events/ui/event_details_screen.dart';
+import 'package:dentin/features/jobs/applied_dentists_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'app_routes.dart';
@@ -107,6 +108,9 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
       return MaterialPageRoute(
         builder: (_) => EventDetailsScreen(eventId: eventId),
       );
+
+    case AppRoutes.appliedDentists:
+      return MaterialPageRoute(builder: (_) => const AppliedDentistsScreen());
 
     default:
       return MaterialPageRoute(

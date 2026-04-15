@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
 import '../../../core/di/inject.dart' as di;
+import '../../../core/services/firebase_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -28,6 +29,7 @@ class _ContactSellerScreenState extends State<ContactSellerScreen> {
   final _formKey = GlobalKey<FormState>();
   final _messageController = TextEditingController();
   final ChatRepository _chatRepository = di.sl<ChatRepository>();
+  final FirebaseService _firebaseService = di.sl<FirebaseService>();
   bool _isSending = false;
 
   @override
@@ -75,7 +77,42 @@ class _ContactSellerScreenState extends State<ContactSellerScreen> {
         receiverId: widget.rent.user.id,
       );
 
-      await _chatRepository.sendMessage(request);
+      final sendResponse = await _chatRepository.sendMessage(request);
+
+      // Keep Firebase realtime chat in sync so the message appears immediately.
+      final roomId = _firebaseService.generateRoomId(
+        currentUser.id,
+        widget.rent.user.id,
+      );
+      final messagesRef = _firebaseService.getMessagesRef(roomId);
+      final newMessageRef = messagesRef.push();
+      final messageId =
+          newMessageRef.key ??
+          'msg_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecondsSinceEpoch}';
+
+      final messageData = {
+        'id': messageId,
+        'body': message,
+        'sender_id': currentUser.id,
+        'receiver_id': widget.rent.user.id,
+        'sender_name': currentUser.userName,
+        'sender_image': currentUser.profileImage ?? '',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'created_at':
+            sendResponse.data.createdAt.isNotEmpty
+            ? sendResponse.data.createdAt
+            : DateTime.now().toIso8601String(),
+        'type': 'text',
+        'is_read': false,
+        'read': false,
+      };
+
+      try {
+        await newMessageRef.set(messageData);
+      } catch (e) {
+        // API send already succeeded, so don't block navigation.
+        debugPrint('Failed to mirror rent message to Firebase: $e');
+      }
 
       if (mounted) {
         Navigator.of(context).pop();

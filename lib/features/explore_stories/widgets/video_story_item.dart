@@ -235,6 +235,7 @@ class _VideoStoryItemState extends State<VideoStoryItem> {
   void initState() {
     super.initState();
     _currentPost = widget.post;
+    _isLiked = _currentPost.isLiked;
   }
 
   @override
@@ -242,8 +243,10 @@ class _VideoStoryItemState extends State<VideoStoryItem> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.post.id != widget.post.id ||
         oldWidget.post.likesCount != widget.post.likesCount ||
+        oldWidget.post.isLiked != widget.post.isLiked ||
         oldWidget.post.comments.length != widget.post.comments.length) {
       _currentPost = widget.post;
+      _isLiked = widget.post.isLiked;
     }
   }
 
@@ -264,14 +267,27 @@ class _VideoStoryItemState extends State<VideoStoryItem> {
     });
 
     try {
-      await _postRepository.likePost(
+      final likeResponse = await _postRepository.likePost(
         _currentPost.id,
         LikePostRequest(liked: _isLiked, likesCount: _currentPost.likesCount),
       );
+
+      if (mounted) {
+        setState(() {
+          _isLiked = likeResponse.liked;
+          _currentPost = _currentPost.copyWith(
+            isLiked: likeResponse.liked,
+            likesCount: likeResponse.likesCount,
+          );
+        });
+      }
     } catch (e) {
       setState(() {
         _isLiked = previousLikedState;
-        _currentPost = _currentPost.copyWith(likesCount: previousLikesCount);
+        _currentPost = _currentPost.copyWith(
+          isLiked: previousLikedState,
+          likesCount: previousLikesCount,
+        );
       });
       if (mounted) {
         AppToast.showError(

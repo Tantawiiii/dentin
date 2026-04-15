@@ -167,8 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final isWorkAssistantUniversity = _isUniversityAssistant == AppTexts.yes
         ? 1
         : 0;
-
-    final hasClinicInt = _hasClinic == AppTexts.yes ? 1 : 0;
+    final hasClinic = _hasClinic == AppTexts.yes ? 1 : 0;
 
     String formattedBirthDate = _birthDateController.text.trim();
     try {
@@ -249,7 +248,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           : _universityNameController.text.trim(),
       isWorkAssistantUniversity: isWorkAssistantUniversity,
       tools: _tools.isEmpty ? null : _tools.join(', '),
-      hasClinic: hasClinicInt,
+      hasClinic: hasClinic,
       clinicName: _clinicNameController.text.trim().isEmpty
           ? null
           : _clinicNameController.text.trim(),
@@ -261,7 +260,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       address: _addressController.text.trim(),
       availableTimes: availableTimes,
       skills: _skills,
-      //fields: _selectedSpecialties.isNotEmpty ? _selectedSpecialties : null,
       fields: [],
       profileImage: _profileImage,
       cv: _cv,

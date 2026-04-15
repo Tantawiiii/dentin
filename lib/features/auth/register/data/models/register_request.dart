@@ -27,7 +27,7 @@ class RegisterRequest {
   final String address;
   final List<AvailableTimeSlot> availableTimes;
   final List<String> skills;
-  final List<String>? fields;
+  final List<int>? fields;
   final int? profileImage;
   final int? cv;
   final int? coverImage;

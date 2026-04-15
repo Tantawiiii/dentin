@@ -226,6 +226,65 @@ class ApplyJobResponse {
   }
 }
 
+class JobApplicantsResponse {
+  final String result;
+  final List<JobApplicant> data;
+  final String message;
+  final int status;
+
+  JobApplicantsResponse({
+    required this.result,
+    required this.data,
+    required this.message,
+    required this.status,
+  });
+
+  factory JobApplicantsResponse.fromJson(Map<String, dynamic> json) {
+    return JobApplicantsResponse(
+      result: json['result']?.toString() ?? '',
+      data:
+          (json['data'] as List<dynamic>?)
+              ?.map((e) => JobApplicant.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      message: json['message']?.toString() ?? '',
+      status: json['status'] ?? 0,
+    );
+  }
+}
+
+class JobApplicant {
+  final int id;
+  final String userName;
+  final String? profileImage;
+  final String createdAt;
+  final String updatedAt;
+  final String coverLetter;
+  final String appliedAt;
+
+  JobApplicant({
+    required this.id,
+    required this.userName,
+    this.profileImage,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.coverLetter,
+    required this.appliedAt,
+  });
+
+  factory JobApplicant.fromJson(Map<String, dynamic> json) {
+    return JobApplicant(
+      id: json['id'] ?? 0,
+      userName: json['user_name']?.toString() ?? '',
+      profileImage: json['profile_image']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
+      coverLetter: json['cover_letter']?.toString() ?? '',
+      appliedAt: json['applied_at']?.toString() ?? '',
+    );
+  }
+}
+
 class CreateJobRequest {
   // final String companyName;
   // final String? companySize;

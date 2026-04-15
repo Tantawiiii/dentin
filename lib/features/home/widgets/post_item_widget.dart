@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:bounce/bounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
@@ -48,11 +50,14 @@ class _PostItemWidgetState extends State<PostItemWidget> {
   final PostRepository _postRepository = di.sl<PostRepository>();
   final FirebaseCommentsService _commentsService = di
       .sl<FirebaseCommentsService>();
+  StreamSubscription<DatabaseEvent>? _likesSubscription;
 
   @override
   void initState() {
     super.initState();
     _currentPost = widget.post;
+    _isLiked = _currentPost.isLiked;
+    _subscribeToPostLikes();
   }
 
   @override
@@ -60,17 +65,42 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.post.id != widget.post.id ||
         oldWidget.post.likesCount != widget.post.likesCount ||
+        oldWidget.post.isLiked != widget.post.isLiked ||
         oldWidget.post.comments.length != widget.post.comments.length) {
+      if (oldWidget.post.id != widget.post.id) {
+        _likesSubscription?.cancel();
+        _subscribeToPostLikes();
+      }
       _currentPost = widget.post;
+      _isLiked = widget.post.isLiked;
     }
   }
 
   @override
   void dispose() {
+    _likesSubscription?.cancel();
     _commentController.dispose();
     _commentFocusNode.dispose();
     _mediaPageController.dispose();
     super.dispose();
+  }
+
+  void _subscribeToPostLikes() {
+    final currentUserId = di.sl<StorageService>().getUserData()?.id;
+    _likesSubscription = _commentsService.subscribeToPostLikes(
+      postId: _currentPost.id,
+      userId: currentUserId,
+      onUpdate: (likesCount, hasUserLiked) {
+        if (!mounted) return;
+        setState(() {
+          _isLiked = hasUserLiked;
+          _currentPost = _currentPost.copyWith(
+            likesCount: likesCount,
+            isLiked: hasUserLiked,
+          );
+        });
+      },
+    );
   }
 
   String _formatTime(String? dateTime) {
@@ -174,10 +204,23 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     });
 
     try {
-      await _postRepository.likePost(
+      final likeResponse = await _postRepository.likePost(
         _currentPost.id,
         LikePostRequest(liked: _isLiked, likesCount: _currentPost.likesCount),
       );
+
+      final finalLiked = likeResponse.liked;
+      final finalLikesCount = likeResponse.likesCount;
+
+      if (mounted) {
+        setState(() {
+          _isLiked = finalLiked;
+          _currentPost = _currentPost.copyWith(
+            isLiked: finalLiked,
+            likesCount: finalLikesCount,
+          );
+        });
+      }
 
       final storageService = di.sl<StorageService>();
       final currentUser = storageService.getUserData();
@@ -191,7 +234,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       }
 
       // Send notification to the post owner only when the user ADDS a like
-      if (_isLiked) {
+      if (finalLiked) {
         if (currentUser != null && currentUser.id != _currentPost.user.id) {
           _commentsService
               .sendNotification(
@@ -217,7 +260,10 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     } catch (e) {
       setState(() {
         _isLiked = previousLikedState;
-        _currentPost = _currentPost.copyWith(likesCount: previousLikesCount);
+        _currentPost = _currentPost.copyWith(
+          isLiked: previousLikedState,
+          likesCount: previousLikesCount,
+        );
       });
       if (mounted) {
         AppToast.showError(

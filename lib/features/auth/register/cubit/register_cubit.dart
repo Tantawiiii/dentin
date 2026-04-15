@@ -92,7 +92,7 @@ class RegisterCubit extends Cubit<RegisterState> {
     required String address,
     required List<AvailableTimeSlot> availableTimes,
     required List<String> skills,
-    List<String>? fields,
+    List<int>? fields,
     File? profileImage,
     File? cv,
     File? coverImage,
