@@ -30,4 +30,5 @@ final class AppRoutes {
   static const String chat = '/chat';
   static const String events = '/events';
   static const String eventDetails = '/event-details';
+  static const String appliedDentists = '/applied-dentists';
 }

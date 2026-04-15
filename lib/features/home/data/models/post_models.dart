@@ -11,3 +11,4 @@ export 'comment.dart';
 export 'create_comment_request.dart';
 export 'create_comment_response.dart';
 export 'like_post_request.dart';
+export 'like_post_response.dart';

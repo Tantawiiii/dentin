@@ -146,6 +146,20 @@ class HomeDrawer extends StatelessWidget {
                     },
                   ),
                   ListTile(
+                    leading: Icon(Icons.assignment_ind_outlined, color: AppColors.primary),
+                    title: Text(
+                      'Applied Dentists',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      sliderDrawerKey.currentState?.closeSlider();
+                      Navigator.of(context).pushNamed(AppRoutes.appliedDentists);
+                    },
+                  ),
+                  ListTile(
                     leading: Icon(
                       Icons.explore_outlined,
                       color: AppColors.primary,

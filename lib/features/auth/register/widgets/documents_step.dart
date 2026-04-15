@@ -108,69 +108,10 @@ class DocumentsStepState extends State<DocumentsStep> {
     });
   }
 
-  String? _validateProfileImage() {
-    if (widget.profileImage == null && widget.profileImageUrl == null) {
-      setState(() {
-        _profileImageError = AppTexts.profileImageRequired;
-      });
-      return AppTexts.profileImageRequired;
-    }
-    return null;
-  }
-
-  String? _validateCoverImage() {
-    if (widget.coverImage == null && widget.coverImageUrl == null) {
-      setState(() {
-        _coverImageError = AppTexts.coverImageRequired;
-      });
-      return AppTexts.coverImageRequired;
-    }
-    return null;
-  }
-
-  String? _validateGraduationCertificate() {
-    if (widget.graduationCertificate == null &&
-        widget.graduationCertificateUrl == null) {
-      setState(() {
-        _graduationCertificateError = AppTexts.graduationCertificateRequired;
-      });
-      return AppTexts.graduationCertificateRequired;
-    }
-    return null;
-  }
-
-  String? _validateCv() {
-    if (widget.cv == null && widget.cvUrl == null) {
-      setState(() {
-        _cvError = AppTexts.cvRequired;
-      });
-      return AppTexts.cvRequired;
-    }
-    return null;
-  }
-
-  String? _validateCourseCertificates() {
-    final hasFiles = widget.courseCertificates != null &&
-        widget.courseCertificates!.isNotEmpty;
-    final hasUrls = widget.courseCertificatesUrls != null &&
-        widget.courseCertificatesUrls!.isNotEmpty;
-    if (!hasFiles && !hasUrls) {
-      setState(() {
-        _courseCertificatesError = AppTexts.courseCertificatesRequired;
-      });
-      return AppTexts.courseCertificatesRequired;
-    }
-    return null;
-  }
-
   bool validate() {
-    bool isValid = true;
-    if (_validateProfileImage() != null) isValid = false;
-    if (_validateCoverImage() != null) isValid = false;
-    if (_validateGraduationCertificate() != null) isValid = false;
-    if (_validateCv() != null) isValid = false;
-    if (_validateCourseCertificates() != null) isValid = false;
-    return isValid;
+    // Documents are optional in registration flow.
+    _clearErrors();
+    return true;
   }
 
   @override

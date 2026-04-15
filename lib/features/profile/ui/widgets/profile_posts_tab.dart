@@ -64,6 +64,7 @@ class ProfilePostsTab extends StatelessWidget {
           isAdRequest: post.isAdRequest,
           isHidden: false,
           isSaved: false,
+          isLiked: false,
         );
 
         return PostItemWidget(

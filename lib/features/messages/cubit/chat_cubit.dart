@@ -39,7 +39,14 @@ class ChatCubit extends Cubit<ChatState> {
 
     try {
       final response = await _repository.getConversations(currentUserId);
-      _conversations = response.data;
+      final apiConversations = response.data;
+      final firebaseConversations = await _loadFirebaseConversations(
+        currentUserId,
+      );
+      _conversations = _mergeConversations(
+        apiConversations,
+        firebaseConversations,
+      );
       emit(ConversationsLoaded(_conversations));
     } catch (e) {
       emit(ConversationsError(e.toString().replaceFirst('Exception: ', '')));
@@ -157,15 +164,17 @@ class ChatCubit extends Cubit<ChatState> {
             );
 
             final message = ChatMessage(
-              id: messageId.contains('_')
-                  ? int.tryParse(messageId.split('_').first) ?? 0
-                  : int.tryParse(messageId) ?? 0,
+              id: int.tryParse(messageId) ?? messageId.hashCode.abs(),
               body: messageData['body'] ?? '',
               createdAt:
                   messageData['created_at'] ?? DateTime.now().toIso8601String(),
               sender: sender,
               receiver: receiver,
-              isRead: messageData['is_read'] ?? false,
+              isRead:
+                  messageData['is_read'] ??
+                  messageData['isRead'] ??
+                  messageData['read'] ??
+                  false,
               type: messageData['type'] == 'image'
                   ? MessageType.image
                   : messageData['type'] == 'file'
@@ -205,6 +214,11 @@ class ChatCubit extends Cubit<ChatState> {
       });
 
       _messages = firebaseMessages;
+      _markIncomingMessagesAsRead(
+        roomId: roomId,
+        receiverId: receiverId,
+        snapshot: event.snapshot,
+      );
 
       // Update conversations if needed (async without await in listener)
       if (_currentUserId != null && _conversations.isEmpty) {
@@ -283,11 +297,18 @@ class ChatCubit extends Cubit<ChatState> {
       }
 
       final userData = _storageService.getUserData()!;
-      final roomId = _firebaseService.generateRoomId(
-        _currentUserId!,
-        receiverId,
+      // Send to Laravel API
+      final request = SendMessageRequest(
+        body: body.trim(),
+        receiverId: receiverId,
       );
+      final sendResponse = await _repository.sendMessage(request);
+
+      final roomId = _firebaseService.generateRoomId(_currentUserId!, receiverId);
+      final messagesRef = _firebaseService.getMessagesRef(roomId);
+      final newMessageRef = messagesRef.push();
       final messageId =
+          newMessageRef.key ??
           'msg_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecondsSinceEpoch}';
 
       final messageData = {
@@ -301,42 +322,71 @@ class ChatCubit extends Cubit<ChatState> {
         'created_at': DateTime.now().toIso8601String(),
         'type': 'text',
         'is_read': false,
+        'read': false,
       };
 
-      // Send to Laravel API
-      final request = SendMessageRequest(
-        body: body.trim(),
-        receiverId: receiverId,
-      );
-      await _repository.sendMessage(request);
+      var syncedToFirebase = false;
+      try {
+        await newMessageRef.set(messageData);
+        syncedToFirebase = true;
+      } catch (e) {
+        // Keep chat usable even if Firebase write fails.
+        print('Firebase message sync failed: $e');
+      }
 
-      // Send to Firebase
-      final messagesRef = _firebaseService.getMessagesRef(roomId);
-      await messagesRef.push().set(messageData);
-
-      // Send notification
-      await _firebaseService.sendNotification(
-        receiverId: receiverId,
-        type: 'new_message',
-        title: 'New Message',
-        message: 'New message from ${userData.userName}: ${body.trim()}',
-        senderId: _currentUserId!,
-        senderName: userData.userName,
-        senderImage: userData.profileImage,
-        data: {'message_id': messageId, 'room_id': roomId},
-      );
+      try {
+        await _firebaseService.sendNotification(
+          receiverId: receiverId,
+          type: 'new_message',
+          title: 'New Message',
+          message: 'New message from ${userData.userName}: ${body.trim()}',
+          senderId: _currentUserId!,
+          senderName: userData.userName,
+          senderImage: userData.profileImage,
+          data: {'message_id': messageId, 'room_id': roomId},
+        );
+      } catch (e) {
+        print('Notification send failed: $e');
+      }
 
       // Stop typing indicator
       await sendTypingIndicator(receiverId, false);
 
-      // Reload conversations to update last message (without changing current messages state)
-      if (_currentUserId != null) {
-        final response = await _repository.getConversations(_currentUserId!);
-        _conversations = response.data;
+      // Fallback to API response when realtime sync is unavailable.
+      if (!syncedToFirebase &&
+          !_messages.any((message) => message.id == sendResponse.data.id)) {
+        _messages = [..._messages, sendResponse.data];
+        emit(
+          MessageSent(
+            conversations: _conversations,
+            messages: _messages,
+            receiverId: receiverId,
+          ),
+        );
       }
 
-      // Don't emit MessageSent - let Firebase listener update the messages
-      // The Firebase listener will automatically update _messages and emit MessagesLoaded
+      // Reload conversations to update last message
+      if (_currentUserId != null) {
+        final response = await _repository.getConversations(_currentUserId!);
+        final apiConversations = response.data;
+        final firebaseConversations = await _loadFirebaseConversations(
+          _currentUserId!,
+        );
+        _conversations = _mergeConversations(
+          apiConversations,
+          firebaseConversations,
+        );
+      }
+
+      if (!syncedToFirebase) {
+        emit(
+          MessagesLoaded(
+            conversations: _conversations,
+            messages: _messages,
+            receiverId: receiverId,
+          ),
+        );
+      }
     } catch (e) {
       emit(
         MessageSendError(
@@ -374,7 +424,10 @@ class ChatCubit extends Cubit<ChatState> {
         _currentUserId!,
         receiverId,
       );
+      final messagesRef = _firebaseService.getMessagesRef(roomId);
+      final newMessageRef = messagesRef.push();
       final messageId =
+          newMessageRef.key ??
           'file_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecondsSinceEpoch}';
 
       final messageData = {
@@ -391,11 +444,11 @@ class ChatCubit extends Cubit<ChatState> {
         'file_name': fileData['file_name'] ?? fileName,
         'file_size': fileData['file_size'] ?? fileSize,
         'is_read': false,
+        'read': false,
       };
 
       // Send to Firebase
-      final messagesRef = _firebaseService.getMessagesRef(roomId);
-      await messagesRef.push().set(messageData);
+      await newMessageRef.set(messageData);
 
       // Send notification
       await _firebaseService.sendNotification(
@@ -458,5 +511,180 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> close() {
     _stopRealtimeListener();
     return super.close();
+  }
+
+  Future<List<Conversation>> _loadFirebaseConversations(int userId) async {
+    final conversationMap = <int, Conversation>{};
+
+    final friendshipsSnapshot = await _firebaseService.getFriendshipsRef().get();
+    if (friendshipsSnapshot.exists) {
+      for (final child in friendshipsSnapshot.children) {
+        final key = child.key;
+        final value = child.value;
+        if (key == null || value is! Map) continue;
+
+        final friendship = Map<String, dynamic>.from(
+          value as Map<Object?, Object?>,
+        );
+        if (_asString(friendship['status']) != 'friends') continue;
+
+        final ids = key.split('_').map((part) => int.tryParse(part)).toList();
+        if (ids.length != 2 || !ids.contains(userId)) continue;
+
+        final otherUserId = ids.first == userId ? ids[1] : ids[0];
+        if (otherUserId == null) continue;
+
+        final isOtherUser1 = _asInt(friendship['user1_id']) == otherUserId;
+        final fallbackName = isOtherUser1
+            ? _asString(friendship['user1_name'])
+            : _asString(friendship['user2_name']);
+        final fallbackImage = isOtherUser1
+            ? _asNullableString(friendship['user1_image'])
+            : _asNullableString(friendship['user2_image']);
+
+        final user = await _fetchFirebaseUserDetails(
+          otherUserId,
+          fallbackName: fallbackName,
+          fallbackImage: fallbackImage,
+        );
+
+        conversationMap[otherUserId] = Conversation(
+          user: user,
+          unreadCount: 0,
+          lastMessage: null,
+        );
+      }
+    }
+
+    final chatsSnapshot = await _firebaseService.databaseRef.child('chats').get();
+    if (chatsSnapshot.exists) {
+      for (final chatChild in chatsSnapshot.children) {
+        final roomId = chatChild.key;
+        if (roomId == null) continue;
+
+        final ids = roomId.split('_').map((part) => int.tryParse(part)).toList();
+        if (ids.length != 2 || !ids.contains(userId)) continue;
+
+        final otherUserId = ids.first == userId ? ids[1] : ids[0];
+        if (otherUserId == null || conversationMap.containsKey(otherUserId)) {
+          continue;
+        }
+
+        final user = await _fetchFirebaseUserDetails(otherUserId);
+        conversationMap[otherUserId] = Conversation(
+          user: user,
+          unreadCount: 0,
+          lastMessage: null,
+        );
+      }
+    }
+
+    return conversationMap.values.toList();
+  }
+
+  List<Conversation> _mergeConversations(
+    List<Conversation> apiConversations,
+    List<Conversation> firebaseConversations,
+  ) {
+    final merged = <int, Conversation>{};
+    for (final conversation in apiConversations) {
+      merged[conversation.user.id] = conversation;
+    }
+    for (final conversation in firebaseConversations) {
+      merged.putIfAbsent(conversation.user.id, () => conversation);
+    }
+    return merged.values.toList();
+  }
+
+  Future<ChatUser> _fetchFirebaseUserDetails(
+    int userId, {
+    String? fallbackName,
+    String? fallbackImage,
+  }) async {
+    try {
+      final snapshot = await _firebaseService.databaseRef.child('users/$userId').get();
+      if (snapshot.exists && snapshot.value is Map) {
+        final userData = Map<String, dynamic>.from(
+          snapshot.value as Map<Object?, Object?>,
+        );
+
+        final userName = _asString(userData['user_name']).isNotEmpty
+            ? _asString(userData['user_name'])
+            : (_asString(userData['name']).isNotEmpty
+                  ? _asString(userData['name'])
+                  : (fallbackName ?? 'User $userId'));
+
+        return ChatUser(
+          id: userId,
+          userName: userName,
+          profileImage:
+              _asNullableString(userData['profile_image']) ??
+              _asNullableString(userData['avatar']) ??
+              fallbackImage,
+          createdAt: _asString(userData['created_at']),
+          updatedAt: _asString(userData['updated_at']),
+        );
+      }
+    } catch (_) {}
+
+    return ChatUser(
+      id: userId,
+      userName:
+          (fallbackName != null && fallbackName.isNotEmpty)
+          ? fallbackName
+          : 'User $userId',
+      profileImage: fallbackImage,
+      createdAt: '',
+      updatedAt: '',
+    );
+  }
+
+  void _markIncomingMessagesAsRead({
+    required String roomId,
+    required int receiverId,
+    required DataSnapshot snapshot,
+  }) {
+    if (_currentUserId == null || !snapshot.exists) return;
+
+    final updates = <String, Object?>{};
+    for (final child in snapshot.children) {
+      if (child.key == null || child.value is! Map) continue;
+
+      final messageData = Map<String, dynamic>.from(
+        child.value as Map<Object?, Object?>,
+      );
+      final senderId = _asInt(messageData['sender_id']);
+      final alreadyRead =
+          _asBool(messageData['is_read']) || _asBool(messageData['read']);
+
+      if (senderId == receiverId && !alreadyRead) {
+        updates['chats/$roomId/messages/${child.key}/is_read'] = true;
+        updates['chats/$roomId/messages/${child.key}/read'] = true;
+      }
+    }
+
+    if (updates.isNotEmpty) {
+      _firebaseService.databaseRef.update(updates);
+    }
+  }
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  bool _asBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final normalized = value?.toString().toLowerCase();
+    return normalized == 'true' || normalized == '1';
+  }
+
+  String _asString(dynamic value) => value?.toString() ?? '';
+
+  String? _asNullableString(dynamic value) {
+    final str = value?.toString();
+    if (str == null || str.isEmpty) return null;
+    return str;
   }
 }

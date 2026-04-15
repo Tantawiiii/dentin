@@ -146,7 +146,7 @@ class PostRepository {
     }
   }
 
-  Future<void> likePost(int postId, LikePostRequest request) async {
+  Future<LikePostResponse> likePost(int postId, LikePostRequest request) async {
     try {
       final response = await _apiService.post<dynamic>(
         ApiConstants.likePost(postId),
@@ -154,7 +154,8 @@ class PostRepository {
       );
 
       if (response.statusCode != null && response.statusCode! < 400) {
-        return;
+        final body = response.data as Map<String, dynamic>? ?? <String, dynamic>{};
+        return LikePostResponse.fromJson(body);
       } else {
         final errorMessage = _extractErrorMessage(response);
         throw Exception(errorMessage);

@@ -94,7 +94,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _sendFriendRequest();
         break;
       case FriendRequestStatus.pending:
-        // Check if sent by me
         final friendshipId = _getFriendshipId();
         if (friendshipId != null) {
           _cancelFriendRequest(friendshipId);
@@ -132,12 +131,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             child: const Text(AppTexts.cancel),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               final friendshipId = _getFriendshipId();
               if (friendshipId != null) {
-                _friendRequestsCubit.removeFriend(friendshipId, widget.userId);
-                AppToast.showSuccess('Friend removed', context: context);
+                final removed = await _friendRequestsCubit.removeFriend(
+                  friendshipId,
+                  widget.userId,
+                );
+
+                if (!mounted) return;
+
+                if (removed) {
+                  setState(() => _friendStatus = FriendRequestStatus.none);
+                  AppToast.showSuccess('Friend removed', context: context);
+                } else {
+                  AppToast.showError(
+                    'Failed to remove friend. Please try again.',
+                    context: context,
+                  );
+                }
               }
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),

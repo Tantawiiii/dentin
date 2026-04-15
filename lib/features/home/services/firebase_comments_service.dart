@@ -221,6 +221,37 @@ class FirebaseCommentsService {
     }
   }
 
+  // Realtime post likes subscription (count + whether current user liked).
+  StreamSubscription<DatabaseEvent> subscribeToPostLikes({
+    required int postId,
+    int? userId,
+    required void Function(int likesCount, bool hasUserLiked) onUpdate,
+  }) {
+    final likesRef = _getPostLikesRef(postId);
+
+    return likesRef.onValue.listen((event) {
+      int likesCount = 0;
+      bool hasUserLiked = false;
+
+      if (event.snapshot.exists && event.snapshot.value is Map) {
+        final likesData = Map<dynamic, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+
+        likesCount = likesData.length;
+
+        if (userId != null) {
+          hasUserLiked = likesData.values.any((like) {
+            if (like is! Map) return false;
+            return like['user_id'] == userId;
+          });
+        }
+      }
+
+      onUpdate(likesCount, hasUserLiked);
+    });
+  }
+
   // Add reply to comment
   Future<String> addReply({
     required int postId,
