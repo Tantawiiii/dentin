@@ -257,6 +257,16 @@ class _PostItemWidgetState extends State<PostItemWidget> {
 
       final response = await _postRepository.createComment(request);
 
+      // Keep Firebase comments in sync with web using same key/path schema.
+      try {
+        await _commentsService.addComment(
+          postId: _currentPost.id,
+          content: content,
+          user: userData,
+          commentId: response.data.id.toString(),
+        );
+      } catch (_) {}
+
       // ── Send push notification to the post owner ──────────────────────────
       if (_currentPost.user.id != userData.id) {
         final preview =
@@ -376,8 +386,6 @@ class _PostItemWidgetState extends State<PostItemWidget> {
   }
 
   void _openCommentsBottomSheet() {
-    if (_currentPost.comments.isEmpty) return;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

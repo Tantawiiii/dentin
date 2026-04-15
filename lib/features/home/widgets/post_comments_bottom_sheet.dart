@@ -260,6 +260,7 @@ class _PostCommentsBottomSheetState extends State<PostCommentsBottomSheet> {
           postId: widget.post.id,
           content: content,
           user: _currentUser!,
+          commentId: response.data.id.toString(),
         );
       } catch (e) {
 

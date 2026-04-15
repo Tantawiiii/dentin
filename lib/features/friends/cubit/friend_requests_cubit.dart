@@ -203,7 +203,10 @@ class FriendRequestsCubit extends Cubit<FriendRequestsState> {
       await _firebaseService.acceptFriendRequest(friendshipId);
 
       try {
-        await _apiService.put<dynamic>('/api/friend-requests/$userId/accept');
+        await _apiService.post<dynamic>(
+          '/api/friend-requests/$userId/respond',
+          data: {'action': 'accept'},
+        );
       } catch (e) {
         print('Backend API error (ignored): $e');
       }
@@ -229,7 +232,10 @@ class FriendRequestsCubit extends Cubit<FriendRequestsState> {
       await _firebaseService.rejectFriendRequest(friendshipId);
 
       try {
-        await _apiService.put<dynamic>('/api/friend-requests/$userId/reject');
+        await _apiService.post<dynamic>(
+          '/api/friend-requests/$userId/respond',
+          data: {'action': 'reject'},
+        );
       } catch (e) {
         print('Backend API error (ignored): $e');
       }
@@ -274,9 +280,9 @@ class FriendRequestsCubit extends Cubit<FriendRequestsState> {
     try {
       await _firebaseService.removeFriend(friendshipId);
 
-      // إرسال للـ backend API للتوثيق
+      // Mirror the removal in backend using the expected route.
       try {
-        await _apiService.delete<dynamic>('/api/friends/$userId');
+        await _apiService.delete<dynamic>('/api/friends/$userId/remove-friend');
       } catch (e) {
         print('Backend API error (ignored): $e');
       }
