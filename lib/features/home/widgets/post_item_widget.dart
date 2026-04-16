@@ -104,39 +104,28 @@ class _PostItemWidgetState extends State<PostItemWidget> {
   }
 
   String _formatTime(String? dateTime) {
-    if (dateTime == null) return AppTexts.justNow;
+    if (dateTime == null || dateTime.isEmpty) return AppTexts.justNow;
     try {
       final date = DateTime.parse(dateTime);
       final now = DateTime.now();
       final difference = now.difference(date);
 
       if (difference.inMinutes < 1) {
-        return AppTexts.justNow;
+        return 'just now';
       } else if (difference.inHours < 1) {
-        return '${difference.inMinutes}${AppTexts.minutes} ${AppTexts.ago}';
+        return '${difference.inMinutes}m';
       } else if (difference.inDays < 1) {
-        return '${difference.inHours}${AppTexts.hours} ${AppTexts.ago}';
-      } else if (difference.inDays < 7) {
-        return '${difference.inDays}${AppTexts.days} ${AppTexts.ago}';
+        return '${difference.inHours}h';
+      } else if (difference.inDays <= 5) {
+        return '${difference.inDays}d';
       } else {
-        final months = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec',
-        ];
-        return '${months[date.month - 1]} ${date.day}, ${date.year}';
+        final day = date.day.toString().padLeft(2, '0');
+        final month = date.month.toString().padLeft(2, '0');
+        final year = date.year.toString();
+        return '$day/$month/$year';
       }
     } catch (e) {
-      return AppTexts.justNow;
+      return 'just now';
     }
   }
 
@@ -303,7 +292,6 @@ class _PostItemWidgetState extends State<PostItemWidget> {
 
       final response = await _postRepository.createComment(request);
 
-      // Keep Firebase comments in sync with web using same key/path schema.
       try {
         await _commentsService.addComment(
           postId: _currentPost.id,
@@ -315,8 +303,9 @@ class _PostItemWidgetState extends State<PostItemWidget> {
 
       // ── Send push notification to the post owner ──────────────────────────
       if (_currentPost.user.id != userData.id) {
-        final preview =
-            content.length > 50 ? '${content.substring(0, 50)}...' : content;
+        final preview = content.length > 50
+            ? '${content.substring(0, 50)}...'
+            : content;
         final postPreview =
             _currentPost.content != null && _currentPost.content!.isNotEmpty
             ? (_currentPost.content!.length > 100
@@ -329,7 +318,8 @@ class _PostItemWidgetState extends State<PostItemWidget> {
               receiverId: _currentPost.user.id,
               type: 'post_comment',
               title: 'New Comment',
-              message: '${userData.userName} commented on your post: "$preview"',
+              message:
+                  '${userData.userName} commented on your post: "$preview"',
               senderId: userData.id,
               senderName: userData.userName,
               senderImage: userData.profileImage,
@@ -481,7 +471,10 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
                   child: Row(
                     children: [
                       Text(
@@ -507,7 +500,10 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                 Divider(height: 1.h, thickness: 1, color: AppColors.divider),
                 if (users.isEmpty)
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 24.h,
+                    ),
                     child: Text(
                       'No likes yet',
                       style: TextStyle(
@@ -522,8 +518,11 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                       shrinkWrap: true,
                       padding: EdgeInsets.symmetric(vertical: 8.h),
                       itemCount: users.length,
-                      separatorBuilder: (_, __) =>
-                          Divider(height: 1.h, thickness: 1, color: AppColors.divider),
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1.h,
+                        thickness: 1,
+                        color: AppColors.divider,
+                      ),
                       itemBuilder: (context, index) {
                         final user = users[index];
                         return ListTile(
@@ -673,7 +672,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
           wasSaved ? AppTexts.postUnsaved : AppTexts.postSaved,
           context: context,
         );
-      
+
         widget.onPostUpdated?.call();
       }
     } catch (e) {
@@ -901,7 +900,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                _formatTime(_currentPost.user.createdAt),
+                                _formatTime(_currentPost.createdAt),
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: AppColors.textSecondary,
@@ -1305,5 +1304,4 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       ),
     );
   }
-
 }

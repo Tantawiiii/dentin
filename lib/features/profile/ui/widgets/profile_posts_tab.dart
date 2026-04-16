@@ -65,6 +65,8 @@ class ProfilePostsTab extends StatelessWidget {
           isHidden: false,
           isSaved: false,
           isLiked: false,
+          createdAt: post.createdAt ?? '',
+          updatedAt: post.createdAt ?? '',
         );
 
         return PostItemWidget(
