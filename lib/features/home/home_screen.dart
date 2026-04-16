@@ -86,12 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
           body: Padding(
             padding: const EdgeInsets.all(8.0),
             child: BlocBuilder<PostCubit, PostState>(
-              buildWhen: (previous, current) {
-                if (current is PostLoadingMore || previous is PostLoadingMore) {
-                  return false; 
-                }
-                return previous != current;
-              },
+              // Important for pagination:
+              // we must rebuild when state returns from PostLoadingMore to PostLoaded
+              // so the newly fetched items become visible in the list.
+              buildWhen: (previous, current) => previous != current,
               builder: (context, state) {
                 final posts = _postCubit.posts;
                 final isLoading = state is PostLoading && posts.isEmpty;
