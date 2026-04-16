@@ -1,3 +1,4 @@
+import 'package:bounce/bounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -187,14 +188,104 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = _notificationsCubit.state is NotificationActionLoading;
+    final unreadCount = _notificationsCubit.unreadCount;
+
     return BlocProvider.value(
       value: _notificationsCubit,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: Text(AppTexts.notifications),
+          title: Text(AppTexts.notifications, style: TextStyle(fontSize: 18.sp),),
           backgroundColor: AppColors.surface,
           elevation: 0,
+          actions: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.1),
+                      AppColors.primary.withValues(alpha: 0.05),
+                    ],
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Bounce(
+                      onTap: isLoading || unreadCount == 0
+                          ? null
+                          : () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: Text(AppTexts.markAllAsRead),
+                            content:
+                            Text(AppTexts.markAllAsReadConfirmation),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: Text(AppTexts.cancel),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                child: Text(AppTexts.markAllAsRead),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true) {
+                          _notificationsCubit.markAllAsRead();
+                        }
+                      },
+                      child: Icon(Icons.done_all,color: AppColors.info,size: 24.sp),
+                    ),
+
+                    SizedBox(width: 12.w),
+
+                    Bounce(
+                      onTap: isLoading
+                          ? null
+                          : () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: Text(AppTexts.clearAll),
+                            content:
+                            Text(AppTexts.clearAllConfirmation),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: Text(AppTexts.cancel),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                child: Text(AppTexts.clearAll),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true) {
+                          _notificationsCubit.clearAllNotifications();
+                        }
+                      },
+                      child: Icon(Icons.delete_outline,   color: AppColors.error, size: 24.sp),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
         body: BlocBuilder<NotificationsCubit, NotificationsState>(
           builder: (context, state) {
@@ -275,118 +366,118 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
               return Column(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(18.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary.withValues(alpha: 0.1),
-                          AppColors.primary.withValues(alpha: 0.05),
-                        ],
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: isLoading || unreadCount == 0
-                              ? null
-                              : () async {
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(AppTexts.markAllAsRead),
-                                      content: Text(
-                                        AppTexts.markAllAsReadConfirmation,
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: Text(AppTexts.cancel),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: Text(
-                                            AppTexts.markAllAsRead,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-
-                                  if (confirmed == true) {
-                                    _notificationsCubit.markAllAsRead();
-                                  }
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor:
-                                AppColors.textSecondary,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.done_all, size: 18.sp),
-                              SizedBox(width: 4.w),
-                              Text(AppTexts.markAllAsRead),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        OutlinedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () async {
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(AppTexts.clearAll),
-                                      content: Text(
-                                        AppTexts.clearAllConfirmation,
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: Text(AppTexts.cancel),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          style: TextButton.styleFrom(
-                                            foregroundColor:
-                                                AppColors.error,
-                                          ),
-                                          child: Text(AppTexts.clearAll),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-
-                                  if (confirmed == true) {
-                                    _notificationsCubit
-                                        .clearAllNotifications();
-                                  }
-                                },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.error),
-                            foregroundColor: AppColors.error,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.delete_outline, size: 18.sp),
-                              SizedBox(width: 4.w),
-                              Text(AppTexts.clearAll),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Container(
+                  //   padding: EdgeInsets.all(18.w),
+                  //   decoration: BoxDecoration(
+                  //     color: AppColors.surface,
+                  //     gradient: LinearGradient(
+                  //       colors: [
+                  //         AppColors.primary.withValues(alpha: 0.1),
+                  //         AppColors.primary.withValues(alpha: 0.05),
+                  //       ],
+                  //     ),
+                  //   ),
+                  //   child: Row(
+                  //     children: [
+                  //       ElevatedButton(
+                  //         onPressed: isLoading || unreadCount == 0
+                  //             ? null
+                  //             : () async {
+                  //                 final confirmed = await showDialog<bool>(
+                  //                   context: context,
+                  //                   builder: (context) => AlertDialog(
+                  //                     title: Text(AppTexts.markAllAsRead),
+                  //                     content: Text(
+                  //                       AppTexts.markAllAsReadConfirmation,
+                  //                     ),
+                  //                     actions: [
+                  //                       TextButton(
+                  //                         onPressed: () =>
+                  //                             Navigator.pop(context, false),
+                  //                         child: Text(AppTexts.cancel),
+                  //                       ),
+                  //                       TextButton(
+                  //                         onPressed: () =>
+                  //                             Navigator.pop(context, true),
+                  //                         child: Text(
+                  //                           AppTexts.markAllAsRead,
+                  //                         ),
+                  //                       ),
+                  //                     ],
+                  //                   ),
+                  //                 );
+                  //
+                  //                 if (confirmed == true) {
+                  //                   _notificationsCubit.markAllAsRead();
+                  //                 }
+                  //               },
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: AppColors.primary,
+                  //           foregroundColor: Colors.white,
+                  //           disabledBackgroundColor:
+                  //               AppColors.textSecondary,
+                  //         ),
+                  //         child: Row(
+                  //           mainAxisSize: MainAxisSize.min,
+                  //           children: [
+                  //             Icon(Icons.done_all, size: 18.sp),
+                  //             SizedBox(width: 4.w),
+                  //             Text(AppTexts.markAllAsRead),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //       SizedBox(width: 8.w),
+                  //       OutlinedButton(
+                  //         onPressed: isLoading
+                  //             ? null
+                  //             : () async {
+                  //                 final confirmed = await showDialog<bool>(
+                  //                   context: context,
+                  //                   builder: (context) => AlertDialog(
+                  //                     title: Text(AppTexts.clearAll),
+                  //                     content: Text(
+                  //                       AppTexts.clearAllConfirmation,
+                  //                     ),
+                  //                     actions: [
+                  //                       TextButton(
+                  //                         onPressed: () =>
+                  //                             Navigator.pop(context, false),
+                  //                         child: Text(AppTexts.cancel),
+                  //                       ),
+                  //                       TextButton(
+                  //                         onPressed: () =>
+                  //                             Navigator.pop(context, true),
+                  //                         style: TextButton.styleFrom(
+                  //                           foregroundColor:
+                  //                               AppColors.error,
+                  //                         ),
+                  //                         child: Text(AppTexts.clearAll),
+                  //                       ),
+                  //                     ],
+                  //                   ),
+                  //                 );
+                  //
+                  //                 if (confirmed == true) {
+                  //                   _notificationsCubit
+                  //                       .clearAllNotifications();
+                  //                 }
+                  //               },
+                  //         style: OutlinedButton.styleFrom(
+                  //           side: BorderSide(color: AppColors.error),
+                  //           foregroundColor: AppColors.error,
+                  //         ),
+                  //         child: Row(
+                  //           mainAxisSize: MainAxisSize.min,
+                  //           children: [
+                  //             Icon(Icons.delete_outline, size: 18.sp),
+                  //             SizedBox(width: 4.w),
+                  //             Text(AppTexts.clearAll),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
 
                   Expanded(
                     child: Column(
